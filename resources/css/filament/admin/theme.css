@@ -1,0 +1,890 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+@layer components {
+    .pios-report {
+        --pios-ink: #10231f;
+        --pios-muted: #5c6f7c;
+        --pios-line: #d8e3ec;
+        --pios-soft: #f5f8fb;
+        --pios-blue: #134c49;
+        --pios-blue-dark: #0e3b38;
+        --pios-blue-soft: #e6f4f2;
+        --pios-emerald: #059669;
+        --pios-amber: #d97706;
+        --pios-rose: #be123c;
+        --pios-panel: #ffffff;
+        color: var(--pios-ink);
+    }
+
+    .dark .pios-report {
+        --pios-ink: #ecfdf5;
+        --pios-muted: #aec0d1;
+        --pios-line: rgb(255 255 255 / 10%);
+        --pios-soft: rgb(255 255 255 / 5%);
+        --pios-panel: rgb(17 24 39 / 96%);
+    }
+
+    .pios-shell {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .pios-hero {
+        overflow: hidden;
+        border: 1px solid rgb(19 76 73 / 18%);
+        border-radius: 8px;
+        background:
+            linear-gradient(135deg, rgb(19 76 73 / 96%), rgb(14 59 56 / 94%) 58%, rgb(13 148 136 / 88%)),
+            var(--pios-blue);
+        box-shadow: 0 18px 40px rgb(19 76 73 / 17%);
+        color: white;
+    }
+
+    .pios-hero-grid {
+        display: grid;
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    @media (min-width: 1024px) {
+        .pios-hero-grid {
+            grid-template-columns: minmax(0, 1fr) minmax(360px, 0.58fr);
+            align-items: stretch;
+            padding: 1.5rem;
+        }
+    }
+
+    .pios-kicker {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        gap: .5rem;
+        border: 1px solid rgb(255 255 255 / 22%);
+        border-radius: 999px;
+        background: rgb(255 255 255 / 13%);
+        padding: .35rem .65rem;
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .pios-hero-title {
+        margin-top: .85rem;
+        max-width: 740px;
+        font-size: clamp(1.45rem, 2.6vw, 2.35rem);
+        font-weight: 750;
+        line-height: 1.08;
+    }
+
+    .pios-hero-copy {
+        margin-top: .75rem;
+        max-width: 720px;
+        color: rgb(255 255 255 / 82%);
+        font-size: .95rem;
+        line-height: 1.55;
+    }
+
+    .pios-hero-aside {
+        border: 1px solid rgb(255 255 255 / 20%);
+        border-radius: 8px;
+        background: rgb(255 255 255 / 12%);
+        padding: 1rem;
+    }
+
+    .pios-hero-total {
+        margin-top: .35rem;
+        font-size: clamp(1.65rem, 3vw, 2.4rem);
+        font-weight: 750;
+        line-height: 1;
+    }
+
+    .pios-hero-meta {
+        color: rgb(255 255 255 / 78%);
+        font-size: .82rem;
+    }
+
+    .pios-progress {
+        height: .55rem;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgb(255 255 255 / 18%);
+    }
+
+    .pios-progress > span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: #fbbf24;
+        width: var(--value, 0%);
+    }
+
+    .pios-filter-panel,
+    .pios-panel,
+    .pios-metric,
+    .pios-money-card {
+        border: 1px solid var(--pios-line);
+        border-radius: 8px;
+        background: var(--pios-panel);
+        box-shadow: 0 12px 28px rgb(19 76 73 / 7%);
+    }
+
+    .pios-filter-panel {
+        padding: 1rem;
+    }
+
+    .pios-filter-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        padding-bottom: .85rem;
+    }
+
+    .pios-filter-grid {
+        display: grid;
+        gap: .8rem;
+    }
+
+    @media (min-width: 640px) {
+        .pios-filter-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (min-width: 1280px) {
+        .pios-filter-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+    }
+
+    .pios-label {
+        display: block;
+        margin-bottom: .35rem;
+        color: var(--pios-muted);
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .pios-input {
+        display: block;
+        width: 100%;
+        min-height: 2.45rem;
+        border: 1px solid var(--pios-line);
+        border-radius: 8px;
+        background: white;
+        padding: .55rem .7rem;
+        color: var(--pios-ink);
+        font-size: .88rem;
+        outline: none;
+    }
+
+    .dark .pios-input {
+        background: rgb(255 255 255 / 6%);
+    }
+
+    .pios-input:focus {
+        border-color: rgb(19 76 73 / 70%);
+        box-shadow: 0 0 0 3px rgb(19 76 73 / 16%);
+    }
+
+    .pios-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        border: 1px solid rgb(19 76 73 / 18%);
+        border-radius: 999px;
+        background: rgb(230 244 242 / 88%);
+        padding: .38rem .65rem;
+        color: var(--pios-blue);
+        font-size: .78rem;
+        font-weight: 750;
+    }
+
+    .dark .pios-chip {
+        background: rgb(19 76 73 / 22%);
+        color: #a7f3d0;
+    }
+
+    .pios-metric-grid,
+    .pios-money-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    @media (min-width: 768px) {
+        .pios-metric-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (min-width: 1280px) {
+        .pios-metric-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .pios-money-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    .pios-metric {
+        position: relative;
+        overflow: hidden;
+        padding: 1rem;
+    }
+
+    .pios-metric::before {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: .25rem;
+        background: var(--accent, var(--pios-blue));
+        content: "";
+    }
+
+    .pios-metric-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: .75rem;
+    }
+
+    .pios-icon {
+        display: inline-flex;
+        width: 2.35rem;
+        height: 2.35rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: color-mix(in oklab, var(--accent, var(--pios-blue)) 13%, white);
+        color: var(--accent, var(--pios-blue));
+    }
+
+    .dark .pios-icon {
+        background: color-mix(in oklab, var(--accent, var(--pios-blue)) 22%, transparent);
+    }
+
+    .pios-icon .fi-icon {
+        width: 1.15rem;
+        height: 1.15rem;
+    }
+
+    .pios-metric-label,
+    .pios-money-label,
+    .pios-section-eyebrow {
+        color: var(--pios-muted);
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .pios-metric-value {
+        margin-top: .55rem;
+        font-size: 2rem;
+        font-weight: 750;
+        line-height: 1;
+    }
+
+    .pios-metric-detail,
+    .pios-money-detail {
+        margin-top: .6rem;
+        color: var(--pios-muted);
+        font-size: .86rem;
+        line-height: 1.45;
+    }
+
+    .pios-money-card {
+        padding: 1rem;
+    }
+
+    .pios-money-value {
+        margin-top: .45rem;
+        font-size: 1.45rem;
+        font-weight: 750;
+        line-height: 1.15;
+    }
+
+    .pios-section-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    @media (min-width: 1280px) {
+        .pios-section-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .pios-section-grid-wide {
+            grid-template-columns: minmax(0, 1.55fr) minmax(360px, .75fr);
+        }
+    }
+
+    .pios-panel-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        border-bottom: 1px solid var(--pios-line);
+        padding: .95rem 1rem;
+    }
+
+    .pios-panel-title {
+        font-size: .98rem;
+        font-weight: 750;
+    }
+
+    .pios-table-wrap {
+        overflow-x: auto;
+    }
+
+    .pios-table {
+        width: 100%;
+        min-width: 640px;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: .875rem;
+    }
+
+    .pios-table thead th {
+        border-bottom: 1px solid var(--pios-line);
+        background: var(--pios-soft);
+        padding: .72rem 1rem;
+        color: var(--pios-muted);
+        font-size: .75rem;
+        font-weight: 750;
+        text-align: left;
+        text-transform: uppercase;
+    }
+
+    .pios-table tbody td {
+        border-bottom: 1px solid var(--pios-line);
+        padding: .82rem 1rem;
+        vertical-align: top;
+    }
+
+    .pios-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .pios-table tbody tr:hover td {
+        background: rgb(230 244 242 / 52%);
+    }
+
+    .dark .pios-table tbody tr:hover td {
+        background: rgb(19 76 73 / 12%);
+    }
+
+    .pios-main-text {
+        color: var(--pios-ink);
+        font-weight: 700;
+    }
+
+    .pios-sub-text {
+        margin-top: .18rem;
+        color: var(--pios-muted);
+        font-size: .76rem;
+    }
+
+    .pios-badge {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid rgb(19 76 73 / 18%);
+        border-radius: 999px;
+        background: rgb(230 244 242 / 90%);
+        padding: .28rem .55rem;
+        color: var(--pios-blue);
+        font-size: .75rem;
+        font-weight: 750;
+        white-space: nowrap;
+    }
+
+    .pios-badge-amber {
+        border-color: rgb(217 119 6 / 22%);
+        background: rgb(255 251 235 / 90%);
+        color: #b45309;
+    }
+
+    .pios-badge-violet {
+        border-color: rgb(124 58 237 / 18%);
+        background: rgb(245 243 255 / 90%);
+        color: #6d28d9;
+    }
+
+    .pios-empty {
+        padding: 2.2rem 1rem;
+        color: var(--pios-muted);
+        text-align: center;
+        font-size: .88rem;
+    }
+
+    .pios-stack-list {
+        display: grid;
+        gap: .75rem;
+        padding: 1rem;
+    }
+
+    .pios-stack-item {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: .9rem;
+        border: 1px solid var(--pios-line);
+        border-radius: 8px;
+        background: var(--pios-soft);
+        padding: .75rem;
+    }
+
+    .pios-stack-value {
+        text-align: right;
+        font-weight: 750;
+        white-space: nowrap;
+    }
+
+    .pios-login-shell {
+        --pios-login-blue: #134c49;
+        --pios-login-blue-dark: #0e3b38;
+        --pios-login-line: #d1fae5;
+        --pios-login-soft: #f0fdf4;
+        display: grid;
+        width: min(100%, 72rem);
+        min-height: min(720px, calc(100vh - 5rem));
+        overflow: hidden;
+        border: 1px solid var(--pios-login-line);
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 18px 44px rgb(19 76 73 / 14%);
+    }
+
+    @media (min-width: 960px) {
+        .pios-login-shell {
+            grid-template-columns: minmax(320px, .95fr) minmax(360px, .75fr);
+        }
+    }
+
+    .dark .pios-login-shell {
+        --pios-login-line: rgb(255 255 255 / 10%);
+        background: rgb(17 24 39 / 96%);
+        box-shadow: 0 18px 44px rgb(0 0 0 / 28%);
+    }
+
+    .pios-login-media {
+        position: relative;
+        isolation: isolate;
+        display: flex;
+        min-height: 22rem;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        background:
+            linear-gradient(90deg, rgb(255 255 255 / 8%) 1px, transparent 1px),
+            linear-gradient(0deg, rgb(255 255 255 / 7%) 1px, transparent 1px),
+            linear-gradient(150deg, var(--pios-login-blue), var(--pios-login-blue-dark) 62%, #0d9488);
+        background-size: 34px 34px, 34px 34px, auto;
+        color: white;
+        padding: clamp(1.4rem, 4vw, 2.6rem);
+    }
+
+    .pios-login-media::after {
+        position: absolute;
+        inset: auto 0 0;
+        z-index: -1;
+        height: 38%;
+        background: linear-gradient(0deg, rgb(16 35 31 / 42%), transparent);
+        content: "";
+    }
+
+    .pios-login-side-top {
+        display: grid;
+        gap: 1.25rem;
+    }
+
+    .pios-login-logo-tile {
+        display: inline-flex;
+        width: 7.2rem;
+        max-width: 100%;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgb(255 255 255 / 30%);
+        border-radius: 8px;
+        background: white;
+        padding: .85rem;
+        box-shadow: 0 14px 28px rgb(0 0 0 / 18%);
+    }
+
+    .pios-login-logo-tile img {
+        width: 100%;
+        height: auto;
+    }
+
+    .pios-login-kicker {
+        width: fit-content;
+        border: 1px solid rgb(255 255 255 / 24%);
+        border-radius: 999px;
+        background: rgb(255 255 255 / 12%);
+        padding: .38rem .68rem;
+        font-size: .74rem;
+        font-weight: 750;
+        text-transform: uppercase;
+    }
+
+    .pios-login-media h1 {
+        margin-top: 1rem;
+        max-width: 28rem;
+        font-size: clamp(2rem, 4vw, 3.45rem);
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .pios-login-media p {
+        margin-top: .9rem;
+        max-width: 31rem;
+        color: rgb(255 255 255 / 83%);
+        font-size: .98rem;
+        line-height: 1.58;
+    }
+
+    .pios-login-side-footer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .55rem;
+    }
+
+    .pios-login-side-footer span {
+        border: 1px solid rgb(255 255 255 / 22%);
+        border-radius: 999px;
+        background: rgb(255 255 255 / 12%);
+        padding: .42rem .68rem;
+        font-size: .78rem;
+        font-weight: 750;
+    }
+
+    .pios-login-form-panel {
+        display: flex;
+        align-items: center;
+        background: linear-gradient(180deg, #ffffff, var(--pios-login-soft));
+        padding: clamp(1.35rem, 4vw, 2.8rem);
+    }
+
+    .dark .pios-login-form-panel {
+        background: linear-gradient(180deg, rgb(17 24 39 / 98%), rgb(12 18 31 / 98%));
+    }
+
+    .pios-login-form-inner {
+        width: min(100%, 25.5rem);
+        margin-inline: auto;
+    }
+
+    .pios-language-switcher {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: .5rem;
+        margin-bottom: 1.15rem;
+    }
+
+    .pios-login-wordmark {
+        width: 8.5rem;
+        height: auto;
+    }
+
+    .dark .pios-login-wordmark {
+        filter: drop-shadow(0 0 12px rgb(167 243 208 / 20%));
+    }
+
+    .pios-login-form-heading {
+        margin-top: 1.25rem;
+        margin-bottom: 1.35rem;
+    }
+
+    .pios-login-form-heading span {
+        display: inline-flex;
+        border: 1px solid rgb(19 76 73 / 18%);
+        border-radius: 999px;
+        background: rgb(230 244 242 / 92%);
+        padding: .35rem .62rem;
+        color: var(--pios-login-blue);
+        font-size: .74rem;
+        font-weight: 750;
+        text-transform: uppercase;
+    }
+
+    .dark .pios-login-form-heading span {
+        background: rgb(19 76 73 / 22%);
+        color: #a7f3d0;
+    }
+
+    .pios-login-form-heading h2 {
+        margin-top: .85rem;
+        color: #10231f;
+        font-size: clamp(1.45rem, 2.4vw, 2.05rem);
+        font-weight: 780;
+        line-height: 1.08;
+    }
+
+    .dark .pios-login-form-heading h2 {
+        color: #ecfdf5;
+    }
+
+    .pios-login-form-heading p {
+        margin-top: .58rem;
+        color: #5c6f7c;
+        font-size: .92rem;
+        line-height: 1.5;
+    }
+
+    .dark .pios-login-form-heading p {
+        color: #aec0d1;
+    }
+
+    @media (max-width: 959px) {
+        .pios-login-shell {
+            min-height: auto;
+        }
+
+        .pios-login-media {
+            min-height: 19rem;
+        }
+    }
+}
+
+/* PIOS panel chrome — Forest Teal theme for all panels */
+@layer components {
+    .fi-sidebar {
+        background-color: #134c49 !important;
+        border-right: 1px solid rgb(255 255 255 / 12%);
+    }
+
+    /* Light nav + group text on the dark teal sidebar */
+    .fi-sidebar :is(
+        .fi-sidebar-item-label,
+        .fi-sidebar-group-label,
+        .text-gray-700, .text-gray-600, .text-gray-500, .text-gray-400,
+        .fi-color-gray
+    ) {
+        color: #d1fae5 !important;
+    }
+
+    .fi-sidebar .fi-sidebar-group-label {
+        color: #6ee7b7 !important;
+    }
+
+    /* Links / active labels use the primary colour — lighten so they read on
+       the dark background. */
+    .fi-sidebar :is(.text-primary-600, .text-primary-500, .text-primary-400) {
+        color: #a7f3d0 !important;
+    }
+
+    .fi-sidebar :is(.fi-sidebar-item-icon, .fi-icon, svg) {
+        color: #a7f3d0 !important;
+    }
+
+    /* Active item: brighter teal/emerald pill with white text + icon. */
+    .fi-sidebar .fi-active .fi-sidebar-item-button,
+    .fi-sidebar .fi-sidebar-item.fi-active > * {
+        background-color: rgb(13 148 136 / 60%) !important;
+        border-radius: .5rem;
+    }
+
+    .fi-sidebar .fi-active :is(.fi-sidebar-item-label, .fi-sidebar-item-icon, .text-primary-600, svg) {
+        color: #ffffff !important;
+    }
+
+    .fi-sidebar .fi-sidebar-item-button:hover {
+        background-color: rgb(255 255 255 / 9%) !important;
+        border-radius: .5rem;
+    }
+
+    .fi-topbar {
+        background-color: #e6f4f2 !important;
+        border-bottom: 1px solid rgb(19 76 73 / 18%);
+    }
+
+    /* Panel tag beside the PIOS wordmark — identifies which panel you're in. */
+    .pios-brand-tag {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid rgb(19 76 73 / 24%);
+        border-radius: 999px;
+        background: rgb(230 244 242 / 94%);
+        padding: .12rem .5rem;
+        color: #0e3b38;
+        font-size: .66rem;
+        font-weight: 750;
+        letter-spacing: .05em;
+        line-height: 1.25;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .dark .pios-brand-tag {
+        border-color: rgb(45 212 191 / 32%);
+        background: rgb(19 76 73 / 26%);
+        color: #a7f3d0;
+    }
+
+    /* "BizGrowth Engine" product name beside the wordmark. */
+    .pios-brand-name {
+        display: none;
+        font-size: .95rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: #0e3b38;
+        white-space: nowrap;
+    }
+
+    @media (min-width: 640px) {
+        .pios-brand-name {
+            display: inline;
+        }
+    }
+
+    .dark .pios-brand-name {
+        color: #a7f3d0;
+    }
+
+    .dark .fi-sidebar {
+        background-color: #092625 !important;
+        border-right-color: rgb(255 255 255 / 8%);
+    }
+
+    .dark .fi-topbar {
+        background-color: rgb(14 59 56 / 94%) !important;
+        border-bottom-color: rgb(255 255 255 / 8%);
+    }
+}
+
+/* ------------------------------------------------------------------ *
+ * Elderly-friendly accessibility
+ * Our users are mostly older adults, so raise the base text size,
+ * darken secondary/muted text, and strengthen borders + focus rings
+ * for higher contrast and legibility across every panel.
+ * ------------------------------------------------------------------ */
+@layer base {
+    html {
+        /* Scales all rem-based Filament sizing up ~6% (16px → 17px). */
+        font-size: 17px;
+    }
+}
+
+@layer components {
+    /* Darken the custom-component tokens (dashboards, reports, login):
+       muted text ~7:1 on white; borders clearly visible. */
+    .pios-report,
+    .pios-login-shell {
+        --pios-muted: #37464f;
+        --pios-line: #b3c5d2;
+    }
+
+    /* Larger + darker small text used throughout the custom components. */
+    .pios-label,
+    .pios-metric-label,
+    .pios-money-label,
+    .pios-section-eyebrow {
+        font-size: .82rem;
+        color: #37464f;
+    }
+
+    .pios-sub-text,
+    .pios-metric-detail,
+    .pios-money-detail,
+    .pios-empty {
+        font-size: .9rem;
+        color: #37464f;
+    }
+
+    .pios-table {
+        font-size: .95rem;
+    }
+
+    .pios-table thead th {
+        font-size: .82rem;
+        color: #37464f;
+    }
+
+    .pios-input:focus {
+        border-color: #134c49;
+        box-shadow: 0 0 0 3px rgb(19 76 73 / 30%);
+    }
+
+    /* Raise contrast of Filament's own secondary text + borders in the
+       main content and forms (light mode — the app default). Darker grays
+       so labels, hints, table meta and placeholders read clearly. */
+    :where(.fi-main, .fi-modal-window) :is(.fi-color-gray, .text-gray-500, .text-gray-400) {
+        color: #3d4d57;
+    }
+
+    .fi-input,
+    .fi-select-input,
+    .fi-ta-text-input {
+        font-size: .975rem;
+    }
+
+    /* Stronger, more visible focus ring for keyboard / low-vision users. */
+    .fi-input:focus,
+    .fi-select-input:focus,
+    :where(.fi-btn, .fi-link):focus-visible {
+        outline: 2px solid #134c49;
+        outline-offset: 1px;
+    }
+
+    /* Modern Mockup Style Polish for Filament UI */
+    .fi-sidebar {
+        transition: all 0.2s ease-in-out;
+    }
+
+    .fi-sidebar-item-active .fi-sidebar-item-btn {
+        background: linear-gradient(135deg, rgba(19, 76, 73, 0.15), rgba(13, 148, 136, 0.1)) !important;
+        border-left: 3px solid #134c49 !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+
+    .dark .fi-sidebar-item-active .fi-sidebar-item-btn {
+        background: linear-gradient(135deg, rgba(19, 76, 73, 0.4), rgba(13, 148, 136, 0.25)) !important;
+        border-left: 3px solid #2dd4bf !important;
+    }
+
+    /* Modern Rounded Cards & Stat Widgets */
+    .fi-wi-stats-overview-stat {
+        border-radius: 14px !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        border: 1px solid rgba(226, 232, 240, 0.8) !important;
+        box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.05), 0 1px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    }
+
+    .fi-wi-stats-overview-stat:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px -5px rgba(19, 76, 73, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    .dark .fi-wi-stats-overview-stat {
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    /* Modern Table Container */
+    .fi-ta-ctn {
+        border-radius: 14px !important;
+        border: 1px solid rgba(226, 232, 240, 0.9) !important;
+        overflow: hidden !important;
+        box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    .dark .fi-ta-ctn {
+        border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .fi-ta-row:hover {
+        background-color: rgba(241, 245, 249, 0.6) !important;
+    }
+
+    .dark .fi-ta-row:hover {
+        background-color: rgba(255, 255, 255, 0.03) !important;
+    }
+}
+

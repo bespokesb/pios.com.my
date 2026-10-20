@@ -1,0 +1,13 @@
+<?php
+
+use App\Providers\AppServiceProvider;
+use App\Providers\Filament\AdminPanelProvider;
+use App\Providers\Filament\BusinessPanelProvider;
+use App\Providers\Filament\PartnerPanelProvider;
+
+return [
+    AppServiceProvider::class,
+    AdminPanelProvider::class,
+    PartnerPanelProvider::class,
+    BusinessPanelProvider::class,
+];

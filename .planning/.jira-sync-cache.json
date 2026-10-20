@@ -1,0 +1,23 @@
+{
+  "[GSD] pios-my phase 1 — Foundation, Roles, and Data Model": "DP-20",
+  "[GSD] pios-my phase 2 — Partner and Business Owner Registration": "DP-21",
+  "[GSD] pios-my phase 3 — Customer Ownership and Eligibility Base": "DP-22",
+  "[GSD] pios-my phase 4 — Product Catalog, Selection, and Proposals": "DP-23",
+  "[GSD] pios-my phase 5 — Fees, Reports, and Basic Commerce Flow": "DP-24",
+  "[GSD] pios-my phase 6 — Fee & Quota Correctness Foundation": "DP-25",
+  "[GSD] pios-my phase 7 — Business Owner Fee Schedule": "DP-26",
+  "[GSD] pios-my phase 8 — Partner Monthly Customer Quota": "DP-27",
+  "[GSD] pios-my phase 9 — Vendor / Product Sourcing": "DP-28",
+  "[GSD] pios-my phase 10 — CRM Data Layer & Ownership Foundation": "DP-29",
+  "[GSD] pios-my phase 11 — Customer Detail View": "DP-30",
+  "[GSD] pios-my phase 12 — Segments & Gated Stage-Change": "DP-31",
+  "[GSD] pios-my phase 13 — One-Tap WhatsApp & Call": "DP-32",
+  "[GSD] pios-my phase 14 — Product Cards, Categories, Status & Simplified BO Form": "DP-33",
+  "[GSD] pios-my phase 15 — Share / Promote": "DP-34",
+  "[GSD] pios-my phase 16 — Order Lifecycle, Statuses & Tracking": "DP-37",
+  "[GSD] pios-my phase 17 — Invoicing & Receipts": "DP-38",
+  "[GSD] pios-my phase 18 — BO Order Dashboard": "DP-39",
+  "[GSD] pios-my phase 19 — BO Sales Reporting": "DP-40",
+  "[GSD] pios-my phase 20 — Vendor Register": "DP-41",
+  "[GSD] pios-my phase 21 — CRM Polish": "DP-42"
+}

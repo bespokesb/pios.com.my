@@ -306,6 +306,7 @@
         </div>
     </section>
 
+    @if (isset($products) && $products->isNotEmpty())
     <!-- Sliding Product Marquee -->
     <section class="sliding-products-section" id="catalog">
         <div class="container">
@@ -339,31 +340,8 @@
             <div class="marquee-track" id="marqueeTrack">
 
                 @php
-                    $displayProducts = ($products && $products->isNotEmpty()) ? $products : collect([
-                        (object)[
-                            'name' => 'COSRX Advanced Snail 96 Mucin Power Essence',
-                            'productType' => (object)['name' => 'Health Product'],
-                            'selling_price' => 108.38,
-                            'stock_quantity' => 14,
-                            'product_no' => 'PRD000001',
-                        ],
-                        (object)[
-                            'name' => 'Nature\'s Organic Glow Radiance Serum',
-                            'productType' => (object)['name' => 'Skincare & Glow'],
-                            'selling_price' => 129.00,
-                            'stock_quantity' => 25,
-                            'product_no' => 'PRD000002',
-                        ],
-                        (object)[
-                            'name' => 'Herbal Renewal Ultra-Hydrating Cream',
-                            'productType' => (object)['name' => 'Facial Care'],
-                            'selling_price' => 89.50,
-                            'stock_quantity' => 18,
-                            'product_no' => 'PRD000003',
-                        ],
-                    ]);
                     // Duplicate collection to ensure smooth infinite loop in CSS marquee
-                    $marqueeItems = $displayProducts->concat($displayProducts);
+                    $marqueeItems = $products->count() > 1 ? $products->concat($products) : $products;
                 @endphp
 
                 @foreach ($marqueeItems as $index => $prod)
@@ -371,7 +349,7 @@
                         $categoryName = is_object($prod->productType) ? $prod->productType->name : ($prod->productType['name'] ?? 'Premium Product');
                         $imgUrl = method_exists($prod, 'firstShareableImageUrl') && $prod->firstShareableImageUrl()
                             ? $prod->firstShareableImageUrl()
-                            : asset('assets/images/products/prod_' . (($index % 6) + 1) . '.jpg');
+                            : asset('assets/images/header_logo.png');
                         $productUrl = (isset($prod->product_no) && filled($prod->product_no))
                             ? route('public.product.show', ['product' => $prod->product_no])
                             : route('login');
@@ -406,6 +384,7 @@
             </div>
         </div>
     </section>
+    @endif
 
 
     <!-- Footer -->

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\SetLocale;
+use App\Models\User;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Non-panel authenticated routes (e.g. order documents) have no global
         // `login` route — send guests to the Business Owner login.
         $middleware->redirectGuestsTo(fn (): string => route('filament.business.auth.login'));
+
+        $middleware->redirectUsersTo(function (): string {
+            $user = Auth::user();
+
+            return $user instanceof User ? $user->getDashboardUrl() : route('home');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -161,7 +161,7 @@ class ProductController extends Controller
             'stock_added' => ['nullable', 'integer', 'min:0'],
             'stock_date_added' => ['nullable', 'date'],
             'media_files' => ['nullable', 'array', 'max:4'],
-            'media_files.*' => ['file', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'media_files.*' => ['file', 'mimes:jpg,jpeg,png,webp,mp4,webm,mov', 'max:30720'],
             'video_file' => ['nullable', 'file', 'mimes:mp4,webm,mov', 'max:30720'],
         ]);
 
@@ -287,7 +287,7 @@ class ProductController extends Controller
             'area' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', 'in:active,inactive'],
             'media_files' => ['nullable', 'array', 'max:4'],
-            'media_files.*' => ['file', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'media_files.*' => ['file', 'mimes:jpg,jpeg,png,webp,mp4,webm,mov', 'max:30720'],
             'video_file' => ['nullable', 'file', 'mimes:mp4,webm,mov', 'max:30720'],
             'remove_video' => ['nullable', 'boolean'],
         ]);

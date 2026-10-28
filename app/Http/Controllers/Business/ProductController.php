@@ -39,7 +39,19 @@ class ProductController extends Controller
 
         if ($category !== 'all' && filled($category)) {
             $query->whereHas('productType', function ($q) use ($category): void {
-                $q->where('name', 'like', "%{$category}%");
+                $catLower = strtolower($category);
+                if (in_array($catLower, ['products', 'product'])) {
+                    $q->where(function ($sq): void {
+                        $sq->where('name', 'like', '%product%')
+                            ->orWhere('name', 'like', '%health%')
+                            ->orWhere('name', 'like', '%book%')
+                            ->orWhere('code', 'like', '%product%')
+                            ->orWhereNotIn('code', ['services', 'programme']);
+                    });
+                } else {
+                    $q->where('name', 'like', "%{$category}%")
+                        ->orWhere('code', 'like', "%{$category}%");
+                }
             });
         }
 

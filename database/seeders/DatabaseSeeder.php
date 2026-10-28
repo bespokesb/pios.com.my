@@ -173,5 +173,24 @@ class DatabaseSeeder extends Seeder
                 'company_name' => fake()->company(),
                 'status' => RecordStatus::Active,
             ]);
+
+        // Canonical Customer user for testing marketplace login
+        User::query()->updateOrCreate(
+            ['email' => 'customer@pios.com.my'],
+            [
+                'name' => 'PIOS Customer Test',
+                'password' => Hash::make('password'),
+                'role' => UserRole::Customer,
+                'status' => UserStatus::Active,
+            ],
+        );
+
+        $this->call([
+            MalaysiaLocationSeeder::class,
+            DemoDataSeeder::class,
+            BoTestDataSeeder::class,
+            OrderSeeder::class,
+            ProductImageSeeder::class,
+        ]);
     }
 }

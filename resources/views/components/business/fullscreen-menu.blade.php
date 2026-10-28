@@ -1,13 +1,7 @@
 <div class="fullscreen-menu" id="fullscreenMenu" aria-hidden="true">
     <div class="fs-menu-header">
         <a href="{{ route('business.dashboard') }}" class="fs-logo-link" style="display: flex; align-items: center; text-decoration: none;">
-            <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 9999px; border: 2px solid #E7C46A; background: #16436E; padding: 2px; margin-right: 10px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">
-                <img src="{{ asset('favicon-192x192.png') }}" alt="PIOS" style="width: 100%; height: 100%; border-radius: 9999px; object-fit: contain;">
-            </div>
-            <div style="display: flex; flex-direction: column;">
-                <span style="font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.25rem; line-height: 1; color: #FFFFFF; letter-spacing: 0.5px;">pios</span>
-                <span style="font-family: 'Inter', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 1.2px; color: #E7C46A; text-transform: uppercase; margin-top: 2px;">BizGrowth Engine</span>
-            </div>
+            <img src="{{ asset('assets/images/bge_logo_horizontal_white.png') }}" alt="PIOS BizGrowth Engine" class="fs-header-logo" style="height: 38px; width: auto; max-width: 180px; object-fit: contain;">
         </a>
         <button class="fs-menu-close-btn" id="fsMenuCloseBtn" aria-label="Close Menu" onclick="window.closePiosMenu(event)">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">

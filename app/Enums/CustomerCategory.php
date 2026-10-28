@@ -7,13 +7,19 @@ enum CustomerCategory: string
     case Lead = 'lead';
     case Prospect = 'prospect';
     case Customer = 'customer';
+    case LoyalCustomer = 'loyal_customer';
+    case Member = 'member';
+    case Partner = 'partner';
 
     public function label(): string
     {
         return match ($this) {
             self::Lead => 'Lead',
-            self::Prospect => 'Prospect',
+            self::Prospect => 'Prospek',
             self::Customer => 'Customer',
+            self::LoyalCustomer => 'Loyal Customer',
+            self::Member => 'Member',
+            self::Partner => 'Partner',
         };
     }
 

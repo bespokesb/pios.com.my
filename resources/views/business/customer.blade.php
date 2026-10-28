@@ -1,5 +1,75 @@
 <x-business-layout title="PIOS - Customer Management" headerTitle="Customer" bodyClass="customer-body" mainClass="cust-main" mobileHeaderClass="mobile-customer-header">
 
+    <style>
+        .btn-action-edit {
+            background-color: #0284C7;
+            color: #FFFFFF !important;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none !important;
+        }
+        .btn-action-edit:hover {
+            background-color: #0369A1;
+        }
+        .mobile-btn-edit {
+            background-color: #F0F9FF !important;
+            color: #0284C7 !important;
+            border: 1px solid #BAE6FD !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            padding: 8px 12px !important;
+            border-radius: 8px !important;
+            font-size: 0.82rem !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            text-decoration: none !important;
+        }
+        .mobile-btn-edit:hover,
+        .mobile-btn-edit:active {
+            background-color: #E0F2FE !important;
+        }
+        .status-pill.lead {
+            background: #F1F5F9;
+            color: #475569;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+        .status-pill.prospect {
+            background: #DBEAFE;
+            color: #1D4ED8;
+            border: 1px solid rgba(37, 99, 235, 0.25);
+        }
+        .status-pill.customer {
+            background: #CCFBF1;
+            color: #0F766E;
+            border: 1px solid rgba(20, 184, 166, 0.25);
+        }
+        .status-pill.loyal {
+            background: #FCE7F3;
+            color: #BE185D;
+            border: 1px solid rgba(244, 114, 182, 0.25);
+        }
+        .status-pill.member {
+            background: #EDE9FE;
+            color: #6D28D9;
+            border: 1px solid rgba(139, 92, 246, 0.25);
+        }
+        .status-pill.partner {
+            background: #FEF3C7;
+            color: #92400E;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+    </style>
+
     <!-- Desktop Header Bar -->
     <div class="cust-topbar">
         <div class="topbar-left">
@@ -102,8 +172,39 @@
                             @php
                                 $initials = strtoupper(substr($c->name, 0, 2));
                                 $statusLabel = $c->is_vip ? 'VIP' : ($c->category?->label() ?? 'Customer');
-                                $statusClass = $c->is_vip ? 'vip' : ($c->category === \App\Enums\CustomerCategory::Prospect ? 'prospect' : 'customer');
+                                $statusClass = match($c->category) {
+                                    \App\Enums\CustomerCategory::Lead => 'lead',
+                                    \App\Enums\CustomerCategory::Prospect => 'prospect',
+                                    \App\Enums\CustomerCategory::Customer => 'customer',
+                                    \App\Enums\CustomerCategory::LoyalCustomer => 'loyal',
+                                    \App\Enums\CustomerCategory::Member => 'member',
+                                    \App\Enums\CustomerCategory::Partner => 'partner',
+                                    default => 'customer',
+                                };
+                                if ($c->is_vip) {
+                                    $statusClass = 'vip';
+                                }
                                 $waUrl = 'https://wa.me/' . preg_replace('/[^0-9]/', '', (string)$c->hp_no);
+                                $custData = [
+                                    'id' => $c->id,
+                                    'name' => $c->name,
+                                    'nick_name' => $c->nick_name,
+                                    'hp_no' => \App\Support\Phone::national($c->hp_no) ?? $c->hp_no,
+                                    'full_hp' => $c->hp_no,
+                                    'email' => $c->email ?? '',
+                                    'category' => $c->category?->value ?? 'customer',
+                                    'status_label' => $statusLabel,
+                                    'is_vip' => (bool)$c->is_vip,
+                                    'abo_no' => $c->abo_no ?? '',
+                                    'address' => $c->address ?? '',
+                                    'address_line_2' => $c->address_line_2 ?? '',
+                                    'address_line_3' => $c->address_line_3 ?? '',
+                                    'bandar' => $c->bandar ?? '',
+                                    'negeri' => $c->negeri ?? '',
+                                    'poskod' => $c->poskod ?? '',
+                                    'remarks' => $c->remarks ?? '',
+                                    'update_url' => route('business.customers.update', $c),
+                                ];
                             @endphp
                             <tr data-name="{{ $c->name }}" data-phone="{{ $c->hp_no }}" data-email="{{ $c->email ?? '-' }}" data-status="{{ $statusLabel }}">
                                 <td>
@@ -137,7 +238,14 @@
                                             </svg>
                                             <span>Call</span>
                                         </a>
-                                        <button class="btn-action-view" onclick="openViewModal('{{ addslashes($c->name) }}', '{{ addslashes(\App\Support\Phone::toTel($c->hp_no) ?? $c->hp_no) }}', '{{ addslashes($c->email ?? '-') }}', '{{ $statusLabel }}', '{{ addslashes($c->abo_no ?? '-') }}', '{{ addslashes($c->address ?? '-') }}')">View</button>
+                                        <button type="button" class="btn-action-view" data-customer='@json($custData)' onclick="openViewModalFromBtn(this)">View</button>
+                                        <button type="button" class="btn-action-edit" data-customer='@json($custData)' onclick="openEditModalFromBtn(this)" title="Edit Customer">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                            <span>Edit</span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -202,8 +310,39 @@
                 @php
                     $initials = strtoupper(substr($c->name, 0, 2));
                     $statusLabel = $c->is_vip ? 'VIP' : ($c->category?->label() ?? 'Customer');
-                    $statusClass = $c->is_vip ? 'vip' : ($c->category === \App\Enums\CustomerCategory::Prospect ? 'prospect' : 'customer');
+                    $statusClass = match($c->category) {
+                        \App\Enums\CustomerCategory::Lead => 'lead',
+                        \App\Enums\CustomerCategory::Prospect => 'prospect',
+                        \App\Enums\CustomerCategory::Customer => 'customer',
+                        \App\Enums\CustomerCategory::LoyalCustomer => 'loyal',
+                        \App\Enums\CustomerCategory::Member => 'member',
+                        \App\Enums\CustomerCategory::Partner => 'partner',
+                        default => 'customer',
+                    };
+                    if ($c->is_vip) {
+                        $statusClass = 'vip';
+                    }
                     $waUrl = 'https://wa.me/' . preg_replace('/[^0-9]/', '', (string)$c->hp_no);
+                    $custData = [
+                        'id' => $c->id,
+                        'name' => $c->name,
+                        'nick_name' => $c->nick_name,
+                        'hp_no' => \App\Support\Phone::national($c->hp_no) ?? $c->hp_no,
+                        'full_hp' => $c->hp_no,
+                        'email' => $c->email ?? '',
+                        'category' => $c->category?->value ?? 'customer',
+                        'status_label' => $statusLabel,
+                        'is_vip' => (bool)$c->is_vip,
+                        'abo_no' => $c->abo_no ?? '',
+                        'address' => $c->address ?? '',
+                        'address_line_2' => $c->address_line_2 ?? '',
+                        'address_line_3' => $c->address_line_3 ?? '',
+                        'bandar' => $c->bandar ?? '',
+                        'negeri' => $c->negeri ?? '',
+                        'poskod' => $c->poskod ?? '',
+                        'remarks' => $c->remarks ?? '',
+                        'update_url' => route('business.customers.update', $c),
+                    ];
                 @endphp
                 <div class="mobile-cust-card" data-name="{{ $c->name }}" data-phone="{{ $c->hp_no }}" data-email="{{ $c->email ?? '-' }}" data-status="{{ $statusLabel }}">
                     <div class="mobile-card-top">
@@ -233,12 +372,19 @@
                             </svg>
                             <span>Call</span>
                         </a>
-                        <button type="button" class="mobile-btn mobile-btn-view" onclick="openViewModal('{{ addslashes($c->name) }}', '{{ addslashes(\App\Support\Phone::toTel($c->hp_no) ?? $c->hp_no) }}', '{{ addslashes($c->email ?? '-') }}', '{{ $statusLabel }}', '{{ addslashes($c->abo_no ?? '-') }}', '{{ addslashes($c->address ?? '-') }}')" aria-label="View details of {{ $c->name }}">
+                        <button type="button" class="mobile-btn mobile-btn-view" data-customer='@json($custData)' onclick="openViewModalFromBtn(this)" aria-label="View details of {{ $c->name }}">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
                             </svg>
                             <span>View</span>
+                        </button>
+                        <button type="button" class="mobile-btn mobile-btn-edit" data-customer='@json($custData)' onclick="openEditModalFromBtn(this)" aria-label="Edit {{ $c->name }}">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            <span>Edit</span>
                         </button>
                     </div>
                 </div>
@@ -301,6 +447,23 @@
                 <div class="modal-body modal-grid-layout">
                     <!-- Left Column -->
                     <div class="modal-col modal-card-section">
+                        <!-- Status Pilihan 6 Kategori -->
+                        <div class="form-group">
+                            <label class="form-label" for="addCustomerCategory" style="font-weight: 700; color: #0F172A;">
+                                Status Pelanggan <span style="color: #EF4444;">*</span>
+                            </label>
+                            <div class="select-wrapper">
+                                <select class="form-control form-select" id="addCustomerCategory" name="category" required style="font-weight: 600; font-size: 0.95rem;">
+                                    <option value="lead" {{ old('category') === 'lead' ? 'selected' : '' }}>1. Lead</option>
+                                    <option value="prospect" {{ old('category') === 'prospect' ? 'selected' : '' }}>2. Prospek</option>
+                                    <option value="customer" {{ old('category', 'customer') === 'customer' ? 'selected' : '' }}>3. Customer</option>
+                                    <option value="loyal_customer" {{ old('category') === 'loyal_customer' ? 'selected' : '' }}>4. Loyal Customer</option>
+                                    <option value="member" {{ old('category') === 'member' ? 'selected' : '' }}>5. Member</option>
+                                    <option value="partner" {{ old('category') === 'partner' ? 'selected' : '' }}>6. Partner</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <!-- Full Name -->
                         <div class="form-group">
                             <label class="form-label" for="customerNameInput">Full Name</label>
@@ -418,9 +581,171 @@
                 <div><strong>ABO / VIP No:</strong> <span id="viewCustAbo"></span></div>
                 <div><strong>Address:</strong> <span id="viewCustAddress"></span></div>
             </div>
-            <div style="margin-top: 24px; text-align: right;">
+            <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 10px;">
                 <button type="button" id="closeViewBtn2" style="padding: 8px 18px; border-radius: 8px; border: 1px solid #CBD5E1; background: #FFF; color: #475569; font-weight: 600; cursor: pointer;">Close</button>
+                <button type="button" id="viewToEditBtn" onclick="openEditFromView()" style="padding: 8px 18px; border-radius: 8px; border: none; background: #0284C7; color: #FFF; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <span>Edit Customer</span>
+                </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Edit Customer Modal -->
+    <div class="modal-overlay" id="editCustomerModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 16px; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+        <div class="modal-card modal-register-card" style="background: #FFFFFF; border-radius: 16px; width: 100%; max-width: 760px; max-height: calc(100dvh - 32px); overflow-y: auto; margin: auto; box-shadow: 0 20px 50px rgba(15,23,42,0.18);">
+            <!-- Mobile Header Bar -->
+            <div class="mobile-reg-header">
+                <div class="mobile-header-left">
+                    <button type="button" class="mobile-reg-back-btn" id="mobileEditBackBtn" aria-label="Back" onclick="closeEditModal()">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <h2 class="mobile-reg-title">Edit Customer</h2>
+                </div>
+                <button type="button" class="mobile-reg-menu-btn" id="mobileEditMenuBtn" aria-label="Close" onclick="closeEditModal()">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Desktop Header -->
+            <div class="modal-header desktop-modal-header">
+                <h3 class="modal-title">Edit Customer</h3>
+                <button type="button" class="modal-close-btn" id="closeEditModalBtn" aria-label="Close modal" onclick="closeEditModal()">&times;</button>
+            </div>
+
+            <form action="" method="POST" id="editCustomerForm">
+                @csrf
+                @method('PUT')
+
+                <div class="modal-body modal-grid-layout">
+                    <!-- Left Column -->
+                    <div class="modal-col modal-card-section">
+                        <!-- Status Pilihan 6 Kategori (Lead, Prospek, Customer, Loyal Customer, Member, Partner) -->
+                        <div class="form-group">
+                            <label class="form-label" for="editCustCategory" style="font-weight: 700; color: #0F172A;">
+                                Status Pelanggan <span style="color: #EF4444;">*</span>
+                            </label>
+                            <div class="select-wrapper">
+                                <select class="form-control form-select" id="editCustCategory" name="category" required style="font-weight: 600; font-size: 0.95rem; border: 1.5px solid #0D9488;">
+                                    <option value="lead">1. Lead</option>
+                                    <option value="prospect">2. Prospek</option>
+                                    <option value="customer">3. Customer</option>
+                                    <option value="loyal_customer">4. Loyal Customer</option>
+                                    <option value="member">5. Member</option>
+                                    <option value="partner">6. Partner</option>
+                                </select>
+                            </div>
+                            <span style="font-size: 0.78rem; color: #64748B; margin-top: 4px; display: block;">Tukar status pelanggan untuk fasa jualan dan promosi.</span>
+                        </div>
+
+                        <!-- Full Name -->
+                        <div class="form-group">
+                            <label class="form-label" for="editCustName">Full Name <span style="color: #EF4444;">*</span></label>
+                            <input type="text" class="form-control" id="editCustName" name="name"
+                                placeholder="Enter full name" required autocomplete="name">
+                        </div>
+
+                        <!-- Email Address -->
+                        <div class="form-group">
+                            <label class="form-label" for="editCustEmail">Email Address</label>
+                            <input type="email" class="form-control" id="editCustEmail" name="email"
+                                placeholder="contact@company.com" autocomplete="email">
+                        </div>
+
+                        <!-- Phone Number -->
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                                <label class="form-label" for="editCustPhone" style="margin-bottom: 0;">Phone Number <span style="color: #EF4444;">*</span></label>
+                                <span style="font-size: 0.76rem; color: #64748B; font-weight: 600;">Format WhatsApp (+60)</span>
+                            </div>
+                            <div class="phone-input-group" id="editPhoneInputContainer" style="position: relative; display: flex; align-items: stretch; border: 1.5px solid #CBD5E1; border-radius: 8px; background: #FFFFFF; transition: all 0.2s ease; overflow: hidden;">
+                                <div class="phone-prefix-badge" style="display: flex; align-items: center; gap: 6px; padding: 0 12px; background: #F8FAFC; border-right: 1.5px solid #E2E8F0; color: #1E293B; font-weight: 700; font-size: 0.95rem; user-select: none;">
+                                    <span style="font-size: 1.15rem; line-height: 1;">🇲🇾</span>
+                                    <span>+60</span>
+                                </div>
+                                <input type="tel" class="form-control phone-input-field" id="editCustPhone" name="hp_no"
+                                    style="border: none !important; border-radius: 0 !important; box-shadow: none !important; padding: 10px 14px; font-weight: 600; font-size: 0.95rem; color: #0F172A; width: 100%; letter-spacing: 0.5px; outline: none !important;"
+                                    placeholder="12-345 6789" required autocomplete="tel">
+                            </div>
+                        </div>
+
+                        <!-- ABO / VIP No -->
+                        <div class="form-group">
+                            <label class="form-label" for="editCustAbo">ABO / VIP No</label>
+                            <input type="text" class="form-control" id="editCustAbo" name="abo_no"
+                                placeholder="Contoh: ABO-12345 / VIP">
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="modal-col modal-card-section">
+                        <!-- Address -->
+                        <div class="form-group">
+                            <label class="form-label">Address</label>
+                            <div class="address-inputs-stack">
+                                <input type="text" class="form-control" name="address" id="editCustAddress"
+                                    placeholder="Address line 1">
+                                <input type="text" class="form-control" name="address_line_2" id="editCustAddress2"
+                                    placeholder="Address line 2">
+                                <input type="text" class="form-control" name="address_line_3" id="editCustAddress3"
+                                    placeholder="Address line 3">
+                            </div>
+                        </div>
+
+                        <!-- Postcode -->
+                        <div class="form-group">
+                            <label class="form-label" for="editPostcodeSelect">Postcode</label>
+                            <div class="select-wrapper">
+                                <select class="form-control form-select" name="poskod" id="editPostcodeSelect">
+                                    <option value="">Select postcode</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- City -->
+                        <div class="form-group">
+                            <label class="form-label" for="editCitySelect">City</label>
+                            <div class="select-wrapper">
+                                <select class="form-control form-select" name="bandar" id="editCitySelect">
+                                    <option value="">Select city</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- State -->
+                        <div class="form-group">
+                            <label class="form-label" for="editStateSelect">State</label>
+                            <div class="select-wrapper">
+                                <select class="form-control form-select" name="negeri" id="editStateSelect">
+                                    <option value="">Select state</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Remarks -->
+                        <div class="form-group">
+                            <label class="form-label" for="editCustRemarks">Remarks</label>
+                            <textarea class="form-control" name="remarks" id="editCustRemarks" rows="2"
+                                placeholder="Catatan tambahan berkenaan pelanggan..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer-divider"></div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" id="cancelEditBtn" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn-modal-submit" id="submitEditCustomerBtn" style="background: #0D9488;">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -476,6 +801,13 @@
             if (addModal) {
                 addModal.addEventListener('click', (e) => {
                     if (e.target === addModal) closeAddModal();
+                });
+            }
+
+            const editModal = document.getElementById('editCustomerModal');
+            if (editModal) {
+                editModal.addEventListener('click', (e) => {
+                    if (e.target === editModal) closeEditModal();
                 });
             }
 
@@ -699,6 +1031,22 @@
                 });
             }
 
+            const editCustomerForm = document.getElementById('editCustomerForm');
+            const editPhoneInput = document.getElementById('editCustPhone');
+            if (editCustomerForm && editPhoneInput) {
+                editCustomerForm.addEventListener('submit', function(e) {
+                    const raw = editPhoneInput.value;
+                    const inspection = inspectSubscriberDigits(raw);
+                    if (!inspection.valid) {
+                        e.preventDefault();
+                        editPhoneInput.focus();
+                        alert(inspection.message || 'Nombor telefon tidak sah.');
+                        return false;
+                    }
+                    editPhoneInput.value = inspection.fullE164;
+                });
+            }
+
             // Auto-open modal if validation errors exist or hash is #register
             @if ($errors->any())
                 openAddModal();
@@ -709,14 +1057,46 @@
             }
         });
 
-        function openViewModal(name, phone, email, status, abo, address) {
-            document.getElementById('viewCustName').textContent = name;
-            document.getElementById('viewCustPhone').textContent = phone;
-            document.getElementById('viewCustEmail').textContent = email;
-            document.getElementById('viewCustStatus').textContent = status;
-            document.getElementById('viewCustAbo').textContent = abo || '-';
-            document.getElementById('viewCustAddress').textContent = address || '-';
+        let activeViewingCustomerData = null;
+
+        function openViewModalFromBtn(btn) {
+            try {
+                const data = JSON.parse(btn.getAttribute('data-customer'));
+                openViewModal(data);
+            } catch (e) {
+                console.error('Error parsing customer data:', e);
+            }
+        }
+
+        function openEditModalFromBtn(btn) {
+            try {
+                const data = JSON.parse(btn.getAttribute('data-customer'));
+                openEditModal(data);
+            } catch (e) {
+                console.error('Error parsing customer data:', e);
+            }
+        }
+
+        function openViewModal(dataOrName, phone, email, status, abo, address) {
             var vm = document.getElementById('viewCustomerModal');
+            if (typeof dataOrName === 'object' && dataOrName !== null) {
+                activeViewingCustomerData = dataOrName;
+                document.getElementById('viewCustName').textContent = dataOrName.name || '-';
+                document.getElementById('viewCustPhone').textContent = dataOrName.hp_no || '-';
+                document.getElementById('viewCustEmail').textContent = dataOrName.email || '-';
+                document.getElementById('viewCustStatus').textContent = dataOrName.status_label || '-';
+                document.getElementById('viewCustAbo').textContent = dataOrName.abo_no || '-';
+                let fullAddr = [dataOrName.address, dataOrName.address_line_2, dataOrName.address_line_3, dataOrName.poskod, dataOrName.bandar, dataOrName.negeri].filter(Boolean).join(', ');
+                document.getElementById('viewCustAddress').textContent = fullAddr || '-';
+            } else {
+                activeViewingCustomerData = { name: dataOrName, hp_no: phone, email: email, status_label: status, abo_no: abo, address: address };
+                document.getElementById('viewCustName').textContent = dataOrName;
+                document.getElementById('viewCustPhone').textContent = phone;
+                document.getElementById('viewCustEmail').textContent = email;
+                document.getElementById('viewCustStatus').textContent = status;
+                document.getElementById('viewCustAbo').textContent = abo || '-';
+                document.getElementById('viewCustAddress').textContent = address || '-';
+            }
             if (vm) {
                 vm.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
@@ -724,6 +1104,92 @@
                 if (mc) mc.scrollTop = 0;
             }
         }
+
+        function openEditFromView() {
+            if (activeViewingCustomerData) {
+                openEditModal(activeViewingCustomerData);
+            }
+        }
+
+        function openEditModal(data) {
+            if (!data) return;
+
+            const vm = document.getElementById('viewCustomerModal');
+            if (vm) vm.style.display = 'none';
+
+            const em = document.getElementById('editCustomerModal');
+            const form = document.getElementById('editCustomerForm');
+            if (form && data.update_url) {
+                form.action = data.update_url;
+            }
+
+            const catSelect = document.getElementById('editCustCategory');
+            if (catSelect) {
+                catSelect.value = data.category || 'customer';
+            }
+
+            const nameInput = document.getElementById('editCustName');
+            if (nameInput) nameInput.value = data.name || '';
+
+            const phoneInput = document.getElementById('editCustPhone');
+            if (phoneInput) {
+                let ph = (data.hp_no || '').replace(/\D/g, '');
+                if (ph.startsWith('60')) ph = ph.substring(2);
+                else if (ph.startsWith('0')) ph = ph.substring(1);
+                phoneInput.value = ph;
+            }
+
+            const emailInput = document.getElementById('editCustEmail');
+            if (emailInput) emailInput.value = data.email || '';
+
+            const aboInput = document.getElementById('editCustAbo');
+            if (aboInput) aboInput.value = data.abo_no || '';
+
+            const addr1 = document.getElementById('editCustAddress');
+            if (addr1) addr1.value = data.address || '';
+
+            const addr2 = document.getElementById('editCustAddress2');
+            if (addr2) addr2.value = data.address_line_2 || '';
+
+            const addr3 = document.getElementById('editCustAddress3');
+            if (addr3) addr3.value = data.address_line_3 || '';
+
+            const remarks = document.getElementById('editCustRemarks');
+            if (remarks) remarks.value = data.remarks || '';
+
+            if (window.attachMalaysiaLocationSync) {
+                window.attachMalaysiaLocationSync({
+                    stateSelect: 'editStateSelect',
+                    citySelect: 'editCitySelect',
+                    postcodeSelect: 'editPostcodeSelect',
+                    initialState: data.negeri || '',
+                    initialCity: data.bandar || '',
+                    initialPostcode: data.poskod || ''
+                });
+            }
+
+            if (em) {
+                em.classList.add('active');
+                em.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeEditModal() {
+            const em = document.getElementById('editCustomerModal');
+            if (em) {
+                em.classList.remove('active');
+                em.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        }
+
+        window.openEditModal = openEditModal;
+        window.closeEditModal = closeEditModal;
+        window.openViewModal = openViewModal;
+        window.openViewModalFromBtn = openViewModalFromBtn;
+        window.openEditModalFromBtn = openEditModalFromBtn;
+        window.openEditFromView = openEditFromView;
     </script>
     @endpush
 

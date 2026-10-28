@@ -51,6 +51,12 @@ class CustomerController extends Controller
             $query->where('is_vip', true);
         } elseif ($filter === 'lead') {
             $query->where('category', CustomerCategory::Lead);
+        } elseif ($filter === 'loyal_customer') {
+            $query->where('category', CustomerCategory::LoyalCustomer);
+        } elseif ($filter === 'member') {
+            $query->where('category', CustomerCategory::Member);
+        } elseif ($filter === 'partner') {
+            $query->where('category', CustomerCategory::Partner);
         }
 
         $customers = $query->latest()->get();
@@ -218,9 +224,13 @@ class CustomerController extends Controller
 
         $rawCategory = $validated['category'] ?? 'customer';
         $category = match ($rawCategory) {
-            'prospect' => CustomerCategory::Prospect,
             'lead' => CustomerCategory::Lead,
-            default => CustomerCategory::Customer,
+            'prospect', 'prospek' => CustomerCategory::Prospect,
+            'customer' => CustomerCategory::Customer,
+            'loyal_customer', 'loyal customer' => CustomerCategory::LoyalCustomer,
+            'member' => CustomerCategory::Member,
+            'partner' => CustomerCategory::Partner,
+            default => CustomerCategory::tryFrom($rawCategory) ?? CustomerCategory::Customer,
         };
 
         $isVip = (bool) ($validated['is_vip'] ?? false) || $rawCategory === 'vip';
@@ -300,13 +310,22 @@ class CustomerController extends Controller
             'is_vip' => ['nullable', 'boolean'],
             'abo_no' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:255'],
+            'address_line_2' => ['nullable', 'string', 'max:255'],
+            'address_line_3' => ['nullable', 'string', 'max:255'],
+            'bandar' => ['nullable', 'string', 'max:100'],
+            'negeri' => ['nullable', 'string', 'max:100'],
+            'poskod' => ['nullable', 'string', 'max:20'],
             'remarks' => ['nullable', 'string'],
         ]);
 
         $category = match ($validated['category']) {
-            'prospect' => CustomerCategory::Prospect,
             'lead' => CustomerCategory::Lead,
-            default => CustomerCategory::Customer,
+            'prospect', 'prospek' => CustomerCategory::Prospect,
+            'customer' => CustomerCategory::Customer,
+            'loyal_customer', 'loyal customer' => CustomerCategory::LoyalCustomer,
+            'member' => CustomerCategory::Member,
+            'partner' => CustomerCategory::Partner,
+            default => CustomerCategory::tryFrom($validated['category']) ?? CustomerCategory::Customer,
         };
 
         $isVip = (bool) ($validated['is_vip'] ?? false) || $validated['category'] === 'vip';
@@ -321,6 +340,11 @@ class CustomerController extends Controller
             'is_vip' => $isVip,
             'abo_no' => $validated['abo_no'] ?? $customer->abo_no,
             'address' => $validated['address'] ?? $customer->address,
+            'address_line_2' => $validated['address_line_2'] ?? $customer->address_line_2,
+            'address_line_3' => $validated['address_line_3'] ?? $customer->address_line_3,
+            'bandar' => $validated['bandar'] ?? $customer->bandar,
+            'negeri' => $validated['negeri'] ?? $customer->negeri,
+            'poskod' => $validated['poskod'] ?? $customer->poskod,
             'remarks' => $validated['remarks'] ?? $customer->remarks,
         ]);
 

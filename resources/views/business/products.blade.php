@@ -473,14 +473,25 @@
         @endif
     </div>
 
-    <!-- Category Filter Tabs -->
+    <!-- Category Filter Tabs (All, Products, Services, Programme) -->
     <div class="prod-categories-bar" style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px;">
-        <a href="{{ route('business.products.index', ['search' => $search]) }}" style="padding: 6px 14px; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; {{ $category === 'all' ? 'background: #0D9488; color: #fff;' : 'background: #fff; color: #475569; border: 1px solid #E2E8F0;' }}">
-            All Products
-        </a>
-        @foreach ($productTypes as $pt)
-            <a href="{{ route('business.products.index', ['category' => $pt->name, 'search' => $search]) }}" style="padding: 6px 14px; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; {{ $category === $pt->name ? 'background: #0D9488; color: #fff;' : 'background: #fff; color: #475569; border: 1px solid #E2E8F0;' }}">
-                {{ $pt->name }}
+        @php
+            $prodTabs = [
+                'all' => 'All',
+                'products' => 'Products',
+                'services' => 'Services',
+                'programme' => 'Programme',
+            ];
+            $currentCat = strtolower($category ?: 'all');
+        @endphp
+        @foreach ($prodTabs as $catKey => $catLabel)
+            @php
+                $isActive = ($catKey === 'all' && ($currentCat === 'all' || !filled($category)))
+                    || ($currentCat === $catKey);
+            @endphp
+            <a href="{{ route('business.products.index', array_filter(['category' => $catKey === 'all' ? null : $catKey, 'search' => $search])) }}"
+               style="padding: 6px 14px; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; {{ $isActive ? 'background: #0D9488; color: #fff;' : 'background: #fff; color: #475569; border: 1px solid #E2E8F0;' }}">
+                {{ $catLabel }}
             </a>
         @endforeach
     </div>

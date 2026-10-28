@@ -1,13 +1,7 @@
 <aside class="desktop-sidebar dash-sidebar" aria-label="Business Owner Navigation">
     <div class="sidebar-brand dash-sidebar-header">
         <a href="{{ route('business.dashboard') }}" class="dash-logo-link" style="display: flex; align-items: center; text-decoration: none;">
-            <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 9999px; border: 2px solid #E7C46A; background: #16436E; padding: 2px; margin-right: 10px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">
-                <img src="{{ asset('favicon-192x192.png') }}" alt="PIOS" style="width: 100%; height: 100%; border-radius: 9999px; object-fit: contain;">
-            </div>
-            <div style="display: flex; flex-direction: column;">
-                <span style="font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.3rem; line-height: 1; color: #FFFFFF; letter-spacing: 0.5px;">pios</span>
-                <span style="font-family: 'Inter', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 1.2px; color: #E7C46A; text-transform: uppercase; margin-top: 2px;">BizGrowth Engine</span>
-            </div>
+            <img src="{{ asset('assets/images/bge_logo_horizontal_white.png') }}" alt="PIOS BizGrowth Engine" class="sidebar-logo" style="height: 44px; width: auto; max-width: 100%; object-fit: contain;">
         </a>
     </div>
 

@@ -193,6 +193,63 @@ class BusinessProductManagementTest extends TestCase
         $response->assertSee('sample.mp4', false);
     }
 
+    public function test_business_owner_can_propose_product_with_image_upload(): void
+    {
+        $image = UploadedFile::fake()->image('bengkel_photo.jpg', 600, 600);
+
+        $response = $this->actingAs($this->user)
+            ->post(route('business.products.propose'), [
+                'name' => 'Bengkel Kereta Servis',
+                'customer_price' => 150.00,
+                'cost_price' => 100.00,
+                'stock_in_hand' => 5,
+                'media_files' => [$image],
+            ]);
+
+        $response->assertRedirect(route('business.products.index'));
+        $response->assertSessionHas('success');
+
+        $product = Product::where('name', 'Bengkel Kereta Servis')->first();
+        $this->assertNotNull($product);
+        $this->assertNotNull($product->media_assets);
+        $this->assertCount(1, $product->media_assets);
+        Storage::disk('public')->assertExists($product->media_assets[0]);
+
+        $this->assertNotNull($product->firstShareableImageUrl());
+        $this->assertStringContainsString($product->media_assets[0], $product->firstShareableImageUrl());
+
+        // Verify product index page renders the uploaded image
+        $indexResponse = $this->actingAs($this->user)->get(route('business.products.index'));
+        $indexResponse->assertOk();
+        $indexResponse->assertSee($product->firstShareableImageUrl(), escape: false);
+    }
+
+    public function test_business_owner_can_update_product_with_new_image(): void
+    {
+        $product = Product::factory()->forBusinessOwner($this->bo)->create([
+            'name' => 'Produk Asal',
+            'selling_price' => 50.00,
+            'media_assets' => ['products/old_photo.jpg'],
+        ]);
+
+        $newImage = UploadedFile::fake()->image('new_photo.png', 800, 800);
+
+        $response = $this->actingAs($this->user)
+            ->put(route('business.products.update', $product), [
+                'name' => 'Produk Asal Kemaskini',
+                'media_files' => [$newImage],
+            ]);
+
+        $response->assertRedirect(route('business.products.index'));
+        $response->assertSessionHas('success');
+
+        $product->refresh();
+        $this->assertNotNull($product->media_assets);
+        $this->assertCount(1, $product->media_assets);
+        Storage::disk('public')->assertExists($product->media_assets[0]);
+        $this->assertStringNotContainsString('old_photo.jpg', $product->media_assets[0]);
+    }
+
     public function test_business_owner_can_remove_video_via_update(): void
     {
         $product = Product::factory()->forBusinessOwner($this->bo)->create([

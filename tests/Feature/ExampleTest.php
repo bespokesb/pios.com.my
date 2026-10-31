@@ -18,20 +18,17 @@ class ExampleTest extends TestCase
 
     public function test_locale_switcher_stores_supported_locale_and_localizes_business_login(): void
     {
-        $this->withHeader('referer', 'http://localhost/business/login')
+        $this->withHeader('referer', 'http://localhost/login')
             ->get('/locale/ms')
-            ->assertRedirect('http://localhost/business/login')
+            ->assertRedirect('http://localhost/login')
             ->assertSessionHas('locale', 'ms');
 
         app()->setLocale('en');
 
         $this->withSession(['locale' => 'ms'])
-            ->get('/business/login')
+            ->get('/login')
             ->assertOk()
-            ->assertSee('Log Masuk Pemilik Perniagaan')
-            ->assertSee('Bahasa Melayu')
-            ->assertSee('English')
-            ->assertSee('pios-language-switcher', escape: false);
+            ->assertSee('Log Masuk');
     }
 
     public function test_locale_switcher_rejects_unsupported_locale(): void

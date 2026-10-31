@@ -9,6 +9,10 @@ use App\Models\BusinessOwner;
 use App\Services\AuditLogger;
 use App\Services\IdentifierGenerator;
 use App\Services\RegistrationAccountCreator;
+use App\Services\RegistrationApprover;
+use App\Services\WhatsAppPassSender;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
@@ -31,8 +35,8 @@ class CreateBusinessOwner extends CreateRecord
         $data['partner_id'] = $this->resolvePartnerId($data);
 
         if (auth()->user()?->actsAsPartner()) {
-            // Business Owners registered by a partner stay Pending until HQ approves.
-            $data['status'] = RecordStatus::Pending->value;
+            // No owner approval needed! Business Owners are active immediately.
+            $data['status'] = RecordStatus::Active->value;
         }
 
         $this->validateDuplicateContact($data);
@@ -64,18 +68,39 @@ class CreateBusinessOwner extends CreateRecord
 
     protected function afterCreate(): void
     {
+        $password = filled($this->accountData['account_password'] ?? null)
+            ? (string) $this->accountData['account_password']
+            : null;
+
         if ($this->accountData['create_user'] ?? false) {
             app(RegistrationAccountCreator::class)->createForBusinessOwner(
                 $this->record,
-                $this->record->status === RecordStatus::Pending
-                    ? UserStatus::Inactive
-                    : UserStatus::Active,
-                // DP-7: a partner (or admin) may set the login password at creation;
-                // when set, the account is usable immediately and no email is sent.
-                filled($this->accountData['account_password'] ?? null)
-                    ? (string) $this->accountData['account_password']
-                    : null,
+                UserStatus::Active,
+                $password,
             );
+        }
+
+        app(RegistrationApprover::class)->generateSetupFee($this->record);
+
+        if ($password !== null) {
+            $waUrl = WhatsAppPassSender::forBusinessOwner($this->record->fresh(), $password);
+
+            if ($waUrl) {
+                Notification::make()
+                    ->success()
+                    ->title('Business Owner Berjaya Didaftarkan')
+                    ->body('Akses log masuk sedia untuk dihantar ke WhatsApp.')
+                    ->persistent()
+                    ->actions([
+                        Action::make('sendWhatsApp')
+                            ->label('Send Pass (WhatsApp)')
+                            ->color('success')
+                            ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                            ->button()
+                            ->url($waUrl, shouldOpenInNewTab: true),
+                    ])
+                    ->send();
+            }
         }
 
         app(AuditLogger::class)->log(

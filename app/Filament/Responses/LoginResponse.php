@@ -62,7 +62,6 @@ class LoginResponse implements Responsable
                 url('/partner/login'),
                 url('/admin/login'),
                 route('login'),
-                route('filament.business.auth.login'),
             ], true)) {
                 return redirect()->to($intended);
             }

@@ -515,6 +515,8 @@
                     'status' => $prod->status?->value ?? 'active',
                     'has_video' => $prod->hasVideo(),
                     'video_url' => $prod->videoUrl(),
+                    'image_url' => $prod->firstShareableImageUrl(),
+                    'images' => $prod->imageUrls(),
                     'update_url' => route('business.products.update', $prod),
                     'delete_url' => route('business.products.destroy', $prod),
                 ];
@@ -1062,11 +1064,20 @@
                         </div>
                     </div>
 
-                    <!-- Ganti Gambar Produk (Pilihan) -->
+                    <!-- Gambar Produk Sedia Ada & Ganti -->
                     <div>
-                        <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Ganti Gambar Produk (Pilihan - Maks 4 fail)</label>
-                        <input type="file" name="media_files[]" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="width: 100%; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 0.88rem; box-sizing: border-box; background: #FFFFFF;">
+                        <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Gambar Produk</label>
+
+                        <!-- Existing Images Preview (if exists) -->
+                        <div id="editCurrentImagesBox" style="display: none; margin-bottom: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px;">
+                            <div style="font-size: 0.74rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Gambar Sedia Ada:</div>
+                            <div id="editCurrentImagesGrid" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                        </div>
+
+                        <label style="display: block; font-size: 0.78rem; font-weight: 500; color: #64748B; margin-bottom: 6px;">Ganti / Tambah Gambar Baru (Pilihan - Maks 4 fail):</label>
+                        <input type="file" id="editMediaFileInput" name="media_files[]" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="width: 100%; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 0.88rem; box-sizing: border-box; background: #FFFFFF;">
                         <span style="font-size: 0.72rem; color: #64748B;">Biarkan kosong jika ingin mengekalkan gambar sedia ada.</span>
+                        <div id="editMediaPreviewGrid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; margin-top: 10px;"></div>
                     </div>
 
                     <!-- Coverage Area / Territory -->
@@ -1446,6 +1457,8 @@
             const MAX_IMG_SIZE = 5 * 1024 * 1024;
 
             if (dropzone && fileInput) {
+                fileInput.addEventListener('click', (e) => e.stopPropagation());
+
                 dropzone.addEventListener('click', () => {
                     if (selectedFiles.length >= MAX_FILES) {
                         showMediaError('Maksimum 4 gambar dibenarkan bagi setiap produk.');
@@ -1688,6 +1701,29 @@
                 });
             }
 
+            // Edit Image Preview
+            const editFileInput = document.getElementById('editMediaFileInput');
+            const editPreviewGrid = document.getElementById('editMediaPreviewGrid');
+            if (editFileInput && editPreviewGrid) {
+                editFileInput.addEventListener('change', (e) => {
+                    editPreviewGrid.innerHTML = '';
+                    const files = Array.from(e.target.files || []);
+                    if (files.length === 0) {
+                        editPreviewGrid.style.display = 'none';
+                        return;
+                    }
+                    editPreviewGrid.style.display = 'grid';
+                    files.slice(0, 4).forEach(file => {
+                        if (file.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(file.name)) {
+                            const img = document.createElement('img');
+                            img.src = URL.createObjectURL(file);
+                            img.style.cssText = 'width: 100%; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #CBD5E1;';
+                            editPreviewGrid.appendChild(img);
+                        }
+                    });
+                });
+            }
+
             // Click Handler for Edit Button on each Product Card
             document.querySelectorAll('.btn-edit-product').forEach(btn => {
                 btn.addEventListener('click', function(e) {
@@ -1749,6 +1785,37 @@
                     if (editVideoFileInput) editVideoFileInput.value = '';
                     if (editVideoPlayer) editVideoPlayer.src = '';
                     if (editVideoPreviewBox) editVideoPreviewBox.style.display = 'none';
+
+                    // Existing images preview
+                    const currentImagesBox = document.getElementById('editCurrentImagesBox');
+                    const currentImagesGrid = document.getElementById('editCurrentImagesGrid');
+                    if (currentImagesBox && currentImagesGrid) {
+                        currentImagesGrid.innerHTML = '';
+                        const imgs = (Array.isArray(data.images) && data.images.length > 0)
+                            ? data.images
+                            : (data.image_url ? [data.image_url] : []);
+
+                        if (imgs.length > 0) {
+                            imgs.forEach(url => {
+                                const thumb = document.createElement('img');
+                                thumb.src = url;
+                                thumb.style.cssText = 'width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #CBD5E1;';
+                                currentImagesGrid.appendChild(thumb);
+                            });
+                            currentImagesBox.style.display = 'block';
+                        } else {
+                            currentImagesBox.style.display = 'none';
+                        }
+                    }
+
+                    // Reset edit media file input and preview
+                    const editFileInput = document.getElementById('editMediaFileInput');
+                    const editPreviewGrid = document.getElementById('editMediaPreviewGrid');
+                    if (editFileInput) editFileInput.value = '';
+                    if (editPreviewGrid) {
+                        editPreviewGrid.innerHTML = '';
+                        editPreviewGrid.style.display = 'none';
+                    }
 
                     openModalEl(editModal);
                 });

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Filament\Responses\LoginResponse;
+use App\Filament\Responses\LogoutResponse;
 use App\Models\AuditLog;
 use App\Models\BusinessOwner;
 use App\Models\BusinessOwnerProductSelection;
@@ -20,6 +21,9 @@ use App\Models\Product;
 use App\Models\ProductProposal;
 use App\Models\ProductType;
 use App\Models\Promotion;
+use App\Models\Subscription;
+use App\Models\SubscriptionPayment;
+use App\Models\SubscriptionProduct;
 use App\Models\Territory;
 use App\Models\User;
 use App\Models\Vendor;
@@ -40,6 +44,9 @@ use App\Policies\ProductPolicy;
 use App\Policies\ProductProposalPolicy;
 use App\Policies\ProductTypePolicy;
 use App\Policies\PromotionPolicy;
+use App\Policies\SubscriptionPaymentPolicy;
+use App\Policies\SubscriptionPolicy;
+use App\Policies\SubscriptionProductPolicy;
 use App\Policies\TerritoryPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\VendorPolicy;
@@ -63,6 +70,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(
             \Filament\Auth\Http\Responses\Contracts\LoginResponse::class,
             LoginResponse::class
+        );
+
+        $this->app->singleton(
+            \Filament\Auth\Http\Responses\Contracts\LogoutResponse::class,
+            LogoutResponse::class
         );
     }
 
@@ -135,5 +147,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ProductProposal::class, ProductProposalPolicy::class);
         Gate::policy(BusinessOwnerProductSelection::class, BusinessOwnerProductSelectionPolicy::class);
         Gate::policy(AuditLog::class, AuditLogPolicy::class);
+        Gate::policy(SubscriptionProduct::class, SubscriptionProductPolicy::class);
+        Gate::policy(Subscription::class, SubscriptionPolicy::class);
+        Gate::policy(SubscriptionPayment::class, SubscriptionPaymentPolicy::class);
     }
 }

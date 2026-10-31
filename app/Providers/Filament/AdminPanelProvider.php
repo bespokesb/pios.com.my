@@ -2,10 +2,9 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Plugins\PiosLoginPlugin;
 use App\Filament\Support\LocaleSwitcher;
+use App\Http\Middleware\FilamentAuthenticate;
 use App\Http\Middleware\SetLocale;
-use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -35,7 +34,6 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('favicon-32x32.png'))
             ->brandLogo(fn () => view('filament.brand'))
             ->brandLogoHeight('2.15rem')
-            ->plugin(PiosLoginPlugin::make())
             ->passwordReset()
             ->profile(isSimple: false)
             ->colors([
@@ -50,6 +48,7 @@ class AdminPanelProvider extends PanelProvider
                 __('pios.nav.group.business_owner'),
                 __('pios.nav.group.products'),
                 __('pios.nav.group.fees'),
+                'Langganan',
                 __('pios.nav.group.reports'),
                 __('pios.nav.group.system'),
             ])
@@ -76,7 +75,7 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                FilamentAuthenticate::class,
             ]);
     }
 }

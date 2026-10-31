@@ -124,10 +124,11 @@ class OperationalReportsTest extends TestCase
     public function test_filament_login_uses_branded_split_layout(): void
     {
         $this->get('/admin/login')
+            ->assertRedirect(route('login'));
+
+        $this->get(route('login'))
             ->assertOk()
-            ->assertSee('pios-login-shell', escape: false)
-            ->assertSee('brand/pios-wordmark.png', escape: false)
-            ->assertSee('brand/pak-itam-logo.png', escape: false);
+            ->assertSee('assets/images/desktop_center_logo.png', escape: false);
     }
 
     public function test_operational_reports_page_can_clear_active_filters(): void

@@ -10,6 +10,9 @@ use App\Services\AuditLogger;
 use App\Services\BusinessOwnerUpgradeService;
 use App\Services\IdentifierGenerator;
 use App\Services\RegistrationAccountCreator;
+use App\Services\WhatsAppPassSender;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +28,7 @@ class CreatePartner extends CreateRecord
     {
         $this->accountData = [
             'create_user' => (bool) ($data['create_user'] ?? false),
+            'account_password' => filled($data['account_password'] ?? null) ? (string) $data['account_password'] : null,
         ];
 
         unset($data['create_user'], $data['account_password']);
@@ -38,20 +42,20 @@ class CreatePartner extends CreateRecord
                 ]);
             }
 
-            // A partner may only recruit directly beneath themselves, and the
-            // recruit stays Pending until HQ approves it.
+            // A partner may only recruit directly beneath themselves.
             if (! $user->partner->hasOpenDirectSlot()) {
                 throw ValidationException::withMessages([
                     'data.applicant_name' => sprintf(
-                        'You already have the maximum of %d direct partners (active or pending). '
-                        .'Approve, reject, or remove an existing recruit before adding another.',
+                        'You already have the maximum of %d direct partners. '
+                        .'Remove an existing partner before adding another.',
                         Partner::MAX_DIRECT_PARTNERS,
                     ),
                 ]);
             }
 
             $data['parent_partner_id'] = $user->partner->id;
-            $data['status'] = RecordStatus::Pending->value;
+            // No owner approval needed for partner recruited by parent partner:
+            $data['status'] = RecordStatus::Active->value;
         }
 
         // Advisory early error for any creator (admins pick parent_partner_id in
@@ -104,19 +108,41 @@ class CreatePartner extends CreateRecord
 
     protected function afterCreate(): void
     {
+        $password = filled($this->accountData['account_password'] ?? null)
+            ? (string) $this->accountData['account_password']
+            : null;
+
         if ($this->accountData['create_user'] ?? false) {
             app(RegistrationAccountCreator::class)->createForPartner(
                 $this->record,
-                $this->record->status === RecordStatus::Pending
-                    ? UserStatus::Inactive
-                    : UserStatus::Active,
+                UserStatus::Active,
+                $password,
             );
         }
 
-        // A Partner is a Business Owner by default — provision the BO profile for an
-        // active partner that has a login (no-op for Pending recruits, which get it
-        // on HQ approval instead).
+        // A Partner is a Business Owner by default — provision the BO profile
         app(BusinessOwnerUpgradeService::class)->provisionFor($this->record->refresh());
+
+        if ($password !== null) {
+            $waUrl = WhatsAppPassSender::forPartner($this->record->fresh(), $password);
+
+            if ($waUrl) {
+                Notification::make()
+                    ->success()
+                    ->title('Partner Berjaya Didaftarkan')
+                    ->body('Akses log masuk sedia untuk dihantar ke WhatsApp.')
+                    ->persistent()
+                    ->actions([
+                        Action::make('sendWhatsApp')
+                            ->label('Send Pass (WhatsApp)')
+                            ->color('success')
+                            ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                            ->button()
+                            ->url($waUrl, shouldOpenInNewTab: true),
+                    ])
+                    ->send();
+            }
+        }
 
         app(AuditLogger::class)->log(
             actor: auth()->user(),

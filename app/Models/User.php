@@ -45,6 +45,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->role?->isAdmin() ?? false;
     }
 
+    public function isSysAdmin(): bool
+    {
+        return $this->role === UserRole::SysAdmin;
+    }
+
     public function isPiosOwner(): bool
     {
         return $this->role === UserRole::PiosOwner;

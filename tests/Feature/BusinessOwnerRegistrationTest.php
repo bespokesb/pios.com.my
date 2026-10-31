@@ -5,11 +5,13 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Filament\Resources\BusinessOwners\Pages\CreateBusinessOwner;
+use App\Filament\Resources\BusinessOwners\Pages\EditBusinessOwner;
 use App\Models\AuditLog;
 use App\Models\BusinessOwner;
 use App\Models\Partner;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
@@ -184,6 +186,97 @@ class BusinessOwnerRegistrationTest extends TestCase
             ])
             ->call('create')
             ->assertHasFormErrors(['hp_no']);
+    }
+
+    public function test_admin_can_set_direct_password_on_edit_business_owner_page_and_login_succeeds(): void
+    {
+        $admin = $this->adminUser();
+        $partner = Partner::query()->create([
+            'partner_no' => 'P000999',
+            'applicant_name' => 'Partner For Edit BO',
+        ]);
+
+        $boUser = User::factory()->create([
+            'email' => 'edit-bo@example.com',
+            'password' => Hash::make('old-password-123'),
+            'role' => UserRole::BusinessOwner,
+            'status' => UserStatus::Active,
+        ]);
+
+        $bo = BusinessOwner::query()->create([
+            'user_id' => $boUser->id,
+            'partner_id' => $partner->id,
+            'business_owner_no' => 'BO000999',
+            'applicant_name' => 'BO To Edit',
+            'email' => 'edit-bo@example.com',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($admin);
+
+        Livewire::test(EditBusinessOwner::class, ['record' => $bo->id])
+            ->fillForm([
+                'create_user' => true,
+                'account_password' => 'new-direct-pass-456',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $boUser->refresh();
+        $this->assertTrue(Hash::check('new-direct-pass-456', $boUser->password));
+        $this->assertSame(UserStatus::Active, $boUser->status);
+
+        // Verify login works with the new password
+        $this->assertTrue(
+            Auth::attempt([
+                'email' => 'edit-bo@example.com',
+                'password' => 'new-direct-pass-456',
+            ])
+        );
+    }
+
+    public function test_admin_can_create_user_with_direct_password_on_edit_when_no_user_existed(): void
+    {
+        $admin = $this->adminUser();
+        $partner = Partner::query()->create([
+            'partner_no' => 'P000998',
+            'applicant_name' => 'Partner For No User BO',
+        ]);
+
+        $bo = BusinessOwner::query()->create([
+            'user_id' => null,
+            'partner_id' => $partner->id,
+            'business_owner_no' => 'BO000998',
+            'applicant_name' => 'BO Without User',
+            'email' => 'nouser-bo@example.com',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($admin);
+
+        Livewire::test(EditBusinessOwner::class, ['record' => $bo->id])
+            ->fillForm([
+                'create_user' => true,
+                'account_password' => 'direct-pass-789',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $bo->refresh();
+        $this->assertNotNull($bo->user_id);
+        $user = User::find($bo->user_id);
+        $this->assertNotNull($user);
+        $this->assertTrue(Hash::check('direct-pass-789', $user->password));
+        $this->assertSame(UserStatus::Active, $user->status);
+        $this->assertSame('active', $bo->status->value);
+
+        // Verify login works
+        $this->assertTrue(
+            Auth::attempt([
+                'email' => 'nouser-bo@example.com',
+                'password' => 'direct-pass-789',
+            ])
+        );
     }
 
     public function test_business_owner_admin_routes_are_registered(): void

@@ -105,7 +105,24 @@ class ProductController extends Controller
             'cost' => ['nullable', 'numeric', 'min:0'],
             'stock_quantity' => ['required', 'integer', 'min:0'],
             'description' => ['nullable', 'string'],
+            'media_files' => ['nullable', 'array', 'max:4'],
+            'media_files.*' => ['file', 'mimes:jpg,jpeg,png,webp,mp4,webm,mov', 'max:30720'],
+            'video_file' => ['nullable', 'file', 'mimes:mp4,webm,mov', 'max:30720'],
         ]);
+
+        $uploadedPaths = [];
+        if ($request->hasFile('media_files')) {
+            foreach ($request->file('media_files') as $file) {
+                if ($file->isValid()) {
+                    $uploadedPaths[] = $file->store('products', 'public');
+                }
+            }
+        }
+
+        $videoPath = null;
+        if ($request->hasFile('video_file') && $request->file('video_file')->isValid()) {
+            $videoPath = $request->file('video_file')->store('products/videos', 'public');
+        }
 
         $productNo = DB::transaction(function (): string {
             $seq = IdentifierSequence::firstOrCreate(
@@ -118,7 +135,7 @@ class ProductController extends Controller
             return $no;
         });
 
-        $product = Product::create([
+        $productData = [
             'business_owner_id' => $bo?->id,
             'product_type_id' => $validated['product_type_id'] ?? null,
             'territory_id' => $bo?->territory_id,
@@ -128,9 +145,16 @@ class ProductController extends Controller
             'selling_price' => $validated['selling_price'],
             'cost' => $validated['cost'] ?? 0,
             'stock_quantity' => $validated['stock_quantity'],
+            'media_assets' => $uploadedPaths,
             'status' => ProductStatus::Active,
             'created_by' => $user->id,
-        ]);
+        ];
+
+        if ($videoPath && Schema::hasColumn('products', 'video_path')) {
+            $productData['video_path'] = $videoPath;
+        }
+
+        $product = Product::create($productData);
 
         if ($request->wantsJson()) {
             return response()->json([

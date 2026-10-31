@@ -3,14 +3,13 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Business\Pages\BusinessDashboard;
-use App\Filament\Pages\Auth\BusinessLogin;
 use App\Filament\Pages\BusinessSalesReport;
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\IncomingOrders\IncomingOrderResource;
 use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Support\LocaleSwitcher;
+use App\Http\Middleware\FilamentAuthenticate;
 use App\Http\Middleware\SetLocale;
-use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -38,7 +37,6 @@ class BusinessPanelProvider extends PanelProvider
             ->favicon(asset('favicon-32x32.png'))
             ->brandLogo(fn () => view('filament.brand'))
             ->brandLogoHeight('2.15rem')
-            ->login(BusinessLogin::class)
             ->passwordReset()
             ->profile(isSimple: false)
             ->databaseNotifications()
@@ -100,7 +98,7 @@ class BusinessPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                FilamentAuthenticate::class,
             ]);
     }
 }

@@ -3,18 +3,23 @@
 namespace App\Filament\Resources\BusinessOwners\Tables;
 
 use App\Enums\RecordStatus;
+use App\Enums\UserStatus;
 use App\Models\BusinessOwner;
 use App\Services\AuditLogger;
+use App\Services\RegistrationAccountCreator;
 use App\Services\RegistrationApprover;
+use App\Services\WhatsAppPassSender;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Hash;
 
 class BusinessOwnersTable
 {
@@ -107,6 +112,71 @@ class BusinessOwnersTable
                         );
 
                         Notification::make()->success()->title(__('pios.businessowner.amway_agent.updated'))->send();
+                    }),
+                Action::make('sendPassWhatsApp')
+                    ->label('Send Pass')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('success')
+                    ->modalHeading(fn (BusinessOwner $record): string => 'Send Pass via WhatsApp — '.$record->applicant_name)
+                    ->modalDescription('Tetapkan kata laluan dan buka WhatsApp untuk menghantar maklumat akses.')
+                    ->schema([
+                        TextInput::make('password')
+                            ->label('Kata Laluan')
+                            ->required()
+                            ->password()
+                            ->revealable()
+                            ->minLength(6)
+                            ->default('password')
+                            ->helperText('Kata laluan ini akan disimpan terus ke akaun Business Owner.'),
+                    ])
+                    ->action(function (BusinessOwner $record, array $data, $livewire): void {
+                        $password = (string) $data['password'];
+
+                        if ($record->user) {
+                            $record->user->forceFill([
+                                'password' => Hash::make($password),
+                                'status' => UserStatus::Active,
+                            ])->save();
+                        } else {
+                            app(RegistrationAccountCreator::class)->createForBusinessOwner(
+                                $record,
+                                UserStatus::Active,
+                                $password,
+                            );
+                        }
+
+                        if ($record->status !== RecordStatus::Active) {
+                            $record->forceFill(['status' => RecordStatus::Active])->save();
+                        }
+
+                        $waUrl = WhatsAppPassSender::forBusinessOwner($record->fresh(), $password);
+
+                        if ($waUrl) {
+                            if (method_exists($livewire, 'js')) {
+                                $livewire->js('window.open('.json_encode($waUrl).", '_blank');");
+                            }
+
+                            Notification::make()
+                                ->success()
+                                ->title('Kata Laluan Dikemaskini')
+                                ->body('Maklumat akses sedia untuk dihantar ke WhatsApp.')
+                                ->persistent()
+                                ->actions([
+                                    Action::make('openWa')
+                                        ->label('Buka WhatsApp (Send Pass)')
+                                        ->color('success')
+                                        ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                                        ->button()
+                                        ->url($waUrl, shouldOpenInNewTab: true),
+                                ])
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->warning()
+                                ->title('Kata Laluan Disimpan')
+                                ->body('Nombor telefon tidak sah untuk pautan WhatsApp.')
+                                ->send();
+                        }
                     }),
                 EditAction::make(),
             ])

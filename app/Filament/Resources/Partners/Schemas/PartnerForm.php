@@ -9,6 +9,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class PartnerForm
@@ -88,12 +89,22 @@ class PartnerForm
                     ])
                     ->columns(3),
 
-                Section::make('Account Access')
+                Section::make(__('pios.section.account_access'))
                     ->schema([
                         Toggle::make('create_user')
-                            ->label('Create login account')
-                            ->helperText('An activation email is sent to the partner to set their own password — no password is set here.')
+                            ->label(__('pios.field.create_login'))
+                            ->helperText(__('pios.field.create_login_hint'))
                             ->default(false)
+                            ->live()
+                            ->dehydrated(),
+                        TextInput::make('account_password')
+                            ->label(__('pios.field.password'))
+                            ->helperText(__('pios.field.password_hint'))
+                            ->password()
+                            ->revealable()
+                            ->minLength(8)
+                            ->maxLength(255)
+                            ->visible(fn (Get $get): bool => (bool) $get('create_user'))
                             ->dehydrated(),
                     ]),
             ]);

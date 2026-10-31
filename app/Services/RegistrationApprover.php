@@ -56,7 +56,7 @@ class RegistrationApprover
      * The amount is sourced from FeeSetting, never hardcoded (the literal is a
      * misconfiguration safety net only).
      */
-    private function generateSetupFee(BusinessOwner $businessOwner): void
+    public function generateSetupFee(BusinessOwner $businessOwner): void
     {
         $amount = FeeSetting::activeAmount(FeeType::BusinessOwnerSetup) ?? 10.00;
 

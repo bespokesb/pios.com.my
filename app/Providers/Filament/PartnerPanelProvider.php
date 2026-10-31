@@ -3,7 +3,8 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\PartnerNetworkTree;
-use App\Filament\Plugins\PiosLoginPlugin;
+use App\Filament\Partner\Resources\PartnerBoPaymentApprovalResource;
+use App\Filament\Partner\Resources\PartnerSubscriptionResource;
 use App\Filament\Resources\BusinessOwners\BusinessOwnerResource;
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\Partners\PartnerResource;
@@ -11,8 +12,8 @@ use App\Filament\Support\LocaleSwitcher;
 use App\Filament\Widgets\PartnerBusinessOwners;
 use App\Filament\Widgets\PartnerQuotaWidget;
 use App\Filament\Widgets\PiosStatsOverview;
+use App\Http\Middleware\FilamentAuthenticate;
 use App\Http\Middleware\SetLocale;
-use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -41,7 +42,6 @@ class PartnerPanelProvider extends PanelProvider
             ->favicon(asset('favicon-32x32.png'))
             ->brandLogo(fn () => view('filament.brand'))
             ->brandLogoHeight('2.15rem')
-            ->plugin(PiosLoginPlugin::make())
             ->passwordReset()
             ->profile(isSimple: false)
             ->colors([
@@ -54,11 +54,14 @@ class PartnerPanelProvider extends PanelProvider
             ->navigationGroups([
                 __('pios.nav.group.register'),
                 'Customers',
+                'Langganan',
             ])
             ->resources([
                 PartnerResource::class,
                 BusinessOwnerResource::class,
                 CustomerResource::class,
+                PartnerSubscriptionResource::class,
+                PartnerBoPaymentApprovalResource::class,
             ])
             ->pages([
                 Dashboard::class,
@@ -84,7 +87,7 @@ class PartnerPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                FilamentAuthenticate::class,
             ]);
     }
 }

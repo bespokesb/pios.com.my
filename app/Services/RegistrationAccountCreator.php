@@ -19,6 +19,7 @@ class RegistrationAccountCreator
     public function createForPartner(
         Partner $partner,
         UserStatus $status = UserStatus::Active,
+        ?string $password = null,
     ): User {
         return $this->createLinkedUser(
             role: UserRole::Partner,
@@ -27,6 +28,7 @@ class RegistrationAccountCreator
             panelId: 'partner',
             status: $status,
             attach: fn (User $user): bool => $partner->forceFill(['user_id' => $user->id])->save(),
+            password: $password,
         );
     }
 

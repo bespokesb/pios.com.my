@@ -20,7 +20,7 @@ class PartnerRecruitmentTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_partner_recruited_sub_partner_is_pending_and_parented_to_recruiter(): void
+    public function test_partner_recruited_sub_partner_is_active_and_parented_to_recruiter(): void
     {
         [$recruiterUser, $recruiter] = $this->partner('P000010');
         $this->actingAs($recruiterUser);
@@ -39,10 +39,10 @@ class PartnerRecruitmentTest extends TestCase
 
         $this->assertNotNull($sub);
         $this->assertSame($recruiter->id, $sub->parent_partner_id);
-        $this->assertSame(RecordStatus::Pending, $sub->status);
+        $this->assertSame(RecordStatus::Active, $sub->status);
     }
 
-    public function test_partner_recruited_sub_partner_login_is_inactive_until_approved(): void
+    public function test_partner_recruited_sub_partner_login_is_active_immediately(): void
     {
         [$recruiterUser] = $this->partner('P000020');
         $this->actingAs($recruiterUser);
@@ -59,7 +59,7 @@ class PartnerRecruitmentTest extends TestCase
         $user = User::query()->firstWhere('email', 'recruit-login@pios.test');
 
         $this->assertNotNull($user);
-        $this->assertSame(UserStatus::Inactive, $user->status);
+        $this->assertSame(UserStatus::Active, $user->status);
     }
 
     public function test_hq_approval_activates_partner_and_login(): void
@@ -115,7 +115,7 @@ class PartnerRecruitmentTest extends TestCase
         }
     }
 
-    public function test_partner_registered_business_owner_is_pending(): void
+    public function test_partner_registered_business_owner_is_active(): void
     {
         [$recruiterUser, $recruiter] = $this->partner('P000070');
         $this->actingAs($recruiterUser);
@@ -134,7 +134,7 @@ class PartnerRecruitmentTest extends TestCase
 
         $this->assertNotNull($businessOwner);
         $this->assertSame($recruiter->id, $businessOwner->partner_id);
-        $this->assertSame(RecordStatus::Pending, $businessOwner->status);
+        $this->assertSame(RecordStatus::Active, $businessOwner->status);
     }
 
     /**

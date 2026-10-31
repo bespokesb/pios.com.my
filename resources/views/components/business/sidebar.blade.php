@@ -50,6 +50,13 @@
             <span>Fees</span>
         </a>
 
+        <a href="{{ route('business.subscriptions.index') }}" class="sidebar-item dash-nav-item {{ request()->routeIs('business.subscriptions.*') || request()->is('subscriptions*', 'business/subscriptions*') ? 'active' : '' }}">
+            <svg class="sidebar-icon dash-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+            </svg>
+            <span>Subscribe</span>
+        </a>
+
         <a href="{{ route('business.reports.index') }}" class="sidebar-item dash-nav-item {{ request()->routeIs('business.reports.*') || request()->is('reports*', 'business/reports*', 'business/business-sales-report*') ? 'active' : '' }}">
             <svg class="sidebar-icon dash-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>

@@ -241,24 +241,11 @@
                         <div class="btn-spinner" id="btnSpinner" aria-hidden="true"></div>
                     </button>
 
-                    <!-- Link to Portals -->
+                    <!-- Marketplace Link -->
                     <div style="text-align: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                        <div style="font-size: 0.82rem; color: #94A3B8; margin-bottom: 8px;">Pilih Portal Khusus:</div>
                         <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 0.85rem;">
-                            <a href="{{ route('filament.admin.auth.login') }}" style="color: #94A3B8; text-decoration: none;">
-                                Owner
-                            </a>
-                            <span style="color: #64748B;">•</span>
-                            <a href="{{ route('filament.partner.auth.login') }}" style="color: #94A3B8; text-decoration: none;">
-                                Partner
-                            </a>
-                            <span style="color: #64748B;">•</span>
-                            <a href="{{ route('filament.business.auth.login') }}" style="color: #14B8A6; font-weight: 600; text-decoration: none;">
-                                Business Owner
-                            </a>
-                            <span style="color: #64748B;">•</span>
-                            <a href="{{ route('marketplace.index') }}" style="color: #94A3B8; text-decoration: none;">
-                                Pelanggan (Marketplace)
+                            <a href="{{ route('marketplace.index') }}" style="color: #14B8A6; text-decoration: none; font-weight: 500;">
+                                ← Ke Katalog Pelanggan (Marketplace)
                             </a>
                         </div>
                     </div>

@@ -5,11 +5,13 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Filament\Resources\Partners\Pages\CreatePartner;
+use App\Filament\Resources\Partners\Pages\EditPartner;
 use App\Models\AuditLog;
 use App\Models\Partner;
 use App\Models\User;
 use App\Notifications\AccountActivation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
@@ -104,6 +106,82 @@ class PartnerRegistrationTest extends TestCase
             ])
             ->call('create')
             ->assertHasFormErrors(['hp_no']);
+    }
+
+    public function test_partner_account_creation_with_direct_password_authenticates_immediately(): void
+    {
+        Notification::fake();
+        $this->actingAs($this->adminUser());
+
+        Livewire::test(CreatePartner::class)
+            ->fillForm([
+                'applicant_name' => 'Partner Direct Password',
+                'email' => 'partner-direct@pios.test',
+                'status' => 'active',
+                'create_user' => true,
+                'account_password' => 'partner-pass-123',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $partner = Partner::query()->firstWhere('email', 'partner-direct@pios.test');
+        $user = User::query()->firstWhere('email', 'partner-direct@pios.test');
+
+        $this->assertNotNull($partner);
+        $this->assertNotNull($user);
+        $this->assertTrue(Hash::check('partner-pass-123', $user->password));
+        $this->assertSame(UserStatus::Active, $user->status);
+        Notification::assertNothingSent();
+
+        // Verify login works
+        $this->assertTrue(
+            Auth::attempt([
+                'email' => 'partner-direct@pios.test',
+                'password' => 'partner-pass-123',
+            ])
+        );
+    }
+
+    public function test_admin_can_set_direct_password_on_edit_partner_page(): void
+    {
+        $admin = $this->adminUser();
+
+        $partnerUser = User::factory()->create([
+            'email' => 'edit-partner@example.com',
+            'password' => Hash::make('old-partner-pass'),
+            'role' => UserRole::Partner,
+            'status' => UserStatus::Active,
+        ]);
+
+        $partner = Partner::query()->create([
+            'user_id' => $partnerUser->id,
+            'partner_no' => 'P000888',
+            'applicant_name' => 'Partner To Edit',
+            'email' => 'edit-partner@example.com',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($admin);
+
+        Livewire::test(EditPartner::class, ['record' => $partner->id])
+            ->fillForm([
+                'create_user' => true,
+                'account_password' => 'new-partner-pass-999',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $partnerUser->refresh();
+        $this->assertTrue(Hash::check('new-partner-pass-999', $partnerUser->password));
+        $this->assertSame(UserStatus::Active, $partnerUser->status);
+
+        // Verify login works
+        $this->assertTrue(
+            Auth::attempt([
+                'email' => 'edit-partner@example.com',
+                'password' => 'new-partner-pass-999',
+            ])
+        );
     }
 
     public function test_partner_admin_routes_are_registered(): void

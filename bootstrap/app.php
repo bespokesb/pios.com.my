@@ -18,9 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
             SetLocale::class,
         ]);
 
-        // Non-panel authenticated routes (e.g. order documents) have no global
-        // `login` route — send guests to the Business Owner login.
-        $middleware->redirectGuestsTo(fn (): string => route('filament.business.auth.login'));
+        // Redirect unauthenticated guests to the unified login route.
+        $middleware->redirectGuestsTo(fn (): string => route('login'));
 
         $middleware->redirectUsersTo(function (): string {
             $user = Auth::user();

@@ -7,10 +7,12 @@ use App\Http\Controllers\Business\DashboardController;
 use App\Http\Controllers\Business\FeeController;
 use App\Http\Controllers\Business\ProductController;
 use App\Http\Controllers\Business\ReportController;
+use App\Http\Controllers\Business\SubscriptionController;
 use App\Http\Controllers\Business\TransactionController;
 use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\OrderDocumentController;
 use App\Http\Controllers\PublicProductController;
+use App\Http\Controllers\SubscriptionReceiptController;
 use App\Http\Middleware\EnsureBusinessOwnerPortalAccess;
 use App\Http\Middleware\EnsureMarketplaceEnabled;
 use App\Models\Product;
@@ -35,6 +37,14 @@ Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 });
+
+// Single Unified Login Redirects for Admin, Partner & Business Panels
+Route::get('/admin/login', fn () => redirect()->route('login'));
+Route::post('/admin/login', fn () => redirect()->route('login'));
+Route::get('/partner/login', fn () => redirect()->route('login'));
+Route::post('/partner/login', fn () => redirect()->route('login'));
+Route::get('/business/login', fn () => redirect()->route('login'));
+Route::post('/business/login', fn () => redirect()->route('login'));
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -80,6 +90,11 @@ Route::middleware(['auth', EnsureBusinessOwnerPortalAccess::class])->group(funct
     Route::get('/fees', [FeeController::class, 'index']);
     Route::post('/fees/{fee}/pay', [FeeController::class, 'pay']);
 
+    // Subscriptions (Langganan BGE & Sistem)
+    Route::get('/business/subscriptions', [SubscriptionController::class, 'index'])->name('business.subscriptions.index');
+    Route::post('/business/subscriptions', [SubscriptionController::class, 'store'])->name('business.subscriptions.store');
+    Route::get('/subscriptions', [SubscriptionController::class, 'index']);
+
     // Reports
     Route::get('/business/reports', [ReportController::class, 'index'])->name('business.reports.index');
     Route::get('/reports', [ReportController::class, 'index']);
@@ -107,10 +122,11 @@ Route::post('/p/{product:product_no}/order', [PublicProductController::class, 'o
     ->middleware('throttle:8,1')
     ->name('public.product.order');
 
-// Printable order documents (invoice / receipt).
+// Printable order documents & official receipts.
 Route::middleware('auth')->group(function (): void {
     Route::get('/orders/{order}/invoice', [OrderDocumentController::class, 'invoice'])->name('order.invoice');
     Route::get('/orders/{order}/receipt', [OrderDocumentController::class, 'receipt'])->name('order.receipt');
+    Route::get('/subscriptions/receipt/{payment:payment_no}', [SubscriptionReceiptController::class, 'show'])->name('subscriptions.receipt');
 });
 
 Route::get('/locale/{locale}', function (Request $request, string $locale) {
@@ -119,5 +135,5 @@ Route::get('/locale/{locale}', function (Request $request, string $locale) {
     $request->session()->put('locale', $locale);
     App::setLocale($locale);
 
-    return redirect()->back(fallback: route('filament.business.auth.login'));
+    return redirect()->back(fallback: route('login'));
 })->name('locale.switch');

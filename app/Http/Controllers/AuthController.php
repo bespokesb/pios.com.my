@@ -96,7 +96,9 @@ class AuthController extends Controller
             url('/business'),
             route('login'),
             url('/login'),
-            route('filament.business.auth.login'),
+            url('/admin/login'),
+            url('/partner/login'),
+            url('/business/login'),
         ], true)) {
             return redirect()->to($intended);
         }

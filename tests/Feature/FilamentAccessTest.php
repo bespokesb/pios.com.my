@@ -22,17 +22,13 @@ class FilamentAccessTest extends TestCase
 
     public function test_admin_login_route_is_available(): void
     {
-        $this->get('/admin/login')->assertOk();
+        $this->get('/admin/login')->assertRedirect(route('login'));
+        $this->get(route('login'))->assertOk();
     }
 
     public function test_business_login_route_is_available_with_own_branding(): void
     {
-        $this->get('/business/login')
-            ->assertOk()
-            ->assertSee('pios-login-shell-business', escape: false)
-            ->assertSee(__('pios.auth.business.heading'))
-            ->assertSee('pios-language-switcher', escape: false)
-            ->assertSee('brand/pak-itam-logo.png', escape: false);
+        $this->get('/business/login')->assertRedirect(route('login'));
     }
 
     public function test_active_sys_admin_can_access_panel_and_system_resources(): void

@@ -195,14 +195,19 @@ class TransactionController extends Controller
             $shippedCount = (clone $baseQuery)->where('status', OrderStatus::Shipped)->count();
             $completedCount = (clone $baseQuery)->where('status', OrderStatus::Completed)->count();
 
+            $displayLabel = $order->statusLabel();
+            $successMsg = ($newStatus === OrderStatus::Cancelled && $order->shipped_at !== null)
+                ? "Order #{$order->order_no} status updated to Returned."
+                : "Order #{$order->order_no} status updated to {$newStatus->label()}.";
+
             return response()->json([
                 'success' => true,
-                'message' => "Order #{$order->order_no} status updated to {$newStatus->label()}.",
+                'message' => $successMsg,
                 'order' => [
                     'id' => $order->id,
                     'order_no' => $order->order_no,
                     'status' => $order->status->value,
-                    'status_label' => $order->status->label(),
+                    'status_label' => $displayLabel,
                     'tracking_number' => $order->tracking_number,
                     'is_terminal' => $order->status->isTerminal(),
                     'next_statuses' => collect($order->status->nextStatuses())->map(fn (OrderStatus $s): array => [
@@ -222,7 +227,11 @@ class TransactionController extends Controller
             ]);
         }
 
+        $successMsg = ($newStatus === OrderStatus::Cancelled && $order->shipped_at !== null)
+            ? "Order #{$order->order_no} status updated to Returned."
+            : "Order #{$order->order_no} status updated to {$newStatus->label()}.";
+
         return redirect()->route('business.transactions.index')
-            ->with('success', "Order #{$order->order_no} status updated to {$newStatus->label()}.");
+            ->with('success', $successMsg);
     }
 }

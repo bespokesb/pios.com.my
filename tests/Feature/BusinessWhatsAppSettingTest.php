@@ -372,4 +372,59 @@ class BusinessWhatsAppSettingTest extends TestCase
             ],
         ]);
     }
+
+    public function test_products_page_renders_manual_wa_options_correctly(): void
+    {
+        $this->bo->update(['whatsapp_provider' => 'manual']);
+
+        $customer = Customer::create([
+            'partner_id' => $this->bo->partner_id,
+            'business_owner_id' => $this->bo->id,
+            'customer_no' => 'CUST0004',
+            'name' => 'Ketapang',
+            'hp_no' => '0121234567',
+        ]);
+
+        $product = Product::factory()->create([
+            'business_owner_id' => $this->bo->id,
+            'name' => 'Sabun Basuh',
+            'selling_price' => 25.00,
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('business.products.index'));
+
+        $response->assertOk();
+        $response->assertSee('Bebas');
+        $response->assertSee('Pelanggan');
+        $response->assertSee('No. Khas / Ujian');
+        $response->assertSee('blast-customer-radio');
+        $response->assertSee('name="selected_customer_id"', false);
+        $response->assertDontSee('id="blastSelectAllBtn"', false);
+    }
+
+    public function test_products_page_renders_auto_provider_options_correctly(): void
+    {
+        $this->bo->update(['whatsapp_provider' => 'fonnte']);
+
+        $customer = Customer::create([
+            'partner_id' => $this->bo->partner_id,
+            'business_owner_id' => $this->bo->id,
+            'customer_no' => 'CUST0005',
+            'name' => 'Ahmad',
+            'hp_no' => '0129990000',
+        ]);
+
+        $product = Product::factory()->create([
+            'business_owner_id' => $this->bo->id,
+            'name' => 'Kopi Arabica',
+            'selling_price' => 35.00,
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('business.products.index'));
+
+        $response->assertOk();
+        $response->assertSee('Semua Pelanggan (1)');
+        $response->assertSee('id="blastSelectAllBtn"', false);
+        $response->assertSee('name="customer_ids[]"', false);
+    }
 }

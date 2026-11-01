@@ -265,6 +265,48 @@ class BusinessTransactionStatusUpdateTest extends TestCase
         $response->assertSee('id="detailsStepper"', escape: false);
     }
 
+    public function test_shipped_order_cancelled_is_returned_with_proper_label(): void
+    {
+        [$user, $partner, $bo] = $this->businessOwnerUser('P00911', 'BO00911', 'Test BO');
+        $customer = $this->customer($bo, $partner, 'C00911');
+        $order = $this->createOrder($bo, $partner, $customer, 'ORD-00911', OrderStatus::Shipped, 'JNT-998877');
+
+        $response = $this->actingAs($user)->postJson(route('business.transactions.status', $order), [
+            'status' => 'cancelled',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => "Order #{$order->order_no} status updated to Returned.",
+                'order' => [
+                    'id' => $order->id,
+                    'status' => 'cancelled',
+                    'status_label' => 'Returned',
+                    'is_terminal' => true,
+                ],
+            ]);
+
+        $this->assertSame(OrderStatus::Cancelled, $order->fresh()->status);
+        $this->assertTrue($order->fresh()->isReturned());
+        $this->assertSame('Returned', $order->fresh()->statusLabel());
+    }
+
+    public function test_transactions_view_renders_returned_order_with_returned_badge(): void
+    {
+        [$user, $partner, $bo] = $this->businessOwnerUser('P00912', 'BO00912', 'Test BO');
+        $customer = $this->customer($bo, $partner, 'C00912');
+        $order = $this->createOrder($bo, $partner, $customer, 'ORD-00912', OrderStatus::Shipped, 'JNT-112233');
+        $order->transitionTo(OrderStatus::Cancelled);
+
+        $response = $this->actingAs($user)->get(route('business.transactions.index'));
+
+        $response->assertOk();
+        $response->assertSee('badge-returned');
+        $response->assertSee('Returned');
+        $response->assertSee('data-status-label="Returned"', escape: false);
+    }
+
     private function createOrder(
         BusinessOwner $bo,
         Partner $partner,

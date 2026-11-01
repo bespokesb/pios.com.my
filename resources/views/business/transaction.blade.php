@@ -412,7 +412,7 @@
                                 \App\Enums\OrderStatus::Shipped => 'badge-delivery',
                                 \App\Enums\OrderStatus::Submitted => 'badge-order',
                                 \App\Enums\OrderStatus::Draft => 'badge-invoice',
-                                \App\Enums\OrderStatus::Cancelled => 'badge-cancelled',
+                                \App\Enums\OrderStatus::Cancelled => ($order->isReturned() ? 'badge-returned' : 'badge-cancelled'),
                                 default => 'badge-order',
                             };
                             $firstItem = $order->items->first();
@@ -427,7 +427,7 @@
                             data-customer-phone="{{ $order->customer?->hp_no ?? '-' }}"
                             data-product="{{ $itemSummary }}" 
                             data-status="{{ $order->status->value }}" 
-                            data-status-label="{{ $order->status->label() }}" 
+                            data-status-label="{{ $order->statusLabel() }}" 
                             data-tracking="{{ $order->tracking_number ?? '' }}"
                             data-amount="{{ (float)$order->total }}" 
                             data-date="{{ $order->created_at->format('d M Y, h:i A') }}"
@@ -441,7 +441,7 @@
                                 <div class="row-tracking-wrap">
                                     @if ($order->tracking_number)
                                         <div class="tracking-tag" title="Tracking Number: {{ $order->tracking_number }}">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
                                             <span>{{ $order->tracking_number }}</span>
                                         </div>
                                     @endif
@@ -455,7 +455,7 @@
                             <td class="col-date">{{ $order->created_at->format('d M Y') }}</td>
                             <td class="col-amount">RM {{ number_format((float)$order->total, 2) }}</td>
                             <td class="col-status-cell">
-                                <span class="badge-status {{ $badgeClass }}">{{ $order->status->label() }}</span>
+                                <span class="badge-status {{ $badgeClass }}">{{ $order->statusLabel() }}</span>
                             </td>
                             <td style="text-align: right;">
                                 <div class="tx-action-group">
@@ -495,7 +495,7 @@
                     \App\Enums\OrderStatus::Shipped => 'badge-delivery',
                     \App\Enums\OrderStatus::Submitted => 'badge-order',
                     \App\Enums\OrderStatus::Draft => 'badge-invoice',
-                    \App\Enums\OrderStatus::Cancelled => 'badge-cancelled',
+                    \App\Enums\OrderStatus::Cancelled => ($order->isReturned() ? 'badge-returned' : 'badge-cancelled'),
                     default => 'badge-order',
                 };
                 $firstItem = $order->items->first();
@@ -510,7 +510,7 @@
                 data-customer-phone="{{ $order->customer?->hp_no ?? '-' }}"
                 data-product="{{ $itemSummary }}" 
                 data-status="{{ $order->status->value }}" 
-                data-status-label="{{ $order->status->label() }}" 
+                data-status-label="{{ $order->statusLabel() }}" 
                 data-tracking="{{ $order->tracking_number ?? '' }}"
                 data-amount="{{ (float)$order->total }}" 
                 data-date="{{ $order->created_at->format('d M Y, h:i A') }}"
@@ -525,13 +525,13 @@
                         <div class="card-tracking-wrap">
                             @if ($order->tracking_number)
                                 <div class="tracking-tag" title="Tracking Number">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
                                     <span>{{ $order->tracking_number }}</span>
                                 </div>
                             @endif
                         </div>
                     </div>
-                    <span class="badge-status {{ $badgeClass }}">{{ $order->status->label() }}</span>
+                    <span class="badge-status {{ $badgeClass }}">{{ $order->statusLabel() }}</span>
                 </div>
                 <div class="tx-card-middle">
                     <span class="tx-card-customer">{{ $customerName }}</span>
@@ -1237,7 +1237,32 @@
             }
         }
 
+        /* Return status badge and card styling */
+        .badge-returned {
+            background-color: #FFF7ED !important;
+            color: #C2410C !important;
+            border: 1px solid #FFEDD5 !important;
+        }
+
+        .status-radio-card.card-return:hover,
+        .status-radio-card.card-return.selected {
+            border-color: #EA580C !important;
+            background: #FFF7ED !important;
+            box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.25) !important;
+        }
+
         /* 8. Dark Theme Support */
+        body.transaction-body.dark-mode-active .badge-returned {
+            background-color: #431407 !important;
+            color: #FB923C !important;
+            border-color: #7C2D12 !important;
+        }
+        body.transaction-body.dark-mode-active .status-radio-card.card-return:hover,
+        body.transaction-body.dark-mode-active .status-radio-card.card-return.selected {
+            border-color: #EA580C !important;
+            background: rgba(234, 88, 12, 0.15) !important;
+            box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.35) !important;
+        }
         body.transaction-body.dark-mode-active .tx-modal-card {
             background-color: #141E2D !important;
             border-color: #23344A !important;

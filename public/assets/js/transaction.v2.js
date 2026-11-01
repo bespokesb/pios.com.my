@@ -530,17 +530,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 targetToSelect = nextStatuses[0].value;
             }
 
+            const isShippedStage = ((currentStatus || '').toLowerCase().trim() === 'shipped');
+
             nextStatuses.forEach(st => {
                 const isSelected = (st.value === targetToSelect);
                 const info = STATUS_DESCRIPTIONS[st.value] || { title: st.label, desc: '' };
                 const isCancelled = (st.value === 'cancelled');
 
+                let title = info.title;
+                let desc = info.desc;
+
+                if (isCancelled) {
+                    if (isShippedStage) {
+                        title = 'Return';
+                        desc = 'Delivery return back, no address found, or customer return';
+                    } else {
+                        title = 'Cancelled';
+                        desc = 'Cancel order and stop fulfillment';
+                    }
+                }
+
                 const card = document.createElement('div');
-                card.className = `status-radio-card ${isSelected ? 'selected' : ''} ${isCancelled ? 'card-cancelled' : ''}`;
+                card.className = `status-radio-card ${isSelected ? 'selected' : ''} ${isCancelled ? (isShippedStage ? 'card-cancelled card-return' : 'card-cancelled') : ''}`;
                 card.innerHTML = `
                     <input type="radio" name="target_status" value="${st.value}" ${isSelected ? 'checked' : ''}>
-                    <span class="status-radio-name">${info.title}</span>
-                    <span class="status-radio-desc">${info.desc}</span>
+                    <span class="status-radio-name">${title}</span>
+                    <span class="status-radio-desc">${desc}</span>
                 `;
 
                 card.addEventListener('click', () => {
@@ -554,12 +569,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (radio) radio.checked = true;
 
                     toggleTrackingField(st.value);
+
+                    if (saveStatusBtnText) {
+                        if (st.value === 'cancelled' && isShippedStage) {
+                            saveStatusBtnText.textContent = 'Confirm Return';
+                        } else if (st.value === 'cancelled') {
+                            saveStatusBtnText.textContent = 'Confirm Cancellation';
+                        } else {
+                            saveStatusBtnText.textContent = 'Confirm Update';
+                        }
+                    }
                 });
 
                 statusOptionsGrid.appendChild(card);
             });
 
             toggleTrackingField(targetToSelect);
+
+            if (saveStatusBtnText) {
+                if (targetToSelect === 'cancelled' && isShippedStage) {
+                    saveStatusBtnText.textContent = 'Confirm Return';
+                } else if (targetToSelect === 'cancelled') {
+                    saveStatusBtnText.textContent = 'Confirm Cancellation';
+                } else {
+                    saveStatusBtnText.textContent = 'Confirm Update';
+                }
+            }
         }
 
         if (trackingNumberInput) {
@@ -987,7 +1022,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update Status Badge
             const badge = el.querySelector('.badge-status');
             if (badge) {
-                badge.className = `badge-status badge-${order.status}`;
+                const isReturned = (order.status === 'cancelled' && (order.shipped_at || el.getAttribute('data-shipped-at')));
+                badge.className = `badge-status ${isReturned ? 'badge-returned' : 'badge-' + order.status}`;
                 badge.textContent = order.status_label;
             }
 

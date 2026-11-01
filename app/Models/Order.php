@@ -73,6 +73,20 @@ class Order extends Model
         ]);
     }
 
+    public function isReturned(): bool
+    {
+        return $this->status === OrderStatus::Cancelled && $this->shipped_at !== null;
+    }
+
+    public function statusLabel(): string
+    {
+        if ($this->isReturned()) {
+            return 'Returned';
+        }
+
+        return $this->status->label();
+    }
+
     public function businessOwner(): BelongsTo
     {
         return $this->belongsTo(BusinessOwner::class);

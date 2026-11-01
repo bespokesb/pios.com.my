@@ -671,8 +671,8 @@
                                 Tarik &amp; lepas gambar ke sini atau <span style="color: #0D9488; font-weight: 700; text-decoration: underline;">Browse</span>
                             </p>
                             <p style="margin: 3px 0 0; font-size: 0.72rem; color: #94A3B8;">Pratonton gambar akan dipaparkan di bawah</p>
-                            <input type="file" id="mediaFileInput" name="media_files[]" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="display: none;">
                         </div>
+                        <input type="file" id="mediaFileInput" name="media_files[]" multiple accept="image/*" style="display: none;">
 
                         <div id="mediaPreviewGrid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 12px;"></div>
                         <div id="mediaErrorMessage" style="display: none; margin-top: 8px; font-size: 0.78rem; color: #DC2626; background: #FEF2F2; padding: 6px 10px; border-radius: 6px;"></div>
@@ -704,8 +704,8 @@
                                 Pilih fail video atau <span style="color: #0D9488; font-weight: 700; text-decoration: underline;">Browse Video</span>
                             </p>
                             <p style="margin: 3px 0 0; font-size: 0.72rem; color: #94A3B8;">Format MP4, WEBM, MOV &bull; Maksimum 30MB</p>
-                            <input type="file" id="proposeVideoInput" name="video_file" accept=".mp4,.webm,.mov,video/mp4,video/webm,video/quicktime" style="display: none;">
                         </div>
+                        <input type="file" id="proposeVideoInput" name="video_file" accept="video/*" style="display: none;">
 
                         <div id="proposeVideoPreviewBox" style="display: none; margin-top: 10px; background: #0F172A; border-radius: 8px; padding: 10px; color: #FFF;">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
@@ -1062,8 +1062,8 @@
                                 Muat naik video baru atau <span style="color: #0D9488; font-weight: 700; text-decoration: underline;">Browse Video</span>
                             </p>
                             <p style="margin: 3px 0 0; font-size: 0.72rem; color: #94A3B8;">Format MP4, WEBM, MOV &bull; Maksimum 30MB</p>
-                            <input type="file" id="editVideoFileInput" name="video_file" accept=".mp4,.webm,.mov,video/mp4,video/webm,video/quicktime" style="display: none;">
                         </div>
+                        <input type="file" id="editVideoFileInput" name="video_file" accept="video/*" style="display: none;">
 
                         <div id="editVideoPreviewBox" style="display: none; margin-top: 10px; background: #0F172A; border-radius: 8px; padding: 10px; color: #FFF;">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
@@ -1108,20 +1108,23 @@
 
                         <!-- Upload New Images Dropzone / File Picker -->
                         <div>
-                            <label style="display: block; font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Tambah Gambar Baru (Pilihan):</label>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <label style="font-size: 0.78rem; font-weight: 600; color: #475569; margin: 0;">Tambah Gambar Baru (Pilihan):</label>
+                                <span id="editNewImagesQuotaBadge" style="font-size: 0.72rem; font-weight: 600; color: #0D9488;"></span>
+                            </div>
                             <div id="editMediaDropzone" style="border: 2px dashed #CBD5E1; border-radius: 10px; background: #FFFFFF; padding: 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 4px; display: block;">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="17 8 12 3 7 8"></polyline>
                                     <line x1="12" y1="3" x2="12" y2="15"></line>
                                 </svg>
-                                <p style="margin: 0; font-size: 0.82rem; color: #475569; font-weight: 500;">
+                                <p id="editDropzonePrompt" style="margin: 0; font-size: 0.82rem; color: #475569; font-weight: 500;">
                                     Klik atau tarik gambar baru ke sini untuk <span style="color: #0D9488; font-weight: 700; text-decoration: underline;">Tambah Gambar</span>
                                 </p>
                                 <p style="margin: 2px 0 0; font-size: 0.70rem; color: #94A3B8;">Format JPG, PNG, WEBP &bull; Gambar lama tidak akan hilang</p>
-                                <input type="file" id="editMediaFileInput" name="media_files[]" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="display: none;">
                             </div>
-
+                            <input type="file" id="editMediaFileInput" name="media_files[]" multiple accept="image/*" style="display: none;">
+                            <div id="editMediaErrorMessage" style="display: none; font-size: 0.76rem; color: #EF4444; background: #FEF2F2; padding: 6px 10px; border-radius: 6px; margin-top: 8px;"></div>
                             <div id="editMediaPreviewGrid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; margin-top: 10px; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 10px; padding: 10px;"></div>
                         </div>
                     </div>
@@ -1422,11 +1425,11 @@
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
                             <label style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1.5px solid #0D9488; background: #F0FDFA; border-radius: 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: #0F172A;" class="blast-target-label">
                                 <input type="radio" name="blast_target" value="all" checked style="accent-color: #0D9488;">
-                                <span>Semua Pelanggan ({{ $customers->count() }})</span>
+                                <span>{{ $isAutoProvider ? 'Semua Pelanggan (' . $customers->count() . ')' : 'Bebas' }}</span>
                             </label>
                             <label style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1.5px solid #E2E8F0; background: #FFF; border-radius: 10px; cursor: pointer; font-size: 0.82rem; font-weight: 500; color: #475569;" class="blast-target-label">
                                 <input type="radio" name="blast_target" value="selected" style="accent-color: #0D9488;">
-                                <span>Pilih Tertentu</span>
+                                <span>Pelanggan</span>
                             </label>
                             <label style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1.5px solid #E2E8F0; background: #FFF; border-radius: 10px; cursor: pointer; font-size: 0.82rem; font-weight: 500; color: #475569;" class="blast-target-label">
                                 <input type="radio" name="blast_target" value="custom" style="accent-color: #0D9488;">
@@ -1441,22 +1444,31 @@
                             Nombor Telefon Khas / Ujian
                         </label>
                         <input type="text" id="blastCustomPhone" name="custom_phone" placeholder="Contoh: 0123456789 atau 60123456789" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 8px; padding: 8px 12px; font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                        <div id="blastCustomPhonePreview" style="display: none; margin-top: 6px; font-size: 0.78rem; color: #0D9488; font-weight: 600;"></div>
                     </div>
 
                     <!-- Customer Selection Box (Hidden by default) -->
                     <div id="blastSelectedBox" style="display: none; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; max-height: 180px; overflow-y: auto; background: #FAFAFA;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.78rem;">
-                            <span style="font-weight: 600; color: #475569;">Pilih pelanggan untuk menerima:</span>
-                            <button type="button" id="blastSelectAllBtn" style="background: none; border: none; color: #0D9488; font-weight: 600; cursor: pointer; padding: 0;">Pilih Semua</button>
+                            <span style="font-weight: 600; color: #475569;">
+                                {{ $isAutoProvider ? 'Pilih pelanggan untuk menerima:' : 'Pilih pelanggan (1 penerima):' }}
+                            </span>
+                            @if($isAutoProvider)
+                                <button type="button" id="blastSelectAllBtn" style="background: none; border: none; color: #0D9488; font-weight: 600; cursor: pointer; padding: 0;">Pilih Semua</button>
+                            @endif
                         </div>
                         @if($customers->isEmpty())
                             <p style="font-size: 0.8rem; color: #94A3B8; margin: 0; text-align: center; padding: 12px;">Tiada pelanggan berdaftar dengan nombor telefon ditemui.</p>
                         @else
                             <div style="display: flex; flex-direction: column; gap: 6px;">
                                 @foreach($customers as $c)
-                                    <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; padding: 6px 8px; background: #FFF; border: 1px solid #E2E8F0; border-radius: 6px; cursor: pointer;">
+                                    <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; padding: 6px 10px; background: #FFF; border: 1.5px solid #E2E8F0; border-radius: 8px; cursor: pointer; transition: all 0.15s ease;" class="blast-customer-item">
                                         <div style="display: flex; align-items: center; gap: 8px;">
-                                            <input type="checkbox" name="customer_ids[]" value="{{ $c->id }}" class="blast-customer-check" style="accent-color: #0D9488;">
+                                            @if($isAutoProvider)
+                                                <input type="checkbox" name="customer_ids[]" value="{{ $c->id }}" class="blast-customer-check" data-name="{{ $c->name }}" data-phone="{{ \App\Support\Phone::toWhatsApp($c->hp_no) ?? $c->hp_no }}" style="accent-color: #0D9488;">
+                                            @else
+                                                <input type="radio" name="selected_customer_id" value="{{ $c->id }}" class="blast-customer-check blast-customer-radio" data-name="{{ $c->name }}" data-phone="{{ \App\Support\Phone::toWhatsApp($c->hp_no) ?? $c->hp_no }}" style="accent-color: #0D9488;">
+                                            @endif
                                             <span style="font-weight: 600; color: #1E293B;">{{ $c->name }}</span>
                                         </div>
                                         <span style="color: #64748B; font-family: monospace; font-size: 0.75rem;">{{ $c->hp_no }}</span>
@@ -1472,7 +1484,9 @@
                             <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #1E293B; margin: 0;">
                                 Sunting Teks Promosi
                             </label>
-                            <span style="font-size: 0.72rem; color: #64748B;">Tag <code>{name}</code> diganti automatik</span>
+                            <span style="font-size: 0.72rem; color: #64748B;">
+                                {{ $isAutoProvider ? 'Tag {name} diganti automatik' : 'Nama pelanggan diganti automatik' }}
+                            </span>
                         </div>
                         <textarea id="blastMessageText" rows="6" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 12px; font-size: 0.85rem; line-height: 1.5; outline: none; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
                     </div>
@@ -1795,6 +1809,8 @@
             const MAX_VID_SIZE = 30 * 1024 * 1024;
 
             if (proposeVideoDropzone && proposeVideoInput) {
+                proposeVideoInput.addEventListener('click', (e) => e.stopPropagation());
+
                 proposeVideoDropzone.addEventListener('click', () => {
                     proposeVideoInput.click();
                 });
@@ -1863,6 +1879,8 @@
             const removeEditVideoBtn = document.getElementById('removeEditVideoBtn');
 
             if (editVideoDropzone && editVideoFileInput) {
+                editVideoFileInput.addEventListener('click', (e) => e.stopPropagation());
+
                 editVideoDropzone.addEventListener('click', () => {
                     editVideoFileInput.click();
                 });
@@ -1904,61 +1922,222 @@
                 });
             }
 
-            // Edit Image Manager (Dropzone + Existing Images + Delete Buttons)
+            // Edit Image Manager (Dropzone + Existing Images + Delete Buttons + Quota tracking)
             const editDropzone = document.getElementById('editMediaDropzone');
             const editFileInput = document.getElementById('editMediaFileInput');
             const editPreviewGrid = document.getElementById('editMediaPreviewGrid');
+            const editErrorNotice = document.getElementById('editMediaErrorMessage');
+            const editQuotaBadge = document.getElementById('editNewImagesQuotaBadge');
+            const editDropzonePrompt = document.getElementById('editDropzonePrompt');
+            const MAX_TOTAL_IMAGES = 4;
 
-            if (editDropzone && editFileInput) {
-                editDropzone.addEventListener('click', () => {
-                    editFileInput.click();
+            let editSelectedNewFiles = [];
+
+            function showEditMediaError(msg) {
+                if (!editErrorNotice) return;
+                editErrorNotice.textContent = msg;
+                editErrorNotice.style.display = 'block';
+                setTimeout(() => {
+                    editErrorNotice.style.display = 'none';
+                }, 4500);
+            }
+
+            function getRemainingExistingCount() {
+                const currentImagesGrid = document.getElementById('editCurrentImagesGrid');
+                return currentImagesGrid ? currentImagesGrid.querySelectorAll('input[name="existing_media[]"]').length : 0;
+            }
+
+            function updateEditImageQuota() {
+                const existingCount = getRemainingExistingCount();
+                const newCount = editSelectedNewFiles.length;
+                const totalCount = existingCount + newCount;
+                const remainingSlots = Math.max(0, MAX_TOTAL_IMAGES - existingCount);
+
+                const countBadge = document.getElementById('editExistingCount');
+                if (countBadge) countBadge.textContent = existingCount + ' gambar tersimpan';
+
+                const totalBadge = document.getElementById('editTotalImagesBadge');
+                if (totalBadge) {
+                    totalBadge.textContent = totalCount + ' / ' + MAX_TOTAL_IMAGES + ' Gambar';
+                }
+
+                if (editQuotaBadge) {
+                    if (totalCount >= MAX_TOTAL_IMAGES) {
+                        editQuotaBadge.textContent = 'Maksimum 4/4 gambar dicapai';
+                        editQuotaBadge.style.color = '#0D9488';
+                    } else {
+                        const slotsLeft = remainingSlots - newCount;
+                        editQuotaBadge.textContent = slotsLeft + ' slot baru tersedia (Maks 4)';
+                        editQuotaBadge.style.color = '#0D9488';
+                    }
+                }
+
+                if (editDropzone) {
+                    if (totalCount >= MAX_TOTAL_IMAGES) {
+                        editDropzone.style.opacity = '0.65';
+                        editDropzone.style.cursor = 'not-allowed';
+                        if (editDropzonePrompt) {
+                            editDropzonePrompt.innerHTML = 'Had maksimum 4 gambar telah dicapai <span style="font-size: 0.72rem; color: #64748B; font-weight: normal;">(padam gambar lama di atas untuk tambah baru)</span>';
+                        }
+                    } else {
+                        editDropzone.style.opacity = '1';
+                        editDropzone.style.cursor = 'pointer';
+                        if (editDropzonePrompt) {
+                            editDropzonePrompt.innerHTML = 'Klik atau tarik gambar baru ke sini untuk <span style="color: #0D9488; font-weight: 700; text-decoration: underline;">Tambah Gambar</span>';
+                        }
+                    }
+                }
+            }
+
+            function syncEditFileInput() {
+                if (!editFileInput) return;
+                try {
+                    const dt = new DataTransfer();
+                    editSelectedNewFiles.forEach(f => dt.items.add(f));
+                    editFileInput.files = dt.files;
+                } catch (e) {
+                    console.warn('DataTransfer not supported', e);
+                }
+            }
+
+            function renderEditNewPreviews() {
+                if (!editPreviewGrid) return;
+                editPreviewGrid.innerHTML = '';
+
+                if (editSelectedNewFiles.length === 0) {
+                    editPreviewGrid.style.display = 'none';
+                    return;
+                }
+
+                editPreviewGrid.style.display = 'grid';
+
+                const headerBar = document.createElement('div');
+                headerBar.style.cssText = 'grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.76rem; font-weight: 700; color: #0D9488;';
+                headerBar.innerHTML = '<span>Gambar Baru Untuk Ditambah (' + editSelectedNewFiles.length + '):</span>';
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.type = 'button';
+                cancelBtn.textContent = 'Batal Semua Baru';
+                cancelBtn.style.cssText = 'background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; padding: 2px 8px; border-radius: 6px; font-size: 0.70rem; cursor: pointer; font-weight: 600;';
+                cancelBtn.addEventListener('click', () => {
+                    editSelectedNewFiles = [];
+                    syncEditFileInput();
+                    renderEditNewPreviews();
+                    updateEditImageQuota();
+                });
+                headerBar.appendChild(cancelBtn);
+                editPreviewGrid.appendChild(headerBar);
+
+                editSelectedNewFiles.forEach((file, index) => {
+                    const card = document.createElement('div');
+                    card.style.cssText = 'position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 2px dashed #0D9488; background: #F0FDFA; box-shadow: 0 1px 3px rgba(0,0,0,0.06);';
+
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;';
+                    card.appendChild(img);
+
+                    const newTag = document.createElement('span');
+                    newTag.textContent = 'Baru';
+                    newTag.style.cssText = 'position: absolute; bottom: 3px; left: 3px; background: rgba(13, 148, 136, 0.95); color: #FFF; font-size: 0.60rem; font-weight: 700; padding: 1px 5px; border-radius: 4px; text-transform: uppercase;';
+                    card.appendChild(newTag);
+
+                    // Delete button for this newly selected file
+                    const delNewBtn = document.createElement('button');
+                    delNewBtn.type = 'button';
+                    delNewBtn.title = 'Padam gambar baru ini';
+                    delNewBtn.innerHTML = '&times;';
+                    delNewBtn.style.cssText = 'position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; background: #EF4444; color: #FFFFFF; border: none; font-size: 16px; font-weight: bold; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.35); transition: transform 0.15s ease;';
+                    delNewBtn.addEventListener('mouseenter', () => { delNewBtn.style.transform = 'scale(1.15)'; });
+                    delNewBtn.addEventListener('mouseleave', () => { delNewBtn.style.transform = 'scale(1)'; });
+                    delNewBtn.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        editSelectedNewFiles.splice(index, 1);
+                        syncEditFileInput();
+                        renderEditNewPreviews();
+                        updateEditImageQuota();
+                    });
+                    card.appendChild(delNewBtn);
+
+                    editPreviewGrid.appendChild(card);
                 });
             }
 
-            if (editFileInput && editPreviewGrid) {
-                editFileInput.addEventListener('change', (e) => {
-                    editPreviewGrid.innerHTML = '';
-                    const files = Array.from(e.target.files || []);
-                    if (files.length === 0) {
-                        editPreviewGrid.style.display = 'none';
+            function handleEditNewFiles(files) {
+                if (editErrorNotice) editErrorNotice.style.display = 'none';
+                const existingCount = getRemainingExistingCount();
+                const availableSlots = MAX_TOTAL_IMAGES - existingCount - editSelectedNewFiles.length;
+
+                if (availableSlots <= 0) {
+                    showEditMediaError('Maksimum 4 gambar dibenarkan bagi setiap produk. Sila padam gambar lama terlebih dahulu untuk menambah gambar baru.');
+                    return;
+                }
+
+                for (const file of files) {
+                    if (existingCount + editSelectedNewFiles.length >= MAX_TOTAL_IMAGES) {
+                        showEditMediaError('Maksimum ' + MAX_TOTAL_IMAGES + ' gambar telah dicapai (gambar sedia ada + gambar baru).');
+                        break;
+                    }
+
+                    if (editSelectedNewFiles.some(f => f.name === file.name && f.size === file.size)) {
+                        continue;
+                    }
+
+                    const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(file.name);
+                    if (!isImage) {
+                        showEditMediaError('Format fail "' + file.name + '" tidak disokong. Sila muat naik JPG, PNG, atau WEBP.');
+                        continue;
+                    }
+
+                    if (file.size > MAX_IMG_SIZE) {
+                        showEditMediaError('Gambar "' + file.name + '" melebihi had saiz 5MB.');
+                        continue;
+                    }
+
+                    editSelectedNewFiles.push(file);
+                }
+
+                syncEditFileInput();
+                renderEditNewPreviews();
+                updateEditImageQuota();
+            }
+
+            if (editDropzone && editFileInput) {
+                editFileInput.addEventListener('click', (e) => e.stopPropagation());
+
+                editDropzone.addEventListener('click', () => {
+                    const existingCount = getRemainingExistingCount();
+                    if (existingCount + editSelectedNewFiles.length >= MAX_TOTAL_IMAGES) {
+                        showEditMediaError('Maksimum 4 gambar dibenarkan bagi setiap produk. Sila padam gambar lama terlebih dahulu untuk menambah gambar baru.');
                         return;
                     }
-                    editPreviewGrid.style.display = 'grid';
+                    editFileInput.click();
+                });
 
-                    const headerBar = document.createElement('div');
-                    headerBar.style.cssText = 'grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.76rem; font-weight: 700; color: #0D9488;';
-                    headerBar.innerHTML = '<span>Gambar Baru Untuk Ditambah (' + files.length + '):</span>';
+                editDropzone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    editDropzone.style.borderColor = '#0D9488';
+                    editDropzone.style.background = '#F0FDFA';
+                });
 
-                    const cancelBtn = document.createElement('button');
-                    cancelBtn.type = 'button';
-                    cancelBtn.textContent = 'Batal Gambar Baru';
-                    cancelBtn.style.cssText = 'background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; padding: 2px 8px; border-radius: 6px; font-size: 0.70rem; cursor: pointer; font-weight: 600;';
-                    cancelBtn.addEventListener('click', () => {
-                        editFileInput.value = '';
-                        editPreviewGrid.innerHTML = '';
-                        editPreviewGrid.style.display = 'none';
-                    });
-                    headerBar.appendChild(cancelBtn);
-                    editPreviewGrid.appendChild(headerBar);
+                editDropzone.addEventListener('dragleave', () => {
+                    editDropzone.style.borderColor = '#CBD5E1';
+                    editDropzone.style.background = '#FFFFFF';
+                });
 
-                    files.forEach(file => {
-                        if (file.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(file.name)) {
-                            const card = document.createElement('div');
-                            card.style.cssText = 'position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 2px dashed #0D9488; background: #F0FDFA; box-shadow: 0 1px 3px rgba(0,0,0,0.06);';
+                editDropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    editDropzone.style.borderColor = '#CBD5E1';
+                    editDropzone.style.background = '#FFFFFF';
+                    if (e.dataTransfer && e.dataTransfer.files) {
+                        handleEditNewFiles(Array.from(e.dataTransfer.files));
+                    }
+                });
 
-                            const img = document.createElement('img');
-                            img.src = URL.createObjectURL(file);
-                            img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;';
-                            card.appendChild(img);
-
-                            const newTag = document.createElement('span');
-                            newTag.textContent = 'Baru';
-                            newTag.style.cssText = 'position: absolute; bottom: 3px; left: 3px; background: rgba(13, 148, 136, 0.95); color: #FFF; font-size: 0.60rem; font-weight: 700; padding: 1px 5px; border-radius: 4px; text-transform: uppercase;';
-                            card.appendChild(newTag);
-
-                            editPreviewGrid.appendChild(card);
-                        }
-                    });
+                editFileInput.addEventListener('change', (e) => {
+                    if (e.target.files) {
+                        handleEditNewFiles(Array.from(e.target.files));
+                    }
                 });
             }
 
@@ -1975,11 +2154,11 @@
 
                 if (!Array.isArray(images) || images.length === 0) {
                     if (currentImagesBox) currentImagesBox.style.display = 'none';
+                    updateEditImageQuota();
                     return;
                 }
 
                 if (currentImagesBox) currentImagesBox.style.display = 'block';
-                if (countBadge) countBadge.textContent = images.length + ' gambar tersimpan';
 
                 images.forEach((item, idx) => {
                     const url = (typeof item === 'object' && item !== null) ? item.url : item;
@@ -2036,11 +2215,14 @@
                         if (remaining === 0 && noMsg) {
                             noMsg.style.display = 'block';
                         }
+                        updateEditImageQuota();
                     });
 
                     card.appendChild(delBtn);
                     currentImagesGrid.appendChild(card);
                 });
+
+                updateEditImageQuota();
             }
 
             // Click Handler for Edit Button on each Product Card
@@ -2105,18 +2287,15 @@
                     if (editVideoPlayer) editVideoPlayer.src = '';
                     if (editVideoPreviewBox) editVideoPreviewBox.style.display = 'none';
 
-                    // Existing images preview with delete button
+                    // Existing images preview with delete button & quota tracking
+                    editSelectedNewFiles = [];
+                    if (editFileInput) editFileInput.value = '';
                     const imgs = (Array.isArray(data.images) && data.images.length > 0)
                         ? data.images
                         : (data.image_url ? [{path: data.image_url, url: data.image_url}] : []);
                     renderExistingImages(imgs);
-
-                    // Reset edit media file input and preview
-                    if (editFileInput) editFileInput.value = '';
-                    if (editPreviewGrid) {
-                        editPreviewGrid.innerHTML = '';
-                        editPreviewGrid.style.display = 'none';
-                    }
+                    renderEditNewPreviews();
+                    updateEditImageQuota();
 
                     openModalEl(editModal);
                 });
@@ -2160,6 +2339,7 @@
             const blastMessageText = document.getElementById('blastMessageText');
             const blastCustomPhoneBox = document.getElementById('blastCustomPhoneBox');
             const blastCustomPhone = document.getElementById('blastCustomPhone');
+            const blastCustomPhonePreview = document.getElementById('blastCustomPhonePreview');
             const blastSelectedBox = document.getElementById('blastSelectedBox');
             const blastSelectAllBtn = document.getElementById('blastSelectAllBtn');
             const blastStatusFeedback = document.getElementById('blastStatusFeedback');
@@ -2169,8 +2349,110 @@
             const autoBlastBtnLabel = document.getElementById('autoBlastBtnLabel');
             const openManualWaBtn = document.getElementById('openManualWaBtn');
 
+            const isAutoProvider = {{ $isAutoProvider ? 'true' : 'false' }};
             let currentBlastUrl = '';
             let currentWaManualUrl = '';
+            let currentCustomerName = '';
+
+            function formatPhoneForWa(raw) {
+                if (!raw) return '';
+                let str = String(raw).trim();
+                const hadPlus = str.startsWith('+');
+                let d = str.replace(/\D/g, '');
+                if (!d) return '';
+                if (d.startsWith('0')) {
+                    return '60' + d.substring(1);
+                }
+                if (hadPlus) {
+                    return d;
+                }
+                if (!d.startsWith('60') && d.length <= 11) {
+                    return '60' + d;
+                }
+                return d;
+            }
+
+            function escapeRegex(string) {
+                return string.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
+            }
+
+            function setGreetingName(newName) {
+                if (!blastMessageText) return;
+                let text = blastMessageText.value;
+                newName = (newName || '').trim();
+
+                if (text.includes('{name}')) {
+                    if (newName) {
+                        text = text.replace(/\{name\}/g, newName);
+                    } else {
+                        text = text.replace(/\{name\}\s*,?/g, '').replace(/Salam\s*,/g, 'Salam,');
+                    }
+                } else if (currentCustomerName && text.includes(currentCustomerName)) {
+                    if (newName) {
+                        text = text.replace(new RegExp(escapeRegex(currentCustomerName), 'g'), newName);
+                    } else {
+                        text = text.replace(new RegExp('\\s*' + escapeRegex(currentCustomerName) + '(?=[,!\\s]|$)', 'g'), '');
+                        text = text.replace(/Salam\s*,/g, 'Salam,');
+                    }
+                } else if (newName) {
+                    const greetingMatch = text.match(/^(Salam|Hai|Hello|Assalam[a-z]*)\s*,?/im);
+                    if (greetingMatch) {
+                        const prefix = greetingMatch[1];
+                        text = text.replace(/^(Salam|Hai|Hello|Assalam[a-z]*)\s*,?/im, `${prefix} ${newName},`);
+                    }
+                }
+
+                currentCustomerName = newName;
+                blastMessageText.value = text;
+            }
+
+            function highlightSelectedCustomer() {
+                document.querySelectorAll('.blast-customer-item').forEach(item => {
+                    const r = item.querySelector('.blast-customer-radio');
+                    if (r && r.checked) {
+                        item.style.borderColor = '#0D9488';
+                        item.style.background = '#F0FDFA';
+                    } else {
+                        item.style.borderColor = '#E2E8F0';
+                        item.style.background = '#FFFFFF';
+                    }
+                });
+            }
+
+            function updateManualWaLink() {
+                if (!openManualWaBtn || !blastMessageText) return;
+
+                const targetVal = document.querySelector('input[name="blast_target"]:checked')?.value || 'all';
+                let phone = '';
+
+                if (targetVal === 'selected') {
+                    const checkedRadio = document.querySelector('.blast-customer-radio:checked');
+                    if (checkedRadio) {
+                        phone = formatPhoneForWa(checkedRadio.getAttribute('data-phone'));
+                    }
+                } else if (targetVal === 'custom') {
+                    if (blastCustomPhone) {
+                        phone = formatPhoneForWa(blastCustomPhone.value);
+                    }
+                }
+
+                let text = blastMessageText.value;
+                if (!isAutoProvider && text.includes('{name}')) {
+                    text = text.replace(/\{name\}\s*,?/g, '').replace(/Salam\s*,/g, 'Salam,');
+                }
+
+                const baseUrl = phone ? ('https://wa.me/' + phone) : 'https://wa.me/';
+                openManualWaBtn.href = baseUrl + '?text=' + encodeURIComponent(text);
+
+                if (blastCustomPhonePreview) {
+                    if (targetVal === 'custom' && phone) {
+                        blastCustomPhonePreview.style.display = 'block';
+                        blastCustomPhonePreview.innerHTML = '✓ Pautan WhatsApp: <span style="font-family: monospace; font-weight: 700; color: #0D9488;">wa.me/' + phone + '</span>';
+                    } else {
+                        blastCustomPhonePreview.style.display = 'none';
+                    }
+                }
+            }
 
             // Open Blast Modal
             document.querySelectorAll('.btn-open-blast').forEach(btn => {
@@ -2188,7 +2470,8 @@
                     }
 
                     // Build initial promo message template
-                    let template = 'Salam {name},\n\n'
+                    const greetingLine = isAutoProvider ? 'Salam {name},\n\n' : 'Salam,\n\n';
+                    let template = greetingLine
                         + 'Tawaran Istimewa Produk: *' + prodName + '*\n'
                         + 'Harga: *RM ' + prodPrice + '*\n';
                     if (prodDesc && prodDesc.trim().length > 0) {
@@ -2196,6 +2479,7 @@
                     }
                     template += '\nKlik pautan untuk buat pesanan terus:\n' + prodUrl;
 
+                    currentCustomerName = '';
                     if (blastMessageText) {
                         blastMessageText.value = template;
                     }
@@ -2210,9 +2494,18 @@
                     const allRadio = document.querySelector('input[name="blast_target"][value="all"]');
                     if (allRadio) {
                         allRadio.checked = true;
-                        updateTargetBoxes('all');
                     }
 
+                    // Reset customer selections
+                    document.querySelectorAll('.blast-customer-radio').forEach(r => r.checked = false);
+                    highlightSelectedCustomer();
+
+                    // Reset custom phone
+                    if (blastCustomPhone) {
+                        blastCustomPhone.value = '';
+                    }
+
+                    updateTargetBoxes('all');
                     updateManualWaLink();
                     openModalEl(blastModal);
                 });
@@ -2233,10 +2526,34 @@
 
                 if (blastCustomPhoneBox) {
                     blastCustomPhoneBox.style.display = (selectedTarget === 'custom') ? 'block' : 'none';
+                    if (selectedTarget === 'custom' && blastCustomPhone) {
+                        setTimeout(() => blastCustomPhone.focus(), 60);
+                    }
                 }
                 if (blastSelectedBox) {
                     blastSelectedBox.style.display = (selectedTarget === 'selected') ? 'block' : 'none';
                 }
+
+                if (!isAutoProvider) {
+                    if (selectedTarget === 'all' || selectedTarget === 'custom') {
+                        setGreetingName('');
+                    } else if (selectedTarget === 'selected') {
+                        const checked = document.querySelector('.blast-customer-radio:checked');
+                        if (checked) {
+                            highlightSelectedCustomer();
+                            setGreetingName(checked.getAttribute('data-name') || '');
+                        } else {
+                            const firstRadio = document.querySelector('.blast-customer-radio');
+                            if (firstRadio) {
+                                firstRadio.checked = true;
+                                highlightSelectedCustomer();
+                                setGreetingName(firstRadio.getAttribute('data-name') || '');
+                            }
+                        }
+                    }
+                }
+
+                updateManualWaLink();
             }
 
             document.querySelectorAll('input[name="blast_target"]').forEach(r => {
@@ -2244,6 +2561,23 @@
                     updateTargetBoxes(this.value);
                 });
             });
+
+            // Customer selection listeners
+            document.querySelectorAll('.blast-customer-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        highlightSelectedCustomer();
+                        setGreetingName(this.getAttribute('data-name') || '');
+                        updateManualWaLink();
+                    }
+                });
+            });
+
+            if (blastCustomPhone) {
+                ['input', 'change', 'keyup'].forEach(evt => {
+                    blastCustomPhone.addEventListener(evt, updateManualWaLink);
+                });
+            }
 
             if (blastSelectAllBtn) {
                 blastSelectAllBtn.addEventListener('click', function() {
@@ -2254,15 +2588,41 @@
                 });
             }
 
-            function updateManualWaLink() {
-                if (openManualWaBtn && blastMessageText) {
-                    const text = blastMessageText.value.replace(/\{name\}/g, 'Pelanggan');
-                    openManualWaBtn.href = 'https://wa.me/?text=' + encodeURIComponent(text);
-                }
-            }
-
             if (blastMessageText) {
                 blastMessageText.addEventListener('input', updateManualWaLink);
+            }
+
+            // Click manual wa.me link validation
+            if (openManualWaBtn) {
+                openManualWaBtn.addEventListener('click', function(e) {
+                    const targetVal = document.querySelector('input[name="blast_target"]:checked')?.value || 'all';
+
+                    if (targetVal === 'selected') {
+                        const checkedRadio = document.querySelector('.blast-customer-radio:checked');
+                        if (!checkedRadio) {
+                            e.preventDefault();
+                            alert('Sila pilih seorang pelanggan daripada senarai.');
+                            return;
+                        }
+                        const phone = formatPhoneForWa(checkedRadio.getAttribute('data-phone'));
+                        if (!phone) {
+                            e.preventDefault();
+                            alert('Pelanggan yang dipilih tidak mempunyai nombor telefon yang sah.');
+                            return;
+                        }
+                    } else if (targetVal === 'custom') {
+                        const rawVal = blastCustomPhone ? blastCustomPhone.value.trim() : '';
+                        const phone = formatPhoneForWa(rawVal);
+                        if (!phone || phone.length < 8) {
+                            e.preventDefault();
+                            alert('Sila masukkan nombor telefon khas / ujian yang sah (contoh: 0123456789).');
+                            if (blastCustomPhone) blastCustomPhone.focus();
+                            return;
+                        }
+                    }
+
+                    updateManualWaLink();
+                });
             }
 
             // Copy Blast Text

@@ -25,6 +25,9 @@ class DashboardController extends Controller
 
         // KPI Counts
         $customerQuery = Customer::query()->visibleTo($user);
+        if (! $user->isAdmin() && $bo) {
+            $customerQuery->where('business_owner_id', $bo->id);
+        }
         $totalCustomers = (clone $customerQuery)->count();
         $prospectsCount = (clone $customerQuery)->where('category', CustomerCategory::Prospect)->count();
         $vipCount = (clone $customerQuery)->where('is_vip', true)->count();
@@ -32,6 +35,9 @@ class DashboardController extends Controller
         $standardCustomersCount = (clone $customerQuery)->where('category', CustomerCategory::Customer)->count();
 
         $productQuery = Product::query()->visibleTo($user);
+        if (! $user->isAdmin() && $bo) {
+            $productQuery->where('business_owner_id', $bo->id);
+        }
         $productsCount = (clone $productQuery)->count();
 
         $promotionsCount = Promotion::query()
@@ -39,9 +45,12 @@ class DashboardController extends Controller
             ->where('status', PromotionStatus::Running)
             ->count();
 
-        $openOrdersCount = Order::query()->visibleTo($user)
-            ->whereIn('status', [OrderStatus::Submitted, OrderStatus::Paid, OrderStatus::Packed])
-            ->count();
+        $openOrdersQuery = Order::query()->visibleTo($user)
+            ->whereIn('status', [OrderStatus::Submitted, OrderStatus::Paid, OrderStatus::Packed]);
+        if (! $user->isAdmin() && $bo) {
+            $openOrdersQuery->where('business_owner_id', $bo->id);
+        }
+        $openOrdersCount = $openOrdersQuery->count();
 
         // Customer Pipeline breakdown
         $pipelineTotal = max($totalCustomers, 1);

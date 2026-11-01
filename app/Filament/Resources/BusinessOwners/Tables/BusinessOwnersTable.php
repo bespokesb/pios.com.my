@@ -4,6 +4,7 @@ namespace App\Filament\Resources\BusinessOwners\Tables;
 
 use App\Enums\RecordStatus;
 use App\Enums\UserStatus;
+use App\Filament\Partner\Resources\PartnerBoPaymentApprovalResource;
 use App\Models\BusinessOwner;
 use App\Services\AuditLogger;
 use App\Services\RegistrationAccountCreator;
@@ -54,6 +55,31 @@ class BusinessOwnersTable
                 TextColumn::make('status')
                     ->badge()
                     ->searchable(),
+                TextColumn::make('bge_status')
+                    ->label('BGE Status')
+                    ->state(function (BusinessOwner $record): string {
+                        $pendingPayment = $record->subscriptionPayments()->where('status', 'pending_approval')->latest()->first();
+                        if ($pendingPayment) {
+                            return 'Pending Confirmation';
+                        }
+                        $bgeSub = $record->subscriptions()->whereHas('product', fn ($q) => $q->where('code', 'bge'))->first();
+                        if (! $bgeSub) {
+                            return 'Tiada Rekod';
+                        }
+                        if ($bgeSub->isActive()) {
+                            return $bgeSub->isTrial() ? 'Trial Aktif' : 'Aktif';
+                        }
+
+                        return 'Tamat Tempoh';
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Aktif' => 'success',
+                        'Trial Aktif' => 'info',
+                        'Pending Confirmation' => 'warning',
+                        'Tamat Tempoh' => 'danger',
+                        default => 'gray',
+                    }),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
@@ -66,6 +92,12 @@ class BusinessOwnersTable
                 //
             ])
             ->recordActions([
+                Action::make('check_bge_payment')
+                    ->label('Sahkan Langganan BGE')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('warning')
+                    ->visible(fn (BusinessOwner $record): bool => auth()->user()?->isPartner() && (bool) $record->subscriptionPayments()->where('status', 'pending_approval')->exists())
+                    ->url(fn (BusinessOwner $record): string => PartnerBoPaymentApprovalResource::getUrl('index')),
                 Action::make('approve')
                     ->label('Approve')
                     ->color('success')

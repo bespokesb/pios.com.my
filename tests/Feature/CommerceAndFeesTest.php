@@ -284,6 +284,60 @@ class CommerceAndFeesTest extends TestCase
         $this->assertContains('admin/payments/create', $routes);
     }
 
+    public function test_business_owner_can_pay_fee_via_web_route(): void
+    {
+        [$user, $partner, $bo] = $this->businessOwnerUser('P000910', 'BO000910', 'Fee Pay BO');
+
+        $fee = Fee::query()->create([
+            'partner_id' => $partner->id,
+            'business_owner_id' => $bo->id,
+            'fee_type' => FeeType::BusinessOwnerMonthly,
+            'amount' => 30.00,
+            'status' => FeeStatus::Unpaid,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('business.fees.pay', $fee), [
+            'payment_method' => 'bank_transfer',
+            'reference_no' => 'FPX-TEST-998877',
+            'notes' => 'Paid via FPX Maybank',
+        ]);
+
+        $response->assertRedirect(route('business.fees.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertSame(FeeStatus::Pending, $fee->fresh()->status);
+
+        $payment = Payment::query()->where('fee_id', $fee->id)->first();
+        $this->assertNotNull($payment);
+        $this->assertSame('30.00', (string) $payment->amount);
+        $this->assertSame('bank_transfer', $payment->payment_type);
+        $this->assertSame(PaymentStatus::Pending, $payment->status);
+        $this->assertSame('FPX-TEST-998877', $payment->reference_no);
+        $this->assertSame($user->id, $payment->recorded_by);
+        $this->assertNotNull($payment->paid_at);
+    }
+
+    public function test_business_owner_cannot_pay_another_business_owner_fee(): void
+    {
+        [$user1, $partner1, $bo1] = $this->businessOwnerUser('P000911', 'BO000911', 'BO One');
+        [$user2, $partner2, $bo2] = $this->businessOwnerUser('P000912', 'BO000912', 'BO Two');
+
+        $fee = Fee::query()->create([
+            'partner_id' => $partner2->id,
+            'business_owner_id' => $bo2->id,
+            'fee_type' => FeeType::BusinessOwnerMonthly,
+            'amount' => 30.00,
+            'status' => FeeStatus::Unpaid,
+        ]);
+
+        $response = $this->actingAs($user1)->post(route('business.fees.pay', $fee), [
+            'payment_method' => 'cash',
+        ]);
+
+        $response->assertForbidden();
+        $this->assertSame(FeeStatus::Unpaid, $fee->fresh()->status);
+    }
+
     private function product(string $productNo, string $name, int $price): Product
     {
         return Product::query()->create([

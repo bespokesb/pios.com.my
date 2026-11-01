@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Partner\Resources\PartnerBoPaymentApprovalResource;
 use App\Filament\Resources\BusinessOwners\BusinessOwnerResource;
 use App\Models\BusinessOwner;
 use App\Models\User;
@@ -72,6 +73,39 @@ class PartnerBusinessOwners extends TableWidget
                 TextColumn::make('status')
                     ->label(__('pios.widgets.status'))
                     ->badge(),
+                TextColumn::make('bge_status')
+                    ->label('BGE Subscription')
+                    ->state(function (BusinessOwner $record): string {
+                        $pendingPayment = $record->subscriptionPayments()->where('status', 'pending_approval')->latest()->first();
+                        if ($pendingPayment) {
+                            return 'Pending Confirmation';
+                        }
+                        $bgeSub = $record->subscriptions()->whereHas('product', fn ($q) => $q->where('code', 'bge'))->first();
+                        if (! $bgeSub) {
+                            return 'Tiada Rekod';
+                        }
+                        if ($bgeSub->isActive()) {
+                            return $bgeSub->isTrial() ? 'Trial Aktif' : 'Aktif';
+                        }
+
+                        return 'Tamat Tempoh';
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Aktif' => 'success',
+                        'Trial Aktif' => 'info',
+                        'Pending Confirmation' => 'warning',
+                        'Tamat Tempoh' => 'danger',
+                        default => 'gray',
+                    })
+                    ->url(function (BusinessOwner $record): ?string {
+                        $pendingPayment = $record->subscriptionPayments()->where('status', 'pending_approval')->latest()->first();
+                        if ($pendingPayment) {
+                            return PartnerBoPaymentApprovalResource::getUrl('index');
+                        }
+
+                        return null;
+                    }),
                 TextColumn::make('created_at')
                     ->label(__('pios.widgets.bo_registered'))
                     ->date('d M Y')

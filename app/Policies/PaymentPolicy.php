@@ -31,7 +31,16 @@ class PaymentPolicy
 
     public function update(User $user, Payment $payment): bool
     {
-        return $user->isAdmin();
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if ($user->isPartner() && $user->partner) {
+            return ($payment->fee && $payment->fee->partner_id === $user->partner->id)
+                || ($payment->order && $payment->order->partner_id === $user->partner->id);
+        }
+
+        return false;
     }
 
     public function delete(User $user, Payment $payment): bool

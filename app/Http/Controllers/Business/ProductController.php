@@ -25,10 +25,15 @@ class ProductController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
+        $bo = $user->businessOwner;
         $search = $request->input('search');
         $category = $request->input('category', 'all');
 
         $query = Product::query()->visibleTo($user)->with(['productType', 'vendor']);
+
+        if (! $user->isAdmin() && $bo) {
+            $query->where('business_owner_id', $bo->id);
+        }
 
         if (filled($search)) {
             $query->where(function ($q) use ($search): void {

@@ -1,5 +1,128 @@
 <x-business-layout title="PIOS - Subscriptions" headerTitle="Subscriptions" bodyClass="fees-body" mainClass="fees-main" mobileHeaderClass="mobile-fees-header">
 
+    <style>
+        /* BGE Subscription Countdown Card (Full Width) */
+        .bge-countdown-card {
+            background: linear-gradient(135deg, #134C49 0%, #174A78 100%);
+            border-radius: 16px;
+            padding: 26px 30px;
+            color: #FFFFFF;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px -5px rgba(19, 76, 73, 0.28);
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .countdown-header-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .countdown-pill-badge {
+            font-size: 0.74rem;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .countdown-pill-gold {
+            background: #E7C46A;
+            color: #0F172A;
+        }
+
+        .countdown-pill-green {
+            background: #10B981;
+            color: #FFFFFF;
+        }
+
+        .countdown-pill-amber {
+            background: #F59E0B;
+            color: #FFFFFF;
+        }
+
+        .countdown-pill-red {
+            background: #EF4444;
+            color: #FFFFFF;
+        }
+
+        .bge-countdown-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 24px;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.16);
+            padding-top: 18px;
+        }
+
+        @media (max-width: 900px) {
+            .bge-countdown-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .countdown-metric-box {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 14px;
+            padding: 16px 22px;
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            backdrop-filter: blur(8px);
+            margin-right: 18px;
+        }
+
+        .countdown-digits {
+            font-size: 2.3rem;
+            font-weight: 900;
+            line-height: 1;
+            color: #FACC15;
+            font-family: var(--font-heading, 'Poppins', sans-serif);
+            letter-spacing: -0.02em;
+        }
+
+        .countdown-unit-text {
+            font-size: 0.85rem;
+            color: #E2E8F0;
+            line-height: 1.35;
+        }
+
+        .btn-renew-whatsapp {
+            background: #E7C46A;
+            color: #0F172A;
+            font-weight: 800;
+            font-size: 0.94rem;
+            padding: 13px 24px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(231, 196, 106, 0.35);
+            white-space: nowrap;
+        }
+
+        .btn-renew-whatsapp:hover {
+            background: #F1D487;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(231, 196, 106, 0.45);
+        }
+    </style>
+
     <!-- Desktop Header Bar -->
     <div class="fees-topbar" style="margin-bottom: 24px;">
         <div class="topbar-left">
@@ -54,69 +177,104 @@
         </div>
     @endif
 
-    <!-- BGE Core Subscription Highlight Banner -->
-    <div style="background: linear-gradient(135deg, #134C49 0%, #174A78 100%); border-radius: 16px; padding: 26px 30px; color: #FFFFFF; margin-bottom: 30px; box-shadow: 0 10px 25px -5px rgba(19, 76, 73, 0.3); display: flex; flex-direction: column; gap: 16px;">
-        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+    <!-- BGE Subscription Day Countdown Card (Full Width) -->
+    <div class="bge-countdown-card">
+        <div class="countdown-header-row">
             <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                    <span style="font-size: 0.76rem; font-weight: 800; background: #E7C46A; color: #0F172A; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em;">Default Mandatory</span>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                    <span class="countdown-pill-badge countdown-pill-gold">Default Mandatory</span>
                     @if ($bgeSubscription && $bgeSubscription->isTrial())
-                        <span style="font-size: 0.78rem; font-weight: 700; background: #F59E0B; color: #FFFFFF; padding: 3px 12px; border-radius: 20px;">
-                            ⭐ 48-Hour Free Trial ({{ $bgeSubscription->hoursRemaining() }}h Left)
+                        <span class="countdown-pill-badge countdown-pill-amber">
+                            ⭐ 48-Hour Free Trial
                         </span>
                     @elseif ($bgeSubscription && $bgeSubscription->isActive())
-                        <span style="font-size: 0.78rem; font-weight: 700; background: #10B981; color: #FFFFFF; padding: 3px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;">
-                            <span style="width: 7px; height: 7px; border-radius: 50%; background: #FFF;"></span>
-                            Active ({{ $bgeSubscription->daysRemaining() }} Days Remaining)
+                        <span class="countdown-pill-badge countdown-pill-green">
+                            <span style="width: 7px; height: 7px; border-radius: 50%; background: #FFF; display: inline-block;"></span>
+                            Active Subscription
                         </span>
                     @elseif ($bgeSubscription && $bgeSubscription->status === 'pending_approval')
-                        <span style="font-size: 0.78rem; font-weight: 700; background: #F59E0B; color: #FFFFFF; padding: 3px 12px; border-radius: 20px;">
+                        <span class="countdown-pill-badge countdown-pill-amber">
                             Pending Payment Confirmation
                         </span>
                     @else
-                        <span style="font-size: 0.78rem; font-weight: 700; background: #EF4444; color: #FFFFFF; padding: 3px 12px; border-radius: 20px;">
-                            Expired / Subscription Required
+                        <span class="countdown-pill-badge countdown-pill-red">
+                            Expired (Restricted Access)
                         </span>
                     @endif
                 </div>
-                <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.01em;">BizGrowth Engine (BGE)</h2>
-                <p style="margin: 4px 0 0; font-size: 0.9rem; color: #E2E8F0; max-width: 650px; line-height: 1.5;">
-                    The core operational engine of your PIOS business. Grants access to product catalog, order management, customer database, and daily sales.
+                <h2 style="margin: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: -0.01em; color: #FFFFFF;">
+                    BizGrowth Engine (BGE) &mdash; Subscription Status &amp; Countdown
+                </h2>
+                <p style="margin: 4px 0 0; font-size: 0.88rem; color: #E2E8F0; line-height: 1.5;">
+                    The core operational engine of your PIOS business. 30-day renewal confirmed directly by your sponsoring Partner.
                 </p>
             </div>
 
-            <div style="display: flex; flex-direction: column; align-items: flex-start; sm:align-items: flex-end; gap: 6px;">
-                <div style="font-size: 1.7rem; font-weight: 900; color: #F8FAFC;">
-                    RM {{ number_format((float)($bgeProduct?->price ?? 30.00), 2) }}
-                    <span style="font-size: 0.85rem; font-weight: 500; color: #CBD5E1;">/ 30 Days</span>
+            <div style="text-align: right;">
+                <div style="font-size: 1.6rem; font-weight: 900; color: #FFFFFF;">
+                    RM {{ number_format((float)($bgeProduct?->price ?? 30.00), 2) }} <span style="font-size: 0.82rem; font-weight: 500; color: #E2E8F0;">/ 30 Days</span>
                 </div>
-                <div style="font-size: 0.78rem; color: #E2E8F0;">
-                    Renews every 30 days from confirmation date
+                <div style="font-size: 0.78rem; color: #CBD5E1;">
+                    Sponsoring Partner: <strong style="color: #FDE68A;">{{ $partner?->applicant_name ?? 'PIOS Partner' }}</strong>
                 </div>
             </div>
         </div>
 
-        <div style="border-top: 1px solid rgba(255, 255, 255, 0.15); padding-top: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
-            <div style="font-size: 0.85rem; color: #F1F5F9;">
-                @if ($bgeSubscription && $bgeSubscription->isActive() && $bgeSubscription->expires_at)
-                    <span>Subscription Expiry Date: <strong>{{ $bgeSubscription->expires_at->format('d M Y, h:i A') }}</strong></span>
-                @elseif ($bgeSubscription && $bgeSubscription->status === 'pending_approval')
-                    <span>Status: <strong>Payment is pending confirmation by your Partner</strong></span>
-                @else
-                    <span style="color: #FECACA;">Notice: Please renew your BGE subscription to maintain full portal access.</span>
-                @endif
+        <div class="bge-countdown-grid">
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 16px;">
+                <!-- Countdown Visual Box -->
+                <div class="countdown-metric-box">
+                    @if ($bgeSubscription && $bgeSubscription->isTrial())
+                        <div class="countdown-digits">{{ $bgeSubscription->hoursRemaining() }}</div>
+                        <div class="countdown-unit-text">
+                            <strong style="color: #FFFFFF; font-size: 1rem; display: block;">HOURS LEFT</strong>
+                            Active trial period
+                        </div>
+                    @elseif ($bgeSubscription && $bgeSubscription->isActive())
+                        <div class="countdown-digits">{{ $bgeSubscription->daysRemaining() }}</div>
+                        <div class="countdown-unit-text">
+                            <strong style="color: #FFFFFF; font-size: 1rem; display: block;">DAYS REMAINING</strong>
+                            Active paid subscription
+                        </div>
+                    @elseif ($bgeSubscription && $bgeSubscription->status === 'pending_approval')
+                        <div class="countdown-digits" style="font-size: 1.4rem; color: #FCD34D;">Pending</div>
+                        <div class="countdown-unit-text">
+                            <strong style="color: #FFFFFF; font-size: 0.95rem; display: block;">CONFIRMATION</strong>
+                            Partner reviewing
+                        </div>
+                    @else
+                        <div class="countdown-digits" style="color: #F87171;">0</div>
+                        <div class="countdown-unit-text">
+                            <strong style="color: #FFFFFF; font-size: 1rem; display: block;">DAYS REMAINING</strong>
+                            Expired
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Expiry details -->
+                <div style="font-size: 0.86rem; color: #F1F5F9; line-height: 1.6;">
+                    @if ($bgeSubscription && $bgeSubscription->expires_at)
+                        <div>Expiry Date: <strong>{{ $bgeSubscription->expires_at->format('d M Y, h:i A') }}</strong></div>
+                    @else
+                        <div>Expiry Date: <strong>-</strong></div>
+                    @endif
+                    <div>BO Account No: <strong style="color: #E7C46A;">{{ $bo?->business_owner_no ?? '-' }}</strong></div>
+                    <div>Partner WhatsApp: <strong>{{ $partner?->hp_no ?? 'Not set' }}</strong></div>
+                </div>
             </div>
 
-            @if ($bgeProduct)
-                <button type="button" onclick="triggerPartnerWhatsAppRenew()"
-                    style="background: #E7C46A; color: #0F172A; border: none; padding: 10px 22px; border-radius: 10px; font-weight: 700; font-size: 0.92rem; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                        <line x1="1" y1="10" x2="23" y2="10"></line>
+            <!-- WhatsApp Renewal Action -->
+            <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                <button type="button" class="btn-renew-whatsapp" onclick="triggerPartnerWhatsAppRenew()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.472 14.382c-.301-.15-1.782-.879-2.057-.98-.276-.1-.476-.15-.677.15-.201.3-.777.98-.953 1.18-.175.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.787-1.677-2.088-.175-.3-.019-.463.132-.613.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.677-1.632-.928-2.235-.245-.587-.493-.508-.677-.517-.175-.01-.376-.01-.577-.01-.201 0-.527.075-.803.376-.276.3-1.054 1.03-1.054 2.511 0 1.482 1.079 2.911 1.23 3.112.15.2 2.124 3.243 5.145 4.548.719.311 1.28.497 1.718.636.722.23 1.379.197 1.9-.12.57-.348 1.782-.728 2.033-1.431.25-.703.25-1.306.175-1.431-.075-.125-.276-.2-.577-.35zM12 2a10 10 0 0 0-8.59 15.11L2 22l4.98-1.31A10 10 0 1 0 12 2z"></path>
                     </svg>
-                    <span>{{ ($bgeSubscription && $bgeSubscription->isActive()) ? 'Renew Subscription' : 'Subscribe Now' }}</span>
+                    Renew Subscription (via WhatsApp)
                 </button>
-            @endif
+                <span style="font-size: 0.74rem; color: #CBD5E1; max-width: 320px; line-height: 1.35;">
+                    Opens your Partner's WhatsApp with pre-filled payment details. Your Partner confirms payment to add +30 days (or bundle) instantly.
+                </span>
+            </div>
         </div>
     </div>
 

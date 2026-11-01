@@ -30,7 +30,6 @@
                     </svg>
                 @endif
             </div>
-            <button type="button" class="bge-modal-close" onclick="closeBgeModal()" aria-label="Close">&times;</button>
             <h2 class="bge-modal-title">
                 {{ $isPending ? 'BGE Payment Pending Confirmation' : 'BGE Subscription Required' }}
             </h2>
@@ -103,9 +102,6 @@
                     </svg>
                     <span>Manage Subscription in Portal</span>
                 </a>
-                <button type="button" class="bge-btn-dismiss" onclick="closeBgeModal()">
-                    Dismiss
-                </button>
             </div>
         </div>
     </div>
@@ -174,26 +170,6 @@
     justify-content: center;
     background: #FFFFFF;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-}
-
-.bge-modal-close {
-    position: absolute;
-    top: 14px;
-    right: 16px;
-    background: transparent;
-    border: none;
-    font-size: 24px;
-    line-height: 1;
-    color: #94A3B8;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 6px;
-    transition: all 0.2s;
-}
-
-.bge-modal-close:hover {
-    color: #334155;
-    background: #F1F5F9;
 }
 
 .bge-modal-title {
@@ -367,22 +343,6 @@
     background: #0E3B39;
 }
 
-.bge-btn-dismiss {
-    background: transparent;
-    border: none;
-    color: #64748B;
-    font-size: 0.85rem;
-    font-weight: 600;
-    padding: 8px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: color 0.2s;
-}
-
-.bge-btn-dismiss:hover {
-    color: #0F172A;
-}
-
 /* Dark Mode Overrides */
 html.dark .bge-modal-card {
     background: #1E293B;
@@ -443,25 +403,14 @@ html.dark .bge-partner-card-header {
 html.dark .bge-partner-meta {
     color: #94A3B8;
 }
-
-html.dark .bge-btn-dismiss {
-    color: #94A3B8;
-}
-
-html.dark .bge-btn-dismiss:hover {
-    color: #F8FAFC;
-}
 </style>
 
 <script>
-function closeBgeModal() {
-    const modal = document.getElementById('bgeExpiredModalOverlay');
-    if (modal) {
-        modal.style.opacity = '0';
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 200);
+// Non-dismissible: access locked until Partner approval
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        e.preventDefault();
     }
-}
+});
 </script>
 

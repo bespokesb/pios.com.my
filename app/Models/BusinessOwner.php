@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Casts\PhoneNumber;
+use App\Enums\FeeStatus;
 use App\Enums\RecordStatus;
 use App\Services\IdentifierGenerator;
+use App\Services\SubscriptionService;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -146,6 +148,11 @@ class BusinessOwner extends Model
         return $this->hasMany(Subscription::class);
     }
 
+    public function subscriptionPayments(): HasMany
+    {
+        return $this->hasMany(SubscriptionPayment::class);
+    }
+
     public function isWhatsAppConfigured(): bool
     {
         if ($this->whatsapp_provider === 'manual') {
@@ -170,6 +177,47 @@ class BusinessOwner extends Model
             'ultramsg' => 'UltraMsg (API)',
             default => 'Manual (wa.me)',
         };
+    }
+
+    public function getBgeSubscription(): ?Subscription
+    {
+        $bgeProduct = SubscriptionProduct::where('code', 'bge')->first();
+        if (! $bgeProduct) {
+            return null;
+        }
+
+        return $this->subscriptions()
+            ->where('subscription_product_id', $bgeProduct->id)
+            ->first();
+    }
+
+    public function isOverdueLocked(): bool
+    {
+        // 1. Check BGE Subscription
+        $bgeProduct = SubscriptionProduct::where('code', 'bge')->first();
+        if ($bgeProduct) {
+            $bgeSub = $this->getBgeSubscription();
+            if (! $bgeSub) {
+                $bgeSub = app(SubscriptionService::class)->ensureInitialBgeSubscription($this);
+            }
+
+            if ($bgeSub && ! $bgeSub->isActive() && $bgeSub->status !== 'pending_approval') {
+                if ($bgeSub->expires_at && $bgeSub->expires_at->isPast()) {
+                    $daysExpired = (int) $bgeSub->expires_at->diffInDays(now());
+                    if ($daysExpired >= 91) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // 2. Check Fees
+        return $this->fees()
+            ->whereNotIn('status', [FeeStatus::Paid, FeeStatus::Waived])
+            ->where('status', '!=', FeeStatus::Pending)
+            ->whereNotNull('due_date')
+            ->where('due_date', '<=', now()->subDays(91))
+            ->exists();
     }
 
     protected function casts(): array

@@ -24,10 +24,15 @@ class CustomerController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
+        $bo = $user->businessOwner;
         $search = $request->input('search');
         $filter = $request->input('filter', 'all');
 
         $query = Customer::query()->visibleTo($user);
+
+        if (! $user->isAdmin() && $bo) {
+            $query->where('business_owner_id', $bo->id);
+        }
 
         if (filled($search)) {
             $digits = Phone::digits($search);

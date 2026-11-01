@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\BusinessOwner;
+use App\Models\Fee;
 use App\Models\Partner;
+use App\Models\Payment;
 use App\Models\SubscriptionPayment;
 use App\Support\Phone;
 
@@ -139,6 +141,47 @@ class WhatsAppPassSender
             ."🗓️ Valid Until: {$expiresAt}\n\n"
             ."View and download your official receipt here:\n{$receiptUrl}\n\n"
             .'Thank you for your business!';
+
+        return 'https://wa.me/'.$phone.'?text='.rawurlencode($message);
+    }
+
+    /**
+     * Generate wa.me URL for Business Owner notifying their Partner about a submitted fee payment.
+     */
+    public static function forFeePaymentToPartner(?Partner $partner, ?BusinessOwner $bo, Fee $fee, Payment $payment): ?string
+    {
+        if (! $partner) {
+            return null;
+        }
+
+        $phone = Phone::toWhatsApp($partner->hp_no ?: $partner->spouse_hp_no);
+        if (! $phone) {
+            return null;
+        }
+
+        $partnerName = trim($partner->applicant_name ?: 'Partner');
+        $boName = trim($bo?->applicant_name ?: 'Business Owner');
+        $boNo = $bo?->business_owner_no ?: ('BO#'.($bo?->id ?? ''));
+        $amount = number_format((float) $fee->amount, 2);
+        $feeType = $fee->fee_type?->label() ?? 'Yuran Platform';
+        $period = $fee->billing_period ? " ({$fee->billing_period})" : '';
+        $method = match ($payment->payment_type) {
+            'cash' => 'Tunai (Cash)',
+            'bank_transfer' => 'Pindahan Bank (Online)',
+            'cheque' => 'Cek',
+            default => ucfirst((string) $payment->payment_type),
+        };
+        $refText = $payment->reference_no ? "\n🧾 No. Rujukan: {$payment->reference_no}" : '';
+        $partnerPortalUrl = url('/partner/bo-fee-approvals');
+
+        $message = "Salam Partner {$partnerName},\n\n"
+            ."Saya {$boName} ({$boNo}) telah membuat bayaran yuran berikut:\n\n"
+            ."📌 Jenis Yuran: {$feeType}{$period}\n"
+            ."💰 Jumlah: RM {$amount}\n"
+            ."💳 Kaedah: {$method}{$refText}\n\n"
+            ."Sila semak & sahkan bayaran di Portal Partner PIOS anda:\n"
+            ."🔗 {$partnerPortalUrl}\n\n"
+            .'Terima kasih!';
 
         return 'https://wa.me/'.$phone.'?text='.rawurlencode($message);
     }

@@ -43,6 +43,31 @@ class AuthController extends Controller
         $email = $this->resolvePiosIdToEmail($login);
         $remember = (bool) ($credentials['rememberMe'] ?? false);
 
+        // Check if account is overdue locked (> 91 days) before checking password
+        $targetUser = User::where('email', $email)->first();
+        if (! $targetUser) {
+            $bo = BusinessOwner::where('business_owner_no', $login)->first();
+            $targetUser = $bo?->user;
+        }
+
+        if ($targetUser && $targetUser->isOverdueLocked()) {
+            $partner = $targetUser->businessOwner?->partner;
+            $partnerName = $partner?->applicant_name;
+            $partnerPhone = $partner?->hp_no ?: ($partner?->spouse_hp_no ?: '');
+            $contactInfo = '';
+            if ($partnerName && $partnerPhone) {
+                $contactInfo = " ({$partnerName} - {$partnerPhone})";
+            } elseif ($partnerName) {
+                $contactInfo = " ({$partnerName})";
+            } elseif ($partnerPhone) {
+                $contactInfo = " ({$partnerPhone})";
+            }
+
+            throw ValidationException::withMessages([
+                'piosId' => 'Akaun anda telah disekat kerana bayaran tertunggak melebihi 90 hari. Sila hubungi Partner anda'.$contactInfo.' untuk mengaktifkan semula akaun. (Account locked. Please contact your partner.)',
+            ]);
+        }
+
         if (! Auth::attempt(['email' => $email, 'password' => $credentials['password']], $remember)) {
             // Check if login matches a registered Customer
             $customer = $this->resolveCustomerByIdentifier($login);
@@ -76,10 +101,29 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        if (! $user instanceof User || $user->status !== UserStatus::Active) {
+        if (! $user instanceof User || $user->status !== UserStatus::Active || $user->isOverdueLocked()) {
+            $isOverdue = $user instanceof User && $user->isOverdueLocked();
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+
+            if ($isOverdue) {
+                $partner = $user->businessOwner?->partner;
+                $partnerName = $partner?->applicant_name;
+                $partnerPhone = $partner?->hp_no ?: ($partner?->spouse_hp_no ?: '');
+                $contactInfo = '';
+                if ($partnerName && $partnerPhone) {
+                    $contactInfo = " ({$partnerName} - {$partnerPhone})";
+                } elseif ($partnerName) {
+                    $contactInfo = " ({$partnerName})";
+                } elseif ($partnerPhone) {
+                    $contactInfo = " ({$partnerPhone})";
+                }
+
+                throw ValidationException::withMessages([
+                    'piosId' => 'Akaun anda telah disekat kerana bayaran tertunggak melebihi 90 hari. Sila hubungi Partner anda'.$contactInfo.' untuk mengaktifkan semula akaun. (Account locked. Please contact your partner.)',
+                ]);
+            }
 
             throw ValidationException::withMessages([
                 'piosId' => 'Account is inactive. Please contact your PIOS Partner or Administrator.',
@@ -101,6 +145,15 @@ class AuthController extends Controller
             url('/business/login'),
         ], true)) {
             return redirect()->to($intended);
+        }
+
+        $loginUpper = strtoupper(trim($login));
+        if (str_starts_with($loginUpper, 'BO') && $user->isBusinessOwner()) {
+            return redirect()->to(route('business.dashboard'));
+        }
+
+        if (str_starts_with($loginUpper, 'P') && $user->isPartner()) {
+            return redirect()->to(route('filament.partner.pages.dashboard'));
         }
 
         return redirect()->to($user->getDashboardUrl());

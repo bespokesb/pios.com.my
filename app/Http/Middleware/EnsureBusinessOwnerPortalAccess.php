@@ -6,6 +6,7 @@ use App\Models\Subscription;
 use App\Services\SubscriptionService;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureBusinessOwnerPortalAccess
@@ -19,6 +20,28 @@ class EnsureBusinessOwnerPortalAccess
         }
 
         if ($user->businessOwner) {
+            if ($user->isOverdueLocked()) {
+                $partner = $user->businessOwner->partner;
+                $partnerName = $partner?->applicant_name;
+                $partnerPhone = $partner?->hp_no ?: ($partner?->spouse_hp_no ?: '');
+                $contactInfo = '';
+                if ($partnerName && $partnerPhone) {
+                    $contactInfo = " ({$partnerName} - {$partnerPhone})";
+                } elseif ($partnerName) {
+                    $contactInfo = " ({$partnerName})";
+                } elseif ($partnerPhone) {
+                    $contactInfo = " ({$partnerPhone})";
+                }
+
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('login')->withErrors([
+                    'piosId' => 'Akaun anda telah disekat kerana bayaran tertunggak melebihi 90 hari. Sila hubungi Partner anda'.$contactInfo.' untuk mengaktifkan semula akaun. (Account locked. Please contact your partner.)',
+                ]);
+            }
+
             /** @var Subscription $bgeSub */
             $bgeSub = app(SubscriptionService::class)->ensureInitialBgeSubscription($user->businessOwner);
             $partner = $user->businessOwner->partner;

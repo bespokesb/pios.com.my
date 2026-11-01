@@ -2,8 +2,11 @@
 
 namespace App\Filament\Partner\Resources\Pages;
 
+use App\Enums\FeeStatus;
+use App\Filament\Partner\Resources\PartnerBoFeeApprovalResource;
 use App\Filament\Partner\Resources\PartnerBoPaymentApprovalResource;
 use App\Models\BusinessOwner;
+use App\Models\Fee;
 use App\Services\SubscriptionService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -20,6 +23,25 @@ class ListPartnerBoPaymentApprovals extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('goto_fee_approvals')
+                ->label('Pengesahan Yuran BO')
+                ->icon(Heroicon::OutlinedBanknotes)
+                ->color('gray')
+                ->url(fn (): string => PartnerBoFeeApprovalResource::getUrl('index'))
+                ->badge(function (): ?string {
+                    $user = auth()->user();
+                    $partner = $user?->partner;
+                    if (! $partner && ! $user?->isSysAdmin()) {
+                        return null;
+                    }
+                    $count = Fee::query()
+                        ->when(! $user->isSysAdmin(), fn ($q) => $q->where('partner_id', $partner?->id))
+                        ->where('status', FeeStatus::Pending)
+                        ->count();
+
+                    return $count > 0 ? (string) $count : null;
+                }),
+
             Action::make('record_payment')
                 ->label('Record & Confirm BO Payment')
                 ->icon(Heroicon::OutlinedPlusCircle)

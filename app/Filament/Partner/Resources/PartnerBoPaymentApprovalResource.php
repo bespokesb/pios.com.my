@@ -27,15 +27,38 @@ class PartnerBoPaymentApprovalResource extends Resource
 
     protected static ?string $slug = 'bo-payment-approvals';
 
-    protected static ?string $navigationLabel = 'BO Payment Approvals';
+    protected static ?string $navigationLabel = 'BO Subscription Approvals';
 
-    protected static ?string $modelLabel = 'BO Payment';
+    protected static ?string $modelLabel = 'Pengesahan Langganan BGE';
 
-    protected static ?string $pluralModelLabel = 'Business Owner Payment Approvals';
+    protected static ?string $pluralModelLabel = 'Pengesahan Bayaran Langganan BGE';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCheckBadge;
 
     protected static string|UnitEnum|null $navigationGroup = 'Subscriptions';
+
+    public static function getNavigationBadge(): ?string
+    {
+        $user = auth()->user();
+        $partner = $user?->partner;
+
+        if (! $partner && ! $user?->isSysAdmin()) {
+            return null;
+        }
+
+        $count = SubscriptionPayment::query()
+            ->when(! $user->isSysAdmin(), fn ($q) => $q->where('partner_id', $partner?->id))
+            ->where('payer_role', 'business_owner')
+            ->where('status', 'pending_approval')
+            ->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
 
     public static function canAccess(): bool
     {
@@ -130,7 +153,98 @@ class PartnerBoPaymentApprovalResource extends Resource
                         'approved' => 'success',
                         'rejected' => 'danger',
                         default => 'warning',
-                    }),
+                    })
+                    ->action(
+                        Action::make('check_payment')
+                            ->label('Semak & Sahkan Bayaran')
+                            ->modalHeading('Semakan Bayaran Langganan BGE (Business Owner)')
+                            ->modalDescription('Semak maklumat bayaran langganan BizGrowth Engine (BGE) yang dihantar oleh Business Owner. Anda boleh mengesahkan atau menolak bayaran di sini.')
+                            ->modalSubmitAction(function (SubscriptionPayment $record, Action $action) {
+                                if ($record->isApproved()) {
+                                    return false;
+                                }
+
+                                return $action
+                                    ->label('Sahkan Bayaran Di Sini')
+                                    ->color('success')
+                                    ->icon(Heroicon::OutlinedCheckCircle);
+                            })
+                            ->form([
+                                TextInput::make('bo_details')
+                                    ->label('Business Owner')
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->default(fn (SubscriptionPayment $record): string => "{$record->businessOwner?->applicant_name} ({$record->businessOwner?->business_owner_no}) — Tel: {$record->businessOwner?->hp_no}"),
+
+                                TextInput::make('plan_summary')
+                                    ->label('Pelan Langganan & Jumlah')
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->default(fn (SubscriptionPayment $record): string => "{$record->product?->name} ({$record->period_days} Hari) — RM ".number_format((float) $record->amount, 2)),
+
+                                TextInput::make('submitted_time')
+                                    ->label('Tarikh Bayaran Dihantar')
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->default(fn (SubscriptionPayment $record): string => $record->paid_at ? $record->paid_at->format('d M Y, h:i A') : $record->created_at->format('d M Y, h:i A')),
+
+                                Select::make('months')
+                                    ->label('Pakej Tempoh Langganan (Lanjutan Tempoh)')
+                                    ->options([
+                                        1 => '1 Bulan (30 Hari) — RM 30.00',
+                                        2 => '2 Bulan (60 Hari) — RM 60.00',
+                                        3 => '3 Bulan (90 Hari) — RM 90.00',
+                                        6 => '6 Bulan (180 Hari) — RM 180.00',
+                                        12 => '12 Bulan (360 Hari) — RM 360.00',
+                                    ])
+                                    ->default(fn (SubscriptionPayment $record): int => max(1, (int) round(($record->period_days ?: 30) / 30)))
+                                    ->required(),
+
+                                Select::make('payment_method')
+                                    ->label('Kaedah Bayaran')
+                                    ->options([
+                                        'cash' => 'Tunai (Cash)',
+                                        'bank_transfer' => 'Pindahan Bank (Online)',
+                                        'qr_code' => 'QR DuitNow',
+                                    ])
+                                    ->default(fn (SubscriptionPayment $record): string => $record->payment_method ?: 'cash')
+                                    ->required(),
+
+                                TextInput::make('reference_no')
+                                    ->label('No. Rujukan / Resit (Pilihan)')
+                                    ->default(fn (SubscriptionPayment $record): ?string => $record->reference_no)
+                                    ->placeholder('cth: FPX-12345 / Resit Tunai'),
+
+                                Textarea::make('notes')
+                                    ->label('Catatan Pengesahan (Pilihan)')
+                                    ->default(fn (SubscriptionPayment $record): ?string => $record->notes)
+                                    ->placeholder('cth: Tunai diterima dan akaun BGE diaktifkan'),
+                            ])
+                            ->action(function (SubscriptionPayment $record, array $data): void {
+                                $months = max(1, (int) ($data['months'] ?? 1));
+                                $days = $months * 30;
+                                $amount = $months * 30.00;
+
+                                $record->period_days = $days;
+                                $record->amount = $amount;
+                                $record->payment_method = $data['payment_method'] ?? $record->payment_method;
+                                if (array_key_exists('reference_no', $data)) {
+                                    $record->reference_no = $data['reference_no'];
+                                }
+                                if (array_key_exists('notes', $data)) {
+                                    $record->notes = $data['notes'];
+                                }
+                                $record->save();
+
+                                app(SubscriptionService::class)->approvePayment($record, auth()->user());
+
+                                Notification::make()
+                                    ->title('Bayaran Langganan Disahkan')
+                                    ->body("Langganan {$record->payerName()} telah berjaya dilanjutkan selama {$days} hari. Resit Rasmi {$record->receipt_no} telah dijana.")
+                                    ->success()
+                                    ->send();
+                            })
+                    ),
 
                 TextColumn::make('paid_at')
                     ->label('Payment Date')

@@ -64,9 +64,9 @@ class BusinessSettingsProfileTest extends TestCase
         app(SubscriptionService::class)->ensureInitialBgeSubscription($this->bo);
     }
 
-    public function test_settings_page_displays_countdown_and_partner_info(): void
+    public function test_subscriptions_page_displays_countdown_and_partner_info(): void
     {
-        $response = $this->actingAs($this->user)->get(route('business.settings.index'));
+        $response = $this->actingAs($this->user)->get(route('business.subscriptions.index'));
 
         $response->assertOk();
         $response->assertSee('BizGrowth Engine (BGE)');
@@ -74,8 +74,16 @@ class BusinessSettingsProfileTest extends TestCase
         $response->assertSee('HOURS LEFT');
         $response->assertSee('Dato Partner Hebat');
         $response->assertSee('Renew Subscription (via WhatsApp)');
+    }
+
+    public function test_settings_page_displays_profile_and_password_forms(): void
+    {
+        $response = $this->actingAs($this->user)->get(route('business.settings.index'));
+
+        $response->assertOk();
         $response->assertSee('Edit Profile &amp; Picture', false);
         $response->assertSee('Change Password');
+        $response->assertDontSee('Subscription Status &amp; Countdown', false);
     }
 
     public function test_business_owner_can_update_profile_info(): void

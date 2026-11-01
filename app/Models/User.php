@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Http\Middleware\EnsureBusinessOwnerPortalAccess;
 use Database\Factories\UserFactory;
 use Filament\Facades\Filament;
 use Filament\Models\Contracts\FilamentUser;
@@ -44,7 +45,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        if ($this->status !== UserStatus::Active || ! $this->role instanceof UserRole) {
+        if ($this->status !== UserStatus::Active || ! $this->role instanceof UserRole || $this->isOverdueLocked()) {
             return false;
         }
 
@@ -54,6 +55,19 @@ class User extends Authenticatable implements FilamentUser
             'business' => $this->isAdmin() || $this->isBusinessOwner(),
             default => false,
         };
+    }
+
+    public function isOverdueLocked(): bool
+    {
+        if ($this->isAdmin()) {
+            return false;
+        }
+
+        if ($this->businessOwner) {
+            return $this->businessOwner->isOverdueLocked();
+        }
+
+        return false;
     }
 
     public function isAdmin(): bool
@@ -125,11 +139,84 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * Determine if the current execution context is within the Business Owner Portal.
+     */
+    public function isCurrentRequestInBusinessPortal(): bool
+    {
+        $panelId = Filament::getCurrentPanel()?->getId();
+        if ($panelId === 'business') {
+            return true;
+        }
+        if ($panelId === 'partner' || $panelId === 'admin') {
+            return false;
+        }
+
+        if (app()->bound('request')) {
+            $req = request();
+            if ($req) {
+                $route = $req->route();
+                if ($route && in_array(EnsureBusinessOwnerPortalAccess::class, $route->gatherMiddleware(), true)) {
+                    return true;
+                }
+
+                if ($req->routeIs('business.*') || $req->routeIs('filament.business.*')) {
+                    return true;
+                }
+
+                if ($req->is(
+                    'business', 'business/*',
+                    'dashboard', 'dashboard/*',
+                    'customers', 'customers/*',
+                    'products', 'products/*',
+                    'transactions', 'transactions/*',
+                    'fees', 'fees/*',
+                    'subscriptions', 'subscriptions/*',
+                    'settings', 'settings/*',
+                    'reports', 'reports/*'
+                )) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine if the current execution context is within the Partner Portal.
+     */
+    public function isCurrentRequestInPartnerPortal(): bool
+    {
+        $panelId = Filament::getCurrentPanel()?->getId();
+        if ($panelId === 'partner') {
+            return true;
+        }
+        if ($panelId === 'business' || $panelId === 'admin') {
+            return false;
+        }
+
+        if (app()->bound('request')) {
+            $req = request();
+            if ($req) {
+                if ($req->routeIs('filament.partner.*') || $req->routeIs('partner.*')) {
+                    return true;
+                }
+
+                if ($req->is('partner', 'partner/*')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Acting "hat": which role a (possibly dual-role) user is exercising in the
-     * CURRENT request, resolved from the active Filament panel. A single-role
-     * user's hat always equals their capability, so their behavior is unchanged;
-     * only a genuinely dual-role user diverges — and only at these disambiguation
-     * points (ownership scopes, owner-resolution, shared-resource form gating).
+     * CURRENT request, resolved from the active Filament panel or portal context.
+     * A single-role user's hat always equals their capability, so their behavior
+     * is unchanged; only a genuinely dual-role user diverges — and only at these
+     * disambiguation points (ownership scopes, owner-resolution, shared-resource form gating).
      */
     public function actsAsPartner(): bool
     {
@@ -137,12 +224,15 @@ class User extends Authenticatable implements FilamentUser
             return false;
         }
 
-        return match (Filament::getCurrentPanel()?->getId()) {
-            'partner' => true,
-            'business' => false,
-            // console / admin / report / test: unambiguous only for a single-capability user.
-            default => ! $this->hasBusinessOwnerProfile(),
-        };
+        if ($this->isCurrentRequestInPartnerPortal()) {
+            return true;
+        }
+
+        if ($this->isCurrentRequestInBusinessPortal()) {
+            return false;
+        }
+
+        return ! $this->hasBusinessOwnerProfile();
     }
 
     public function actsAsBusinessOwner(): bool
@@ -151,11 +241,15 @@ class User extends Authenticatable implements FilamentUser
             return false;
         }
 
-        return match (Filament::getCurrentPanel()?->getId()) {
-            'business' => true,
-            'partner' => false,
-            default => ! $this->hasPartnerProfile(),
-        };
+        if ($this->isCurrentRequestInBusinessPortal()) {
+            return true;
+        }
+
+        if ($this->isCurrentRequestInPartnerPortal()) {
+            return false;
+        }
+
+        return ! $this->hasPartnerProfile();
     }
 
     public function canImpersonate(): bool

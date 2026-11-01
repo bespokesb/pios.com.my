@@ -440,6 +440,51 @@ class SubscriptionModuleTest extends TestCase
         $this->assertSame('active', $sub->status);
     }
 
+    public function test_partner_can_approve_payment_via_check_payment_popup_action(): void
+    {
+        Filament::setCurrentPanel('partner');
+
+        $partnerUser = User::factory()->create([
+            'role' => UserRole::Partner,
+            'status' => UserStatus::Active,
+        ]);
+        $partner = Partner::factory()->create(['user_id' => $partnerUser->id]);
+
+        $boUser = User::factory()->create(['role' => UserRole::BusinessOwner, 'status' => UserStatus::Active]);
+        $bo = BusinessOwner::factory()->create([
+            'user_id' => $boUser->id,
+            'partner_id' => $partner->id,
+            'applicant_name' => 'Kedai Kopi Abu',
+        ]);
+
+        $bge = SubscriptionProduct::where('code', 'bge')->first();
+
+        $payment = app(SubscriptionService::class)->submitPayment($boUser, $bge, [
+            'payment_method' => 'cash',
+        ]);
+
+        $this->actingAs($partnerUser);
+
+        // Partner clicks "Pending Confirmation" badge on status column (Check Payment popup)
+        Livewire::test(ListPartnerBoPaymentApprovals::class)
+            ->callTableAction('check_payment', $payment, [
+                'months' => 1,
+                'payment_method' => 'cash',
+                'reference_no' => 'CASH-ABU-01',
+                'notes' => 'Disahkan dari popup semakan status bayaran',
+            ])
+            ->assertHasNoTableActionErrors();
+
+        $payment->refresh();
+        $this->assertSame('approved', $payment->status);
+        $this->assertSame('CASH-ABU-01', $payment->reference_no);
+        $this->assertNotNull($payment->receipt_no);
+
+        $sub = $payment->subscription->fresh();
+        $this->assertTrue($sub->isActive());
+        $this->assertSame('active', $sub->status);
+    }
+
     public function test_new_business_owner_gets_initial_48_hour_bge_trial_subscription(): void
     {
         $partnerUser = User::factory()->create(['role' => UserRole::Partner, 'status' => UserStatus::Active]);
@@ -539,5 +584,60 @@ class SubscriptionModuleTest extends TestCase
         $subResponse = $this->actingAs($boUser)->get(route('business.subscriptions.index'));
         $subResponse->assertOk();
         $subResponse->assertDontSee('id="bgeExpiredModalOverlay"', escape: false);
+
+        // Modal is non-dismissible: no close buttons or dismiss actions
+        $response->assertDontSee('Dismiss');
+        $response->assertDontSee('bge-modal-close');
+        $response->assertDontSee('closeBgeModal');
+    }
+
+    public function test_pending_bge_approval_modal_is_non_dismissible_until_partner_approves(): void
+    {
+        $partnerUser = User::factory()->create(['role' => UserRole::Partner, 'status' => UserStatus::Active]);
+        $partner = Partner::factory()->create([
+            'user_id' => $partnerUser->id,
+            'applicant_name' => 'Dato Partner Hebat',
+            'partner_no' => 'P1002',
+            'hp_no' => '0123456789',
+        ]);
+
+        $boUser = User::factory()->create(['role' => UserRole::BusinessOwner, 'status' => UserStatus::Active]);
+        $bo = BusinessOwner::factory()->create([
+            'user_id' => $boUser->id,
+            'partner_id' => $partner->id,
+            'applicant_name' => 'Kedai Kopi Abu',
+            'created_at' => now()->subHours(50),
+        ]);
+
+        $bge = SubscriptionProduct::where('code', 'bge')->first();
+
+        // Ensure initial BGE sub (trial expired after 50 hours)
+        app(SubscriptionService::class)->ensureInitialBgeSubscription($bo);
+
+        // 1. BO submits payment
+        $payment = app(SubscriptionService::class)->submitPayment($boUser, $bge, [
+            'payment_method' => 'cash',
+        ]);
+
+        $this->assertSame('pending_approval', $payment->status);
+
+        // 2. Visiting portal shows non-dismissible Pending Confirmation modal
+        $response = $this->actingAs($boUser)->get('/dashboard');
+        $response->assertOk();
+        $response->assertSee('id="bgeExpiredModalOverlay"', escape: false);
+        $response->assertSee('BGE Payment Pending Confirmation');
+        $response->assertSee('Your subscription request is being reviewed by your Partner.');
+        $response->assertDontSee('Dismiss');
+        $response->assertDontSee('bge-modal-close');
+        $response->assertDontSee('closeBgeModal');
+
+        // 3. Partner approves the payment
+        app(SubscriptionService::class)->approvePayment($payment, $partnerUser);
+
+        // 4. Modal disappears and Business Owner can now use the portal
+        $postApprovalResponse = $this->actingAs($boUser)->get('/dashboard');
+        $postApprovalResponse->assertOk();
+        $postApprovalResponse->assertDontSee('id="bgeExpiredModalOverlay"', escape: false);
+        $postApprovalResponse->assertDontSee('BGE Payment Pending Confirmation');
     }
 }

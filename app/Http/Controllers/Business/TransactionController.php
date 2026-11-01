@@ -21,10 +21,14 @@ class TransactionController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
+        $bo = $user->businessOwner;
         $status = $request->input('status', 'all');
         $search = $request->input('search');
 
         $query = Order::query()->visibleTo($user)->with(['customer', 'items.product', 'payments']);
+        if (! $user->isAdmin() && $bo) {
+            $query->where('business_owner_id', $bo->id);
+        }
 
         if (filled($search)) {
             $query->where(function ($q) use ($search): void {
@@ -45,6 +49,9 @@ class TransactionController extends Controller
 
         // Metrics
         $baseQuery = Order::query()->visibleTo($user);
+        if (! $user->isAdmin() && $bo) {
+            $baseQuery->where('business_owner_id', $bo->id);
+        }
         $totalOrdersCount = (clone $baseQuery)->count();
         $totalRevenue = (clone $baseQuery)->whereIn('status', [OrderStatus::Paid, OrderStatus::Packed, OrderStatus::Shipped, OrderStatus::Completed])->sum('total');
         $paidCount = (clone $baseQuery)->whereIn('status', [OrderStatus::Paid, OrderStatus::Packed])->count();

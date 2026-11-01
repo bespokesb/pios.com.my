@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\PartnerNetworkTree;
+use App\Filament\Partner\Resources\PartnerBoFeeApprovalResource;
 use App\Filament\Partner\Resources\PartnerBoPaymentApprovalResource;
 use App\Filament\Partner\Resources\PartnerSubscriptionResource;
 use App\Filament\Resources\BusinessOwners\BusinessOwnerResource;
@@ -54,12 +55,14 @@ class PartnerPanelProvider extends PanelProvider
             ->navigationGroups([
                 __('pios.nav.group.register'),
                 'Customers',
+                'Fees',
                 'Subscriptions',
             ])
             ->resources([
                 PartnerResource::class,
                 BusinessOwnerResource::class,
                 CustomerResource::class,
+                PartnerBoFeeApprovalResource::class,
                 PartnerSubscriptionResource::class,
                 PartnerBoPaymentApprovalResource::class,
             ])

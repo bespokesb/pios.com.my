@@ -24,7 +24,15 @@ class FeePolicy
 
     public function update(User $user, Fee $fee): bool
     {
-        return $user->isAdmin();
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if ($user->isPartner() && $user->partner) {
+            return $fee->partner_id === $user->partner->id;
+        }
+
+        return false;
     }
 
     public function delete(User $user, Fee $fee): bool

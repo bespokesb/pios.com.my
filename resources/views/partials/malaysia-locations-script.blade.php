@@ -60,11 +60,86 @@ window.__malaysianLocations = @json($malaysianLocationsData);
             : (options.postcodeSelect || document.getElementById('postcodeSelect'));
 
         if (!stateSelect || !citySelect || !postcodeSelect) {
-            return;
+            return null;
+        }
+
+        const customInput = typeof options.customInput === 'string'
+            ? document.getElementById(options.customInput)
+            : (options.customInput || null);
+        const customInputWrapper = typeof options.customInputWrapper === 'string'
+            ? document.getElementById(options.customInputWrapper)
+            : (options.customInputWrapper || null);
+        const selectWrapper = typeof options.selectWrapper === 'string'
+            ? document.getElementById(options.selectWrapper)
+            : (options.selectWrapper || null);
+        const toggleBtn = typeof options.toggleBtn === 'string'
+            ? document.getElementById(options.toggleBtn)
+            : (options.toggleBtn || null);
+        const cancelBtn = typeof options.cancelBtn === 'string'
+            ? document.getElementById(options.cancelBtn)
+            : (options.cancelBtn || null);
+        const allowCustom = options.allowCustom !== undefined
+            ? Boolean(options.allowCustom)
+            : Boolean(customInput);
+
+        // If controller already exists on this postcodeSelect, reset its values cleanly
+        if (postcodeSelect._syncController) {
+            postcodeSelect._syncController.resetValues(options.initialState, options.initialCity, options.initialPostcode);
+            return postcodeSelect._syncController;
         }
 
         const locations = window.__malaysianLocations;
         let isSyncing = false;
+        let isCustomModeActive = false;
+
+        function setCustomMode(isCustom) {
+            isCustomModeActive = Boolean(isCustom);
+            if (customInputWrapper && selectWrapper) {
+                if (isCustomModeActive) {
+                    selectWrapper.style.display = 'none';
+                    customInputWrapper.style.display = 'block';
+                    if (toggleBtn) {
+                        toggleBtn.textContent = '← Select from list';
+                    }
+                    if (customInput) {
+                        customInput.disabled = false;
+                        customInput.setAttribute('name', 'poskod');
+                        if (postcodeSelect.value && postcodeSelect.value !== '__custom__') {
+                            customInput.value = postcodeSelect.value;
+                        }
+                        setTimeout(() => {
+                            customInput.focus();
+                        }, 50);
+                    }
+                    postcodeSelect.disabled = true;
+                    postcodeSelect.removeAttribute('name');
+                } else {
+                    customInputWrapper.style.display = 'none';
+                    selectWrapper.style.display = '';
+                    if (toggleBtn) {
+                        toggleBtn.textContent = '+ Add new postcode';
+                    }
+                    postcodeSelect.disabled = false;
+                    postcodeSelect.setAttribute('name', 'poskod');
+                    if (customInput) {
+                        customInput.disabled = true;
+                        customInput.removeAttribute('name');
+                        const typed = customInput.value.trim();
+                        if (typed) {
+                            if (!Array.from(postcodeSelect.options).some(o => o.value === typed)) {
+                                const opt = document.createElement('option');
+                                opt.value = typed;
+                                opt.textContent = typed;
+                                postcodeSelect.appendChild(opt);
+                            }
+                            postcodeSelect.value = typed;
+                        } else if (postcodeSelect.value === '__custom__') {
+                            postcodeSelect.value = '';
+                        }
+                    }
+                }
+            }
+        }
 
         function renderCities(stateName, targetValue) {
             const previousVal = targetValue !== undefined ? targetValue : citySelect.value;
@@ -113,8 +188,18 @@ window.__malaysianLocations = @json($malaysianLocationsData);
         }
 
         function renderPostcodes(stateName, cityName, targetValue) {
-            const previousVal = targetValue !== undefined ? targetValue : postcodeSelect.value;
+            const previousVal = targetValue !== undefined
+                ? targetValue
+                : (isCustomModeActive && customInput ? customInput.value : postcodeSelect.value);
+
             postcodeSelect.innerHTML = '<option value="">Select postcode</option>';
+
+            if (allowCustom) {
+                const customActionOpt = document.createElement('option');
+                customActionOpt.value = '__custom__';
+                customActionOpt.textContent = '+ Add new postcode...';
+                postcodeSelect.appendChild(customActionOpt);
+            }
 
             const list = [];
             if (stateName && locations[stateName]) {
@@ -148,7 +233,7 @@ window.__malaysianLocations = @json($malaysianLocationsData);
             });
 
             // If a previous custom value is not in the list, preserve it
-            if (previousVal && !Array.from(postcodeSelect.options).some(o => o.value === previousVal)) {
+            if (previousVal && previousVal !== '__custom__' && !Array.from(postcodeSelect.options).some(o => o.value === previousVal)) {
                 const customOpt = document.createElement('option');
                 customOpt.value = previousVal;
                 customOpt.textContent = previousVal;
@@ -156,41 +241,54 @@ window.__malaysianLocations = @json($malaysianLocationsData);
                 postcodeSelect.appendChild(customOpt);
             }
 
-            if (previousVal) {
+            if (previousVal && previousVal !== '__custom__') {
                 postcodeSelect.value = previousVal;
+                if (customInput) {
+                    customInput.value = previousVal;
+                }
+            }
+        }
+
+        function syncLocationFromPostcode(pc) {
+            let match = postcodeLookup[pc];
+            let resolvedState = match ? match.state : null;
+            let resolvedCity = match ? match.city : null;
+
+            if (!resolvedState) {
+                const num = parseInt(pc, 10);
+                if (!isNaN(num)) {
+                    resolvedState = getPostalNumberState(num);
+                    if (resolvedState && locations[resolvedState]) {
+                        resolvedCity = locations[resolvedState].cities[0] || '';
+                    }
+                }
+            }
+
+            if (resolvedState) {
+                stateSelect.value = resolvedState;
+                const targetCity = resolvedCity || citySelect.value;
+                renderCities(resolvedState, targetCity);
+                renderPostcodes(resolvedState, targetCity, pc);
+                if (targetCity) {
+                    citySelect.value = targetCity;
+                }
             }
         }
 
         function handlePostcodeChange() {
             if (isSyncing) return;
+            const pc = postcodeSelect.value.trim();
+            if (pc === '__custom__') {
+                setCustomMode(true);
+                return;
+            }
+            if (customInput) {
+                customInput.value = pc;
+            }
             isSyncing = true;
             try {
-                const pc = postcodeSelect.value.trim();
                 if (!pc) return;
-
-                let match = postcodeLookup[pc];
-                let resolvedState = match ? match.state : null;
-                let resolvedCity = match ? match.city : null;
-
-                if (!resolvedState) {
-                    const num = parseInt(pc, 10);
-                    if (!isNaN(num)) {
-                        resolvedState = getPostalNumberState(num);
-                        if (resolvedState && locations[resolvedState]) {
-                            resolvedCity = locations[resolvedState].cities[0] || '';
-                        }
-                    }
-                }
-
-                if (resolvedState) {
-                    stateSelect.value = resolvedState;
-                    const targetCity = resolvedCity || citySelect.value;
-                    renderCities(resolvedState, targetCity);
-                    renderPostcodes(resolvedState, targetCity, pc);
-                    if (targetCity) {
-                        citySelect.value = targetCity;
-                    }
-                }
+                syncLocationFromPostcode(pc);
             } finally {
                 isSyncing = false;
             }
@@ -202,7 +300,7 @@ window.__malaysianLocations = @json($malaysianLocationsData);
             try {
                 const chosenCity = citySelect.value.trim();
                 const curState = stateSelect.value;
-                const curPostcode = postcodeSelect.value;
+                const curPostcode = isCustomModeActive && customInput ? customInput.value : postcodeSelect.value;
 
                 if (!chosenCity) {
                     if (curState) {
@@ -237,7 +335,7 @@ window.__malaysianLocations = @json($malaysianLocationsData);
             try {
                 const selectedState = stateSelect.value.trim();
                 const curCity = citySelect.value;
-                const curPostcode = postcodeSelect.value;
+                const curPostcode = isCustomModeActive && customInput ? customInput.value : postcodeSelect.value;
 
                 if (selectedState && locations[selectedState]) {
                     const sData = locations[selectedState];
@@ -253,6 +351,41 @@ window.__malaysianLocations = @json($malaysianLocationsData);
                 }
             } finally {
                 isSyncing = false;
+            }
+        }
+
+        function resetValues(rawInitialState, rawInitialCity, rawInitialPostcode) {
+            let resolvedState = rawInitialState || '';
+            let initialCity = rawInitialCity || '';
+            let initialPostcode = rawInitialPostcode || '';
+
+            if (!resolvedState && initialPostcode) {
+                const match = postcodeLookup[initialPostcode];
+                if (match) {
+                    resolvedState = match.state;
+                    if (!initialCity) initialCity = match.city;
+                } else {
+                    const num = parseInt(initialPostcode, 10);
+                    if (!isNaN(num)) {
+                        resolvedState = getPostalNumberState(num) || '';
+                    }
+                }
+            }
+            if (!resolvedState && initialCity) {
+                for (const [st, d] of Object.entries(locations)) {
+                    if (d.cities.includes(initialCity)) {
+                        resolvedState = st;
+                        break;
+                    }
+                }
+            }
+
+            stateSelect.value = resolvedState || '';
+            renderCities(resolvedState, initialCity);
+            renderPostcodes(resolvedState, initialCity, initialPostcode);
+            setCustomMode(false);
+            if (customInput) {
+                customInput.value = initialPostcode || '';
             }
         }
 
@@ -306,6 +439,54 @@ window.__malaysianLocations = @json($malaysianLocationsData);
         postcodeSelect.addEventListener('change', handlePostcodeChange);
         citySelect.addEventListener('change', handleCityChange);
         stateSelect.addEventListener('change', handleStateChange);
+
+        if (customInput) {
+            customInput.addEventListener('input', function() {
+                const pc = customInput.value.trim();
+                if (pc.length === 5 && !isNaN(parseInt(pc, 10))) {
+                    isSyncing = true;
+                    try {
+                        syncLocationFromPostcode(pc);
+                    } finally {
+                        isSyncing = false;
+                    }
+                }
+            });
+            customInput.addEventListener('change', function() {
+                const pc = customInput.value.trim();
+                if (pc) {
+                    isSyncing = true;
+                    try {
+                        syncLocationFromPostcode(pc);
+                    } finally {
+                        isSyncing = false;
+                    }
+                }
+            });
+        }
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                setCustomMode(!isCustomModeActive);
+            });
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                setCustomMode(false);
+            });
+        }
+
+        const controller = {
+            resetValues: resetValues,
+            setCustomMode: setCustomMode,
+            renderCities: renderCities,
+            renderPostcodes: renderPostcodes
+        };
+        postcodeSelect._syncController = controller;
+        return controller;
     };
 })();
 </script>

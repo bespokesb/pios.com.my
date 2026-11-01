@@ -38,6 +38,69 @@
         .mobile-btn-edit:active {
             background-color: #E0F2FE !important;
         }
+        .postcode-mode-toggle {
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #0D9488;
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color 0.15s ease;
+        }
+        .postcode-mode-toggle:hover {
+            color: #0F766E;
+        }
+        .btn-postcode-list {
+            background: #F1F5F9;
+            border: 1.5px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 0 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            height: 42px;
+        }
+        .btn-postcode-list:hover {
+            background: #E2E8F0;
+            color: #1E293B;
+        }
+        .postcode-helper-text {
+            font-size: 0.74rem;
+            color: #64748B;
+            margin-top: 4px;
+            display: block;
+        }
+        body.dark-mode-active .postcode-mode-toggle,
+        html.dark .postcode-mode-toggle {
+            color: #2DD4BF;
+        }
+        body.dark-mode-active .postcode-mode-toggle:hover,
+        html.dark .postcode-mode-toggle:hover {
+            color: #5EEAD4;
+        }
+        body.dark-mode-active .btn-postcode-list,
+        html.dark .btn-postcode-list {
+            background: #1E293B;
+            border-color: #334155;
+            color: #CBD5E1;
+        }
+        body.dark-mode-active .btn-postcode-list:hover,
+        html.dark .btn-postcode-list:hover {
+            background: #334155;
+            color: #FFFFFF;
+        }
+        body.dark-mode-active .postcode-helper-text,
+        html.dark .postcode-helper-text {
+            color: #94A3B8;
+        }
         .status-pill.lead {
             background: #F1F5F9;
             color: #475569;
@@ -525,11 +588,38 @@
 
                         <!-- Postcode -->
                         <div class="form-group">
-                            <label class="form-label" for="postcodeSelect">Postcode</label>
-                            <div class="select-wrapper">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                                <label class="form-label" for="postcodeSelect" style="margin-bottom: 0;">Postcode</label>
+                                <button type="button" class="postcode-mode-toggle" id="togglePostcodeModeBtn">
+                                    + Add new postcode
+                                </button>
+                            </div>
+                            <!-- Postcode Dropdown Select Mode -->
+                            <div class="select-wrapper" id="postcodeSelectWrapper">
                                 <select class="form-control form-select" name="poskod" id="postcodeSelect">
                                     <option value="">Select postcode</option>
                                 </select>
+                            </div>
+                            <!-- Postcode Custom Text Input Mode -->
+                            <div class="custom-postcode-wrapper" id="postcodeInputWrapper" style="display: none;">
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="text" class="form-control" id="customPostcodeInput"
+                                        placeholder="Enter postcode (e.g. 50480)" maxlength="10"
+                                        pattern="[0-9]*" inputmode="numeric"
+                                        style="font-weight: 600; font-size: 0.95rem; flex: 1;">
+                                    <button type="button" class="btn-postcode-list" id="cancelCustomPostcodeBtn" title="Choose from postcode list">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                        </svg>
+                                        <span>List</span>
+                                    </button>
+                                </div>
+                                <span class="postcode-helper-text">Enter postcode (auto-detects Malaysian state &amp; city)</span>
                             </div>
                         </div>
 
@@ -702,11 +792,36 @@
 
                         <!-- Postcode -->
                         <div class="form-group">
-                            <label class="form-label" for="editPostcodeSelect">Postcode</label>
-                            <div class="select-wrapper">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                                <label class="form-label" for="editPostcodeSelect" style="margin-bottom: 0;">Postcode</label>
+                                <button type="button" class="postcode-mode-toggle" id="toggleEditPostcodeModeBtn">
+                                    + Add new postcode
+                                </button>
+                            </div>
+                            <div class="select-wrapper" id="editPostcodeSelectWrapper">
                                 <select class="form-control form-select" name="poskod" id="editPostcodeSelect">
                                     <option value="">Select postcode</option>
                                 </select>
+                            </div>
+                            <div class="custom-postcode-wrapper" id="editPostcodeInputWrapper" style="display: none;">
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="text" class="form-control" id="editCustomPostcodeInput"
+                                        placeholder="Enter postcode (e.g. 50480)" maxlength="10"
+                                        pattern="[0-9]*" inputmode="numeric"
+                                        style="font-weight: 600; font-size: 0.95rem; flex: 1;">
+                                    <button type="button" class="btn-postcode-list" id="cancelEditCustomPostcodeBtn" title="Choose from postcode list">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                        </svg>
+                                        <span>List</span>
+                                    </button>
+                                </div>
+                                <span class="postcode-helper-text">Enter postcode (auto-detects Malaysian state &amp; city)</span>
                             </div>
                         </div>
 
@@ -775,6 +890,10 @@
                     addModal.classList.remove('active');
                     addModal.style.display = 'none';
                     document.body.style.overflow = '';
+                    const pcSel = document.getElementById('postcodeSelect');
+                    if (pcSel && pcSel._syncController) {
+                        pcSel._syncController.setCustomMode(false);
+                    }
                 }
             }
 
@@ -816,6 +935,11 @@
                 stateSelect: 'stateSelect',
                 citySelect: 'citySelect',
                 postcodeSelect: 'postcodeSelect',
+                customInput: 'customPostcodeInput',
+                customInputWrapper: 'postcodeInputWrapper',
+                selectWrapper: 'postcodeSelectWrapper',
+                toggleBtn: 'togglePostcodeModeBtn',
+                cancelBtn: 'cancelCustomPostcodeBtn',
                 initialState: @json(old('negeri', '')),
                 initialCity: @json(old('bandar', '')),
                 initialPostcode: @json(old('poskod', ''))
@@ -1162,6 +1286,11 @@
                     stateSelect: 'editStateSelect',
                     citySelect: 'editCitySelect',
                     postcodeSelect: 'editPostcodeSelect',
+                    customInput: 'editCustomPostcodeInput',
+                    customInputWrapper: 'editPostcodeInputWrapper',
+                    selectWrapper: 'editPostcodeSelectWrapper',
+                    toggleBtn: 'toggleEditPostcodeModeBtn',
+                    cancelBtn: 'cancelEditCustomPostcodeBtn',
                     initialState: data.negeri || '',
                     initialCity: data.bandar || '',
                     initialPostcode: data.poskod || ''
@@ -1181,6 +1310,10 @@
                 em.classList.remove('active');
                 em.style.display = 'none';
                 document.body.style.overflow = '';
+                const editPcSel = document.getElementById('editPostcodeSelect');
+                if (editPcSel && editPcSel._syncController) {
+                    editPcSel._syncController.setCustomMode(false);
+                }
             }
         }
 

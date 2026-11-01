@@ -194,6 +194,33 @@ class BusinessPortalTest extends TestCase
         ]);
     }
 
+    public function test_authenticated_bo_can_register_customer_with_new_custom_postcode(): void
+    {
+        $response = $this->actingAs($this->user)->post(route('business.customers.store'), [
+            'name' => 'Custom Postcode Customer',
+            'email' => 'custom-postcode@example.com',
+            'hp_no' => '0189998888',
+            'poskod' => '99999',
+            'bandar' => 'Bandar Baru',
+            'negeri' => 'Selangor',
+        ]);
+
+        $response->assertRedirect(route('business.customers.index'));
+        $this->assertDatabaseHas('customers', [
+            'name' => 'Custom Postcode Customer',
+            'poskod' => '99999',
+            'bandar' => 'Bandar Baru',
+            'negeri' => 'Selangor',
+            'business_owner_id' => $this->bo->id,
+        ]);
+
+        $pageResponse = $this->actingAs($this->user)->get(route('business.customers.index'));
+        $pageResponse->assertOk();
+        $pageResponse->assertSee('+ Add new postcode');
+        $pageResponse->assertSee('customPostcodeInput');
+        $pageResponse->assertSee('editCustomPostcodeInput');
+    }
+
     public function test_register_customer_rejects_duplicate_phone(): void
     {
         Customer::factory()->create([

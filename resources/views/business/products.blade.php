@@ -584,7 +584,7 @@
         @empty
             <div style="grid-column: 1 / -1; background: #FFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 48px; text-align: center; color: #64748B;">
                 <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">No products available.</p>
-                <p style="font-size: 0.9rem;">Submit a proposal to list your custom products in the catalog.</p>
+                <p style="font-size: 0.9rem;">Add a new product to list your custom products in the catalog.</p>
             </div>
         @endforelse
     </div>
@@ -937,7 +937,7 @@
                 <div class="modal-footer">
                     <button type="button" id="cancelProposeBtn" class="btn-modal-cancel">Cancel</button>
                     @if ($canAddProduct)
-                        <button type="submit" id="submitProposeBtn" class="btn-modal-submit">Submit Proposal</button>
+                        <button type="submit" id="submitProposeBtn" class="btn-modal-submit">Submit</button>
                     @else
                         <button type="button" id="submitProposeBtn" class="btn-modal-submit" disabled style="background: #94A3B8 !important; cursor: not-allowed !important; opacity: 0.75 !important;">Limit Reached ({{ $productCount }}/{{ $productLimit }})</button>
                     @endif

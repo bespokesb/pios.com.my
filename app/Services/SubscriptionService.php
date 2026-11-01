@@ -16,6 +16,60 @@ use Illuminate\Validation\ValidationException;
 class SubscriptionService
 {
     /**
+     * Ensure the Business Owner has an initial 48-hour trial subscription for BGE.
+     */
+    public function ensureInitialBgeSubscription(BusinessOwner $bo): Subscription
+    {
+        $bgeProduct = SubscriptionProduct::where('code', 'bge')->first();
+        if (! $bgeProduct) {
+            $bgeProduct = SubscriptionProduct::create([
+                'name' => 'BizGrowth Engine (BGE)',
+                'code' => 'bge',
+                'description' => 'Enjin pengurusan utama perniagaan PIOS.',
+                'price' => 30.00,
+                'period_days' => 30,
+                'target_role' => 'all',
+                'is_mandatory' => true,
+                'is_active' => true,
+                'sort_order' => 1,
+            ]);
+        }
+
+        /** @var Subscription|null $subscription */
+        $subscription = Subscription::where('business_owner_id', $bo->id)
+            ->where('subscription_product_id', $bgeProduct->id)
+            ->first();
+
+        if (! $subscription) {
+            $startsAt = $bo->created_at ?: now();
+            $expiresAt = $startsAt->copy()->addHours(48);
+            $isStillActive = now()->isBefore($expiresAt);
+
+            $subscription = Subscription::create([
+                'subscription_no' => $this->generateSubscriptionNo(),
+                'subscription_product_id' => $bgeProduct->id,
+                'user_id' => $bo->user_id,
+                'subscriber_type' => 'business_owner',
+                'partner_id' => $bo->partner_id,
+                'business_owner_id' => $bo->id,
+                'status' => $isStillActive ? 'trial' : 'expired',
+                'starts_at' => $startsAt,
+                'expires_at' => $expiresAt,
+            ]);
+        } else {
+            if ($bo->user_id && ! $subscription->user_id) {
+                $subscription->update(['user_id' => $bo->user_id]);
+            }
+
+            if ($subscription->status === 'trial' && $subscription->expires_at && now()->isAfter($subscription->expires_at)) {
+                $subscription->update(['status' => 'expired']);
+            }
+        }
+
+        return $subscription;
+    }
+
+    /**
      * Submit a new subscription or renewal payment request.
      *
      * @param array{
@@ -99,25 +153,134 @@ class SubscriptionService
 
     /**
      * Check if a user can approve a given subscription payment.
+     * Business Owner BGE payments are verified and approved exclusively by their sponsoring Partner.
      */
     public function canApprove(User $user, SubscriptionPayment $payment): bool
     {
-        // PIOS Owner and SysAdmin can approve ANY payment
-        if ($user->isSysAdmin() || $user->isPiosOwner()) {
-            return true;
+        // If payment was made by Business Owner, ONLY their sponsoring Partner can approve (or SysAdmin)
+        if ($payment->payer_role === 'business_owner') {
+            if ($user->isSysAdmin()) {
+                return true;
+            }
+
+            return $user->isPartner() && $user->partner && $user->partner->id === $payment->partner_id;
         }
 
-        // If payment was made by Partner, ONLY Owner can approve
+        // If payment was made by Partner, PIOS Owner / SysAdmin approves
         if ($payment->payer_role === 'partner') {
-            return false;
-        }
-
-        // If payment was made by Business Owner, their sponsoring Partner can approve
-        if ($payment->payer_role === 'business_owner' && $user->isPartner()) {
-            return $user->partner && $user->partner->id === $payment->partner_id;
+            return $user->isSysAdmin() || $user->isPiosOwner();
         }
 
         return false;
+    }
+
+    /**
+     * Get available BGE subscription bundles.
+     *
+     * @return array<int, array{months: int, days: int, price: float, label: string}>
+     */
+    public static function getBgeBundles(): array
+    {
+        return [
+            1 => ['months' => 1, 'days' => 30, 'price' => 30.00, 'label' => '1 Month (30 Days) — RM 30.00'],
+            2 => ['months' => 2, 'days' => 60, 'price' => 60.00, 'label' => '2 Months (60 Days) — RM 60.00'],
+            3 => ['months' => 3, 'days' => 90, 'price' => 90.00, 'label' => '3 Months (90 Days) — RM 90.00'],
+            6 => ['months' => 6, 'days' => 180, 'price' => 180.00, 'label' => '6 Months (180 Days) — RM 180.00'],
+            12 => ['months' => 12, 'days' => 360, 'price' => 360.00, 'label' => '12 Months (360 Days) — RM 360.00'],
+        ];
+    }
+
+    /**
+     * Partner directly records and confirms a subscription payment for their sponsored Business Owner.
+     * Immediately marks as approved, generates receipt, and extends subscription by the bundle days.
+     */
+    public function recordPartnerPaymentForBo(
+        User $partnerUser,
+        BusinessOwner $bo,
+        int $months = 1,
+        string $paymentMethod = 'cash',
+        ?string $referenceNo = null,
+        ?string $notes = null
+    ): SubscriptionPayment {
+        $partner = $partnerUser->partner;
+        $isAuthorized = ($partner && $partner->id === $bo->partner_id) || $partnerUser->isSysAdmin();
+
+        if (! $isAuthorized) {
+            throw ValidationException::withMessages([
+                'business_owner_id' => 'You are not authorized to confirm payments for this Business Owner.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($partnerUser, $bo, $months, $paymentMethod, $referenceNo, $notes): SubscriptionPayment {
+            $bgeProduct = SubscriptionProduct::where('code', 'bge')->first();
+            if (! $bgeProduct) {
+                $bgeProduct = SubscriptionProduct::create([
+                    'name' => 'BizGrowth Engine (BGE)',
+                    'code' => 'bge',
+                    'description' => 'Core PIOS business management engine.',
+                    'price' => 30.00,
+                    'period_days' => 30,
+                    'target_role' => 'all',
+                    'is_mandatory' => true,
+                    'is_active' => true,
+                    'sort_order' => 1,
+                ]);
+            }
+
+            $months = max(1, $months);
+            $days = $months * 30;
+            $amount = $months * (float) $bgeProduct->price;
+
+            $subscription = $this->ensureInitialBgeSubscription($bo);
+
+            // Generate receipt number
+            $seq = IdentifierSequence::firstOrCreate(
+                ['key' => 'receipt_no'],
+                ['prefix' => 'RCT'.date('ym'), 'next_number' => 1, 'padding' => 5]
+            );
+            $receiptNo = $seq->prefix.str_pad((string) $seq->next_number, $seq->padding, '0', STR_PAD_LEFT);
+            $seq->increment('next_number');
+
+            $paymentNo = $this->generatePaymentNo();
+
+            /** @var SubscriptionPayment $payment */
+            $payment = SubscriptionPayment::create([
+                'payment_no' => $paymentNo,
+                'receipt_no' => $receiptNo,
+                'subscription_id' => $subscription->id,
+                'subscription_product_id' => $bgeProduct->id,
+                'user_id' => $bo->user_id,
+                'payer_role' => 'business_owner',
+                'partner_id' => $bo->partner_id,
+                'business_owner_id' => $bo->id,
+                'amount' => $amount,
+                'period_days' => $days,
+                'payment_method' => $paymentMethod,
+                'reference_no' => $referenceNo,
+                'notes' => $notes,
+                'paid_at' => now(),
+                'status' => 'approved',
+                'approved_by' => $partnerUser->id,
+                'approved_at' => now(),
+            ]);
+
+            // Update Subscription countdown
+            if ($subscription->starts_at === null) {
+                $subscription->starts_at = now();
+            }
+
+            if ($subscription->isActive() && $subscription->expires_at && $subscription->expires_at->isFuture()) {
+                $subscription->expires_at = $subscription->expires_at->copy()->addDays($days);
+            } else {
+                $subscription->expires_at = now()->addDays($days);
+            }
+
+            $subscription->status = 'active';
+            $subscription->last_renewed_at = now();
+            $subscription->save();
+
+            return $payment;
+        });
     }
 
     /**
@@ -127,7 +290,7 @@ class SubscriptionService
     {
         if (! $this->canApprove($approver, $payment)) {
             throw ValidationException::withMessages([
-                'approver' => 'Anda tidak mempunyai kebenaran untuk mengesahkan bayaran ini.',
+                'approver' => 'You do not have authorization to approve this payment.',
             ]);
         }
 
@@ -141,7 +304,7 @@ class SubscriptionService
     {
         if (! $this->canApprove($approver, $payment)) {
             throw ValidationException::withMessages([
-                'approver' => 'Anda tidak mempunyai kebenaran untuk menolak bayaran ini.',
+                'approver' => 'You do not have authorization to reject this payment.',
             ]);
         }
 
@@ -178,4 +341,3 @@ class SubscriptionService
         return $no;
     }
 }
-

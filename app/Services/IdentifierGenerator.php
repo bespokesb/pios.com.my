@@ -47,15 +47,82 @@ class IdentifierGenerator
                 ]);
             }
 
-            do {
-                $candidate = $sequence->prefix.str_pad((string) $sequence->next_number, $sequence->padding, '0', STR_PAD_LEFT);
-                $sequence->next_number++;
-            } while ($modelClass::query()->where($column, $candidate)->exists());
+            // Pluck existing numbers with this prefix to detect any gaps from deleted records
+            $existing = $modelClass::query()
+                ->where($column, 'like', $sequence->prefix.'%')
+                ->pluck($column)
+                ->map(function ($val) use ($sequence) {
+                    $numStr = substr($val, strlen($sequence->prefix));
 
+                    return is_numeric($numStr) ? (int) $numStr : null;
+                })
+                ->filter()
+                ->values()
+                ->all();
+
+            $existingMap = array_flip($existing);
+            $maxExisting = empty($existing) ? 0 : max($existing);
+
+            // 1. Check if there are any gaps in existing records (e.g. 1, 2, 3, 5 -> 4 was deleted)
+            $gapNumber = null;
+            for ($i = 1; $i <= $maxExisting; $i++) {
+                if (! isset($existingMap[$i])) {
+                    $gapNumber = $i;
+                    break;
+                }
+            }
+
+            if ($gapNumber !== null) {
+                // Fill the missing gap left by deleted records
+                $candidateNumber = $gapNumber;
+            } else {
+                // If sequence next_number has drifted ahead of maxExisting (e.g. latest records deleted),
+                // sync it back to maxExisting + 1
+                if ($maxExisting > 0 && $sequence->next_number > $maxExisting + 1) {
+                    $sequence->next_number = $maxExisting + 1;
+                }
+
+                while (isset($existingMap[$sequence->next_number])) {
+                    $sequence->next_number++;
+                }
+
+                $candidateNumber = $sequence->next_number;
+                $sequence->next_number++;
+            }
+
+            $candidate = $sequence->prefix.str_pad((string) $candidateNumber, $sequence->padding, '0', STR_PAD_LEFT);
             $sequence->save();
 
             return $candidate;
         });
+    }
+
+    /**
+     * Synchronize next_number sequence counter based on actual existing records in the model.
+     *
+     * @param  class-string<Model>  $modelClass
+     */
+    public function sync(string $key, string $modelClass, string $column): void
+    {
+        $sequence = IdentifierSequence::query()->where('key', $key)->first();
+        if (! $sequence) {
+            return;
+        }
+
+        $existing = $modelClass::query()
+            ->where($column, 'like', $sequence->prefix.'%')
+            ->pluck($column)
+            ->map(function ($val) use ($sequence) {
+                $numStr = substr($val, strlen($sequence->prefix));
+
+                return is_numeric($numStr) ? (int) $numStr : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        $max = empty($existing) ? 0 : max($existing);
+        $sequence->update(['next_number' => $max + 1]);
     }
 
     /**

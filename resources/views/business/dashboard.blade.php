@@ -39,6 +39,77 @@
         </div>
     </div>
 
+    @php
+        $dashBgeSub = $bgeSubscription ?? (auth()->check() && auth()->user()->businessOwner ? app(\App\Services\SubscriptionService::class)->ensureInitialBgeSubscription(auth()->user()->businessOwner) : null);
+    @endphp
+
+    @if ($dashBgeSub && $dashBgeSub->isTrial())
+        <!-- In-Dashboard BGE 48-Hour Trial Banner Card -->
+        <div class="dash-trial-card" style="background: linear-gradient(135deg, #134C49 0%, #174A78 100%); border-radius: 16px; padding: 22px 26px; color: #FFFFFF; margin-bottom: 26px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; box-shadow: 0 4px 16px rgba(19, 76, 73, 0.22); border: 1px solid rgba(255, 255, 255, 0.12);">
+            <div style="display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1;">
+                <div style="width: 48px; height: 48px; min-width: 48px; border-radius: 12px; background: rgba(231, 196, 106, 0.2); border: 1.5px solid rgba(231, 196, 106, 0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#E7C46A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <div style="min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                        <span style="background: #E7C46A; color: #0F172A; font-size: 0.72rem; font-weight: 800; padding: 3px 9px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em;">48 Jam Percubaan BGE</span>
+                        <span style="font-size: 0.80rem; font-weight: 700; background: rgba(16, 185, 129, 0.25); color: #6EE7B7; border: 1px solid rgba(16, 185, 129, 0.4); padding: 2px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px;">
+                            <span style="width: 6px; height: 6px; border-radius: 50%; background: #10B981;"></span>
+                            Berbaki {{ $dashBgeSub->hoursRemaining() }} Jam
+                        </span>
+                        @if($dashBgeSub->expires_at)
+                            <span style="font-size: 0.76rem; color: #CBD5E1;">Tamat: {{ $dashBgeSub->expires_at->format('d M Y, h:i A') }}</span>
+                        @endif
+                    </div>
+                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #FFFFFF; letter-spacing: -0.01em;">Akses Percubaan BizGrowth Engine (BGE) Anda Sedang Aktif</h3>
+                    <p style="margin: 3px 0 0; font-size: 0.86rem; color: #E2E8F0; line-height: 1.5;">Gunakan tempoh 48 jam ini untuk mencuba katalog produk, pengurusan pelanggan, transaksi dan WhatsApp blaster. Sila langgan sebelum tamat tempoh untuk mengelakkan sekatan akses.</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+                <a href="{{ route('business.subscriptions.index') }}" style="background: #E7C46A; color: #0F172A; font-weight: 800; font-size: 0.90rem; padding: 11px 24px; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(231, 196, 106, 0.35); transition: all 0.2s; white-space: nowrap;">
+                    <span>Langgan Pelan BGE</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    @elseif ($dashBgeSub && $dashBgeSub->isExpired())
+        <!-- In-Dashboard BGE Expired Banner Card -->
+        <div class="dash-trial-card" style="background: linear-gradient(135deg, #7F1D1D 0%, #991B1B 100%); border-radius: 16px; padding: 22px 26px; color: #FFFFFF; margin-bottom: 26px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; box-shadow: 0 4px 16px rgba(153, 27, 27, 0.25); border: 1px solid rgba(254, 202, 202, 0.2);">
+            <div style="display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1;">
+                <div style="width: 48px; height: 48px; min-width: 48px; border-radius: 12px; background: rgba(254, 226, 226, 0.15); border: 1.5px solid rgba(254, 202, 202, 0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FCA5A5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <div style="min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                        <span style="background: #FEE2E2; color: #991B1B; font-size: 0.72rem; font-weight: 800; padding: 3px 9px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em;">Percubaan Tamat</span>
+                        <span style="font-size: 0.80rem; font-weight: 700; background: rgba(239, 68, 68, 0.3); color: #FCA5A5; border: 1px solid rgba(239, 68, 68, 0.4); padding: 2px 10px; border-radius: 20px;">Akses Terhad</span>
+                    </div>
+                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #FFFFFF; letter-spacing: -0.01em;">Tempoh Percubaan 48 Jam BGE Anda Telah Tamat</h3>
+                    <p style="margin: 3px 0 0; font-size: 0.86rem; color: #FECACA; line-height: 1.5;">Sila buat bayaran langganan BizGrowth Engine (BGE) dan muat naik resit bayaran untuk mengaktifkan akses penuh perniagaan anda.</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+                <a href="{{ route('business.subscriptions.index') }}" style="background: #FFFFFF; color: #991B1B; font-weight: 800; font-size: 0.90rem; padding: 11px 24px; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: all 0.2s; white-space: nowrap;">
+                    <span>Langgan BGE Sekarang</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    @endif
+
     <!-- 6 Metric / KPI Cards (3x2 Grid on Desktop) -->
     <div class="kpi-grid" aria-label="Key Performance Indicators">
 

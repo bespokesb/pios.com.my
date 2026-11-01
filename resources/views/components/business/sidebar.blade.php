@@ -67,16 +67,24 @@
             </svg>
             <span>Reports</span>
         </a>
+
+        <a href="{{ route('business.settings.index') }}" class="sidebar-item dash-nav-item {{ request()->routeIs('business.settings.*') || request()->is('settings*', 'business/settings*') ? 'active' : '' }}">
+            <svg class="sidebar-icon dash-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>Settings</span>
+        </a>
     </nav>
 
     <div class="sidebar-footer dash-sidebar-footer">
         <div class="sidebar-user dash-user-profile">
-            <img src="{{ asset('assets/images/lenny_avatar.png') }}" alt="{{ auth()->user()?->name ?? 'User' }}" class="user-avatar-img" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode(auth()->user()?->businessOwner?->applicant_name ?? auth()->user()?->name ?? 'BO') }}&background=0D9488&color=fff';">
-            <div class="user-profile-info">
-                <span class="user-name-text">{{ auth()->user()?->businessOwner?->applicant_name ?? auth()->user()?->name ?? 'Diego Robel' }}</span>
+            <img src="{{ auth()->user()?->avatarUrl() ?? asset('assets/images/lenny_avatar.png') }}" alt="{{ auth()->user()?->name ?? 'User' }}" class="user-avatar-img" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode(auth()->user()?->businessOwner?->applicant_name ?? auth()->user()?->name ?? 'BO') }}&background=0D9488&color=fff';">
+            <div class="user-profile-info" style="min-width: 0; flex: 1; overflow: hidden;">
+                <span class="user-name-text" style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">{{ auth()->user()?->businessOwner?->applicant_name ?? auth()->user()?->name ?? 'Diego Robel' }}</span>
             </div>
         </div>
-        <form action="{{ route('logout') }}" method="POST" class="inline">
+        <form action="{{ route('logout') }}" method="POST" class="inline" style="margin: 0; padding: 0; display: inline-flex; flex-shrink: 0;">
             @csrf
             <button type="submit" class="sidebar-logout-btn" title="Sign out" aria-label="Sign out">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

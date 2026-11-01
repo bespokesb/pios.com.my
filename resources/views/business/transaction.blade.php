@@ -142,6 +142,14 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
         }
 
+        .stepper-dot svg {
+            width: 18px !important;
+            height: 18px !important;
+            stroke: currentColor !important;
+            display: block !important;
+            flex-shrink: 0 !important;
+        }
+
         .stepper-node.done .stepper-dot {
             background: #0D9488 !important;
             color: #FFFFFF !important;
@@ -562,27 +570,37 @@
                     <!-- Visual Order Lifecycle Stepper -->
                     <div class="order-lifecycle-stepper" id="statusStepper">
                         <div class="stepper-node" data-step="submitted">
-                            <div class="stepper-dot">1</div>
+                            <div class="stepper-dot">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                            </div>
                             <span class="stepper-title">Pending</span>
                             <div class="stepper-bar"></div>
                         </div>
                         <div class="stepper-node" data-step="paid">
-                            <div class="stepper-dot">2</div>
+                            <div class="stepper-dot">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                            </div>
                             <span class="stepper-title">Paid</span>
                             <div class="stepper-bar"></div>
                         </div>
                         <div class="stepper-node" data-step="packed">
-                            <div class="stepper-dot">3</div>
+                            <div class="stepper-dot">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                            </div>
                             <span class="stepper-title">Packed</span>
                             <div class="stepper-bar"></div>
                         </div>
                         <div class="stepper-node" data-step="shipped">
-                            <div class="stepper-dot">4</div>
+                            <div class="stepper-dot">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                            </div>
                             <span class="stepper-title">Shipped</span>
                             <div class="stepper-bar"></div>
                         </div>
                         <div class="stepper-node" data-step="completed">
-                            <div class="stepper-dot">5</div>
+                            <div class="stepper-dot">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            </div>
                             <span class="stepper-title">Completed</span>
                         </div>
                     </div>
@@ -743,9 +761,7 @@
             </div>
             <div class="tx-modal-footer" style="display: flex !important; align-items: center !important; justify-content: flex-end !important; gap: 10px !important; padding: 16px 24px !important; border-top: 1px solid #E2E8F0 !important; background-color: #FFFFFF !important; flex-wrap: wrap !important;">
                 <button type="button" class="btn-cancel" id="cancelTxModalBtn" style="display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 42px !important; min-height: 42px !important; max-height: 42px !important; line-height: 40px !important; padding: 0 20px !important; border-radius: 10px !important; font-size: 0.875rem !important; font-weight: 600 !important; background: #FFFFFF !important; border: 1px solid #CBD5E1 !important; color: #475569 !important; cursor: pointer !important; box-sizing: border-box !important; margin: 0 !important; white-space: nowrap !important;" onclick="window.closeTxModal()">Close</button>
-                <button type="button" class="btn-tx-step btn-step-paid" id="modalActionBtn" style="display: none; align-items: center !important; justify-content: center !important; height: 42px !important; min-height: 42px !important; max-height: 42px !important; line-height: 40px !important; padding: 0 22px !important; border-radius: 10px !important; font-size: 0.875rem !important; font-weight: 600 !important; background: #0D9488 !important; border: 1px solid #0D9488 !important; color: #FFFFFF !important; cursor: pointer !important; box-sizing: border-box !important; margin: 0 !important; box-shadow: 0 2px 6px rgba(13, 148, 136, 0.35) !important; white-space: nowrap !important;" onclick="window.handleModalActionClick(this, event)">
-                    Mark Paid
-                </button>
+                <button type="button" class="btn-tx-step is-hidden" id="modalActionBtn" style="display: none !important; align-items: center !important; justify-content: center !important; height: 42px !important; min-height: 42px !important; max-height: 42px !important; line-height: 40px !important; padding: 0 22px !important; border-radius: 10px !important; font-size: 0.875rem !important; font-weight: 600 !important; cursor: pointer !important; box-sizing: border-box !important; margin: 0 !important; white-space: nowrap !important;" onclick="window.handleModalActionClick(this, event)"></button>
             </div>
         </div>
     </div>
@@ -1028,8 +1044,6 @@
 
         .tx-modal-footer .btn-cancel,
         .tx-modal-footer #cancelTxModalBtn,
-        .tx-modal-footer .btn-tx-step,
-        .tx-modal-footer #modalActionBtn,
         .tx-modal-footer .btn-print,
         .tx-modal-footer #printReceiptBtn {
             display: inline-flex !important;
@@ -1051,6 +1065,35 @@
             transition: all 0.2s ease !important;
             text-decoration: none !important;
             margin: 0 !important;
+        }
+
+        .tx-modal-footer #modalActionBtn {
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            height: 42px !important;
+            min-height: 42px !important;
+            max-height: 42px !important;
+            line-height: 42px !important;
+            padding: 0 22px !important;
+            box-sizing: border-box !important;
+            border-radius: 10px !important;
+            font-family: inherit !important;
+            font-size: 0.875rem !important;
+            font-weight: 600 !important;
+            white-space: nowrap !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+            text-decoration: none !important;
+            margin: 0 !important;
+        }
+
+        .tx-modal-footer #modalActionBtn.is-hidden {
+            display: none !important;
+        }
+
+        .tx-modal-footer #modalActionBtn.is-visible {
+            display: inline-flex !important;
         }
 
         /* Neutral Close / Cancel Button */
@@ -1221,6 +1264,76 @@
 
     <script>
         (function() {
+            var STEP_ORDER = ['submitted', 'paid', 'packed', 'shipped', 'completed'];
+
+            window.renderStepper = function(stepperEl, currentStatus, context) {
+                if (!stepperEl) return;
+                var normalized = (currentStatus || '').toLowerCase();
+                var currentIndex = STEP_ORDER.indexOf(normalized);
+                var nodes = stepperEl.querySelectorAll('.stepper-node');
+                nodes.forEach(function(node) {
+                    var stepName = node.getAttribute('data-step');
+                    var stepIndex = STEP_ORDER.indexOf(stepName);
+                    var bar = node.querySelector('.stepper-bar');
+
+                    node.classList.remove('done', 'active', 'upcoming', 'cancelled', 'next-action', 'clickable');
+                    node.onclick = null;
+                    node.removeAttribute('title');
+                    if (bar) bar.classList.remove('done');
+
+                    if (normalized === 'cancelled') {
+                        node.classList.add('cancelled');
+                    } else if (normalized === 'completed') {
+                        node.classList.add('done');
+                        if (bar) bar.classList.add('done');
+                    } else if (currentIndex !== -1) {
+                        if (stepIndex < currentIndex) {
+                            node.classList.add('done');
+                            if (bar) bar.classList.add('done');
+                        } else if (stepIndex === currentIndex) {
+                            node.classList.add('active');
+                        } else if (stepIndex === currentIndex + 1 || (normalized === 'paid' && (stepName === 'packed' || stepName === 'shipped'))) {
+                            node.classList.add('next-action', 'clickable');
+                            if (context && context.orderId) {
+                                if (stepName === 'paid') {
+                                    node.setAttribute('title', '👉 Mark Paid');
+                                    node.onclick = function(e) {
+                                        if (e) { e.preventDefault(); e.stopPropagation(); }
+                                        window.closeTxModal();
+                                        window.openMarkPaidModal(context.orderId, context.orderNo, context.customer, context.amount);
+                                    };
+                                } else if (stepName === 'packed') {
+                                    node.setAttribute('title', '👉 Mark Packed');
+                                    node.onclick = function(e) {
+                                        if (e) { e.preventDefault(); e.stopPropagation(); }
+                                        window.closeTxModal();
+                                        window.openQuickStatusUpdate(context.orderId, context.orderNo, 'packed', 'Packed');
+                                    };
+                                } else if (stepName === 'shipped') {
+                                    node.setAttribute('title', '👉 Ship Order');
+                                    node.onclick = function(e) {
+                                        if (e) { e.preventDefault(); e.stopPropagation(); }
+                                        window.closeTxModal();
+                                        window.openShipOrderModal(context.orderId, context.orderNo, context.customer, context.tracking);
+                                    };
+                                } else if (stepName === 'completed') {
+                                    node.setAttribute('title', '👉 Mark Completed');
+                                    node.onclick = function(e) {
+                                        if (e) { e.preventDefault(); e.stopPropagation(); }
+                                        window.closeTxModal();
+                                        window.openQuickStatusUpdate(context.orderId, context.orderNo, 'completed', 'Completed');
+                                    };
+                                }
+                            }
+                        } else {
+                            node.classList.add('upcoming');
+                        }
+                    } else {
+                        node.classList.add('upcoming');
+                    }
+                });
+            };
+
             // 1. Details Modal
             window.openOrderDetailsById = function(orderId) {
                 var row = document.getElementById('txRow-' + orderId) || document.getElementById('txCard-' + orderId);
@@ -1269,7 +1382,7 @@
                 // Stepper
                 var detailsStepper = document.getElementById('detailsStepper');
                 if (detailsStepper && typeof window.renderStepper === 'function') {
-                    window.renderStepper(detailsStepper, status);
+                    window.renderStepper(detailsStepper, status, { orderId: orderId, orderNo: orderNo, customer: customer, amount: amount, tracking: tracking });
                 }
 
                 // Tracking Section
@@ -1330,44 +1443,65 @@
                     modalActionBtn.setAttribute('data-amount', amount);
                     modalActionBtn.setAttribute('data-tracking', tracking);
 
-                    if (!isTerminal && status !== 'cancelled') {
-                        if (status === 'draft') {
-                            modalActionBtn.style.display = 'inline-flex';
-                            modalActionBtn.style.backgroundColor = '#0D9488';
-                            modalActionBtn.style.borderColor = '#0D9488';
-                            modalActionBtn.style.color = '#FFFFFF';
-                            modalActionBtn.textContent = 'Submit Order';
-                            modalActionBtn.setAttribute('data-action', 'submit');
-                            modalActionBtn.className = 'btn-tx-step btn-step-paid';
-                        } else if (status === 'submitted') {
-                            modalActionBtn.style.display = 'inline-flex';
-                            modalActionBtn.style.backgroundColor = '#0D9488';
-                            modalActionBtn.style.borderColor = '#0D9488';
-                            modalActionBtn.style.color = '#FFFFFF';
-                            modalActionBtn.textContent = 'Mark Paid';
-                            modalActionBtn.setAttribute('data-action', 'mark-paid');
-                            modalActionBtn.className = 'btn-tx-step btn-step-paid';
-                        } else if (status === 'paid' || status === 'packed') {
-                            modalActionBtn.style.display = 'inline-flex';
-                            modalActionBtn.style.backgroundColor = '#2563EB';
-                            modalActionBtn.style.borderColor = '#2563EB';
-                            modalActionBtn.style.color = '#FFFFFF';
-                            modalActionBtn.textContent = 'Ship Order';
-                            modalActionBtn.setAttribute('data-action', 'ship');
-                            modalActionBtn.className = 'btn-tx-step btn-step-ship';
-                        } else if (status === 'shipped') {
-                            modalActionBtn.style.display = 'inline-flex';
-                            modalActionBtn.style.backgroundColor = '#059669';
-                            modalActionBtn.style.borderColor = '#059669';
-                            modalActionBtn.style.color = '#FFFFFF';
-                            modalActionBtn.textContent = 'Mark Completed';
-                            modalActionBtn.setAttribute('data-action', 'complete');
-                            modalActionBtn.className = 'btn-tx-step btn-step-complete';
-                        } else {
-                            modalActionBtn.style.display = 'none';
-                        }
+                    // Reset classes & handler
+                    modalActionBtn.classList.remove('btn-step-paid', 'btn-step-ship', 'btn-step-complete', 'is-visible');
+                    modalActionBtn.onclick = null;
+
+                    // If terminal (completed or cancelled), remove/hide action button
+                    if (isTerminal || status === 'completed' || status === 'cancelled') {
+                        modalActionBtn.classList.add('is-hidden');
+                        modalActionBtn.style.setProperty('display', 'none', 'important');
+                        modalActionBtn.textContent = '';
+                        modalActionBtn.setAttribute('data-action', '');
+                    } else if (status === 'submitted') {
+                        modalActionBtn.classList.remove('is-hidden');
+                        modalActionBtn.classList.add('btn-step-paid', 'is-visible');
+                        modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
+                        modalActionBtn.textContent = 'Mark Paid';
+                        modalActionBtn.setAttribute('data-action', 'mark-paid');
+                        modalActionBtn.onclick = function(e) {
+                            if (e) { e.preventDefault(); e.stopPropagation(); }
+                            window.closeTxModal();
+                            window.openMarkPaidModal(orderId, orderNo, customer, amount);
+                        };
+                    } else if (status === 'paid' || status === 'packed') {
+                        modalActionBtn.classList.remove('is-hidden');
+                        modalActionBtn.classList.add('btn-step-ship', 'is-visible');
+                        modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
+                        modalActionBtn.textContent = 'Ship Order';
+                        modalActionBtn.setAttribute('data-action', 'ship');
+                        modalActionBtn.onclick = function(e) {
+                            if (e) { e.preventDefault(); e.stopPropagation(); }
+                            window.closeTxModal();
+                            window.openShipOrderModal(orderId, orderNo, customer, tracking);
+                        };
+                    } else if (status === 'shipped') {
+                        modalActionBtn.classList.remove('is-hidden');
+                        modalActionBtn.classList.add('btn-step-complete', 'is-visible');
+                        modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
+                        modalActionBtn.textContent = 'Mark Completed';
+                        modalActionBtn.setAttribute('data-action', 'complete');
+                        modalActionBtn.onclick = function(e) {
+                            if (e) { e.preventDefault(); e.stopPropagation(); }
+                            window.closeTxModal();
+                            window.openQuickStatusUpdate(orderId, orderNo, 'completed', 'Completed');
+                        };
+                    } else if (status === 'draft') {
+                        modalActionBtn.classList.remove('is-hidden');
+                        modalActionBtn.classList.add('btn-step-paid', 'is-visible');
+                        modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
+                        modalActionBtn.textContent = 'Submit Order';
+                        modalActionBtn.setAttribute('data-action', 'submit');
+                        modalActionBtn.onclick = function(e) {
+                            if (e) { e.preventDefault(); e.stopPropagation(); }
+                            window.closeTxModal();
+                            window.openQuickStatusUpdate(orderId, orderNo, 'submitted', 'Submitted');
+                        };
                     } else {
-                        modalActionBtn.style.display = 'none';
+                        modalActionBtn.classList.add('is-hidden');
+                        modalActionBtn.style.setProperty('display', 'none', 'important');
+                        modalActionBtn.textContent = '';
+                        modalActionBtn.setAttribute('data-action', '');
                     }
                 }
 
@@ -1393,6 +1527,15 @@
                 txModal.style.pointerEvents = 'none';
                 txModal.setAttribute('aria-hidden', 'true');
                 document.body.style.overflow = '';
+
+                var modalActionBtn = document.getElementById('modalActionBtn');
+                if (modalActionBtn) {
+                    modalActionBtn.classList.remove('is-visible', 'btn-step-paid', 'btn-step-ship', 'btn-step-complete');
+                    modalActionBtn.classList.add('is-hidden');
+                    modalActionBtn.style.setProperty('display', 'none', 'important');
+                    modalActionBtn.textContent = '';
+                    modalActionBtn.onclick = null;
+                }
             };
 
             // 2. Action Button Click Handler (inside Details Modal)

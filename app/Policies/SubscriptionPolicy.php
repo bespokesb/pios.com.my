@@ -44,4 +44,3 @@ class SubscriptionPolicy
         return $user->isSysAdmin() || $user->isPiosOwner();
     }
 }
-

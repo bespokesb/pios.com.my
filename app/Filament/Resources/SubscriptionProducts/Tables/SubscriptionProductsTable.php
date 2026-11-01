@@ -18,34 +18,34 @@ class SubscriptionProductsTable
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Nama Pelan / Produk')
+                    ->label('Plan / Product Name')
                     ->weight('bold')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('code')
-                    ->label('Kod')
+                    ->label('Code')
                     ->badge()
                     ->color('gray')
                     ->searchable(),
 
                 TextColumn::make('price')
-                    ->label('Harga (RM)')
+                    ->label('Price (MYR)')
                     ->money('MYR')
                     ->sortable(),
 
                 TextColumn::make('period_days')
-                    ->label('Tempoh')
-                    ->suffix(' Hari')
+                    ->label('Period')
+                    ->suffix(' Days')
                     ->sortable(),
 
                 TextColumn::make('target_role')
-                    ->label('Sasaran')
+                    ->label('Target')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'partner' => 'Partner Sahaja',
-                        'business_owner' => 'Business Owner Sahaja',
-                        default => 'Semua (Partner & BO)',
+                        'partner' => 'Partner Only',
+                        'business_owner' => 'Business Owner Only',
+                        default => 'All (Partner & BO)',
                     })
                     ->color(fn (string $state): string => match ($state) {
                         'partner' => 'warning',
@@ -54,19 +54,19 @@ class SubscriptionProductsTable
                     }),
 
                 IconColumn::make('is_mandatory')
-                    ->label('Wajib')
+                    ->label('Mandatory')
                     ->boolean(),
 
                 ToggleColumn::make('is_active')
-                    ->label('Aktif')
+                    ->label('Active')
                     ->sortable(),
 
                 TextColumn::make('sort_order')
-                    ->label('Susunan')
+                    ->label('Sort Order')
                     ->sortable(),
 
                 TextColumn::make('created_at')
-                    ->label('Dicipta')
+                    ->label('Created')
                     ->dateTime('d M Y')
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

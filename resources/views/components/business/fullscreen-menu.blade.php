@@ -73,6 +73,14 @@
             </svg>
             <span>Reports</span>
         </a>
+
+        <a href="{{ route('business.settings.index') }}" class="fs-nav-item {{ request()->routeIs('business.settings.*') || request()->is('settings*', 'business/settings*') ? 'active' : '' }}">
+            <svg class="fs-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>Settings</span>
+        </a>
     </nav>
 
     <div class="fs-menu-footer">
@@ -102,7 +110,7 @@
 
         <div class="fs-user-profile fs-user-card" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
             <div class="fs-user-left" style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
-                <img src="{{ asset('assets/images/lenny_avatar.png') }}" alt="{{ auth()->user()?->name ?? 'User' }}" class="fs-user-avatar fs-avatar-img" style="width: 40px; height: 40px; min-width: 40px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.25); display: block;" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode(auth()->user()?->businessOwner?->applicant_name ?? auth()->user()?->name ?? 'BO') }}&background=0D9488&color=fff';">
+                <img src="{{ auth()->user()?->avatarUrl() ?? asset('assets/images/lenny_avatar.png') }}" alt="{{ auth()->user()?->name ?? 'User' }}" class="fs-user-avatar fs-avatar-img" style="width: 40px; height: 40px; min-width: 40px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.25); display: block;" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode(auth()->user()?->businessOwner?->applicant_name ?? auth()->user()?->name ?? 'BO') }}&background=0D9488&color=fff';">
                 <div class="fs-user-info" style="flex: 1; min-width: 0;">
                     <span class="fs-user-name" style="font-size: 1rem; font-weight: 600; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">{{ auth()->user()?->businessOwner?->applicant_name ?? auth()->user()?->name ?? 'Diego Robel' }}</span>
                 </div>

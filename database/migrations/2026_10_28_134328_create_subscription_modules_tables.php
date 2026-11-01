@@ -32,7 +32,7 @@ return new class extends Migration
             $table->id();
             $table->string('subscription_no')->unique();
             $table->foreignId('subscription_product_id')->constrained('subscription_products')->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->string('subscriber_type'); // 'partner' or 'business_owner'
             $table->foreignId('partner_id')->nullable()->constrained('partners')->cascadeOnDelete();
             $table->foreignId('business_owner_id')->nullable()->constrained('business_owners')->cascadeOnDelete();

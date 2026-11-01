@@ -32,6 +32,16 @@ class EditBusinessOwner extends EditRecord
 
     private array $oldValues = [];
 
+    protected function getSaveFormAction(): Action
+    {
+        return parent::getSaveFormAction()
+            ->extraAttributes([
+                'wire:loading.attr' => 'disabled',
+                'wire:target' => 'save',
+                'x-on:click' => 'setTimeout(() => { $el.disabled = true; }, 0)',
+            ]);
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -248,31 +258,41 @@ class EditBusinessOwner extends EditRecord
     {
         $password = $this->accountData['account_password'] ?? null;
 
-        if ($this->record->user_id && $this->record->user) {
-            if ($password !== null) {
-                $this->record->user->forceFill([
-                    'password' => Hash::make($password),
-                    'status' => UserStatus::Active,
-                ])->save();
+        try {
+            if ($this->record->user_id && $this->record->user) {
+                if ($password !== null) {
+                    $this->record->user->forceFill([
+                        'password' => Hash::make($password),
+                        'status' => UserStatus::Active,
+                    ])->save();
+
+                    if ($this->record->status !== RecordStatus::Active) {
+                        $this->record->forceFill(['status' => RecordStatus::Active])->save();
+                    }
+                }
+
+                if ($this->record->email && $this->record->email !== $this->record->user->email) {
+                    $this->record->user->forceFill(['email' => $this->record->email])->save();
+                }
+            } elseif (($this->accountData['create_user'] ?? false) && blank($this->record->user_id)) {
+                app(RegistrationAccountCreator::class)->createForBusinessOwner(
+                    $this->record,
+                    UserStatus::Active,
+                    $password,
+                );
 
                 if ($this->record->status !== RecordStatus::Active) {
                     $this->record->forceFill(['status' => RecordStatus::Active])->save();
                 }
             }
+        } catch (ValidationException $e) {
+            Notification::make()
+                ->danger()
+                ->title('Gagal Mengemaskini Akaun')
+                ->body(collect($e->errors())->flatten()->first() ?? $e->getMessage())
+                ->send();
 
-            if ($this->record->email && $this->record->email !== $this->record->user->email) {
-                $this->record->user->forceFill(['email' => $this->record->email])->save();
-            }
-        } elseif (($this->accountData['create_user'] ?? false) && blank($this->record->user_id)) {
-            app(RegistrationAccountCreator::class)->createForBusinessOwner(
-                $this->record,
-                UserStatus::Active,
-                $password,
-            );
-
-            if ($this->record->status !== RecordStatus::Active) {
-                $this->record->forceFill(['status' => RecordStatus::Active])->save();
-            }
+            throw $e;
         }
 
         if ($password !== null) {
@@ -330,7 +350,7 @@ class EditBusinessOwner extends EditRecord
 
     private function validateDuplicateContact(array $data): void
     {
-        foreach (['ic_no' => 'IC No', 'hp_no' => 'HP No'] as $field => $label) {
+        foreach (['ic_no' => 'IC No', 'hp_no' => 'HP No', 'email' => 'Email address'] as $field => $label) {
             if (blank($data[$field] ?? null)) {
                 continue;
             }
@@ -342,6 +362,7 @@ class EditBusinessOwner extends EditRecord
                 ->exists()) {
                 throw ValidationException::withMessages([
                     "data.{$field}" => "{$label} already belongs to another Business Owner for this Partner.",
+                    $field => "{$label} already belongs to another Business Owner for this Partner.",
                 ]);
             }
         }

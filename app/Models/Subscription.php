@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Subscription extends Model
 {
@@ -62,14 +63,14 @@ class Subscription extends Model
         return $this->hasMany(SubscriptionPayment::class);
     }
 
-    public function latestPayment(): BelongsTo
+    public function latestPayment(): HasOne
     {
-        return $this->belongsTo(SubscriptionPayment::class, 'id', 'subscription_id')->latestOfMany();
+        return $this->hasOne(SubscriptionPayment::class)->latestOfMany();
     }
 
     public function isActive(): bool
     {
-        if ($this->status !== 'active') {
+        if (! in_array($this->status, ['active', 'trial'], true)) {
             return false;
         }
 
@@ -78,6 +79,25 @@ class Subscription extends Model
         }
 
         return $this->expires_at->isFuture();
+    }
+
+    public function isTrial(): bool
+    {
+        return $this->status === 'trial' && $this->isActive();
+    }
+
+    public function isExpired(): bool
+    {
+        return ! $this->isActive();
+    }
+
+    public function hoursRemaining(): int
+    {
+        if (! $this->isActive() || ! $this->expires_at) {
+            return 0;
+        }
+
+        return max(0, (int) now()->diffInHours($this->expires_at, false));
     }
 
     public function daysRemaining(): int

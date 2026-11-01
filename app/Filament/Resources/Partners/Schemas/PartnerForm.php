@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Partners\Schemas;
 
 use App\Enums\RecordStatus;
 use App\Filament\Support\PhoneInput;
+use App\Models\Partner;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -31,6 +32,8 @@ class PartnerForm
                         TextInput::make('email')
                             ->label('Email address')
                             ->email()
+                            ->unique(Partner::class, 'email', ignoreRecord: true)
+                            ->unique(Partner::class, 'email', ignoreRecord: true)
                             ->maxLength(255),
                     ])
                     ->columns(2),

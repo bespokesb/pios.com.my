@@ -17,15 +17,15 @@ class SubscriptionResource extends Resource
 
     protected static ?string $slug = 'subscriptions';
 
-    protected static ?string $navigationLabel = 'Senarai Pelanggan & Status';
+    protected static ?string $navigationLabel = 'Subscribers & Status';
 
-    protected static ?string $modelLabel = 'Langganan';
+    protected static ?string $modelLabel = 'Subscription';
 
-    protected static ?string $pluralModelLabel = 'Langganan Pengguna';
+    protected static ?string $pluralModelLabel = 'User Subscriptions';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedIdentification;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Langganan';
+    protected static string|UnitEnum|null $navigationGroup = 'Subscriptions';
 
     public static function canAccess(): bool
     {

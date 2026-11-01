@@ -20,13 +20,13 @@ class SubscriptionPaymentsTable
         return $table
             ->columns([
                 TextColumn::make('payment_no')
-                    ->label('No. Bayaran')
+                    ->label('Payment No')
                     ->weight('bold')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('receipt_no')
-                    ->label('No. Resit')
+                    ->label('Receipt No')
                     ->badge()
                     ->color('success')
                     ->placeholder('-')
@@ -34,7 +34,7 @@ class SubscriptionPaymentsTable
                     ->sortable(),
 
                 TextColumn::make('payer')
-                    ->label('Pembayar')
+                    ->label('Payer')
                     ->state(fn (SubscriptionPayment $record): string => $record->payerName().' ('.$record->payerIdentifier().')')
                     ->description(fn (SubscriptionPayment $record): ?string => $record->payerHpNo())
                     ->searchable(query: function ($query, string $search): void {
@@ -51,7 +51,7 @@ class SubscriptionPaymentsTable
                     }),
 
                 TextColumn::make('payer_role')
-                    ->label('Peranan')
+                    ->label('Role')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'partner' => 'Partner',
@@ -65,21 +65,28 @@ class SubscriptionPaymentsTable
                     }),
 
                 TextColumn::make('product.name')
-                    ->label('Pelan / Produk')
+                    ->label('Plan / Product')
                     ->weight('medium')
                     ->searchable(),
 
                 TextColumn::make('amount')
-                    ->label('Jumlah')
+                    ->label('Amount (MYR)')
                     ->money('MYR')
                     ->sortable(),
 
+                TextColumn::make('period_days')
+                    ->label('Duration')
+                    ->badge()
+                    ->color('info')
+                    ->formatStateUsing(fn ($state): string => "{$state} Days")
+                    ->sortable(),
+
                 TextColumn::make('payment_method')
-                    ->label('Kaedah')
+                    ->label('Method')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'qr_code' => 'QR DuitNow',
-                        'cash' => 'Tunai',
+                        'cash' => 'Cash',
                         'bank_transfer' => 'Bank Transfer',
                         default => ucfirst($state),
                     })
@@ -90,7 +97,7 @@ class SubscriptionPaymentsTable
                     }),
 
                 ImageColumn::make('payment_proof')
-                    ->label('Slip')
+                    ->label('Proof Slip')
                     ->disk('public')
                     ->square(),
 
@@ -98,9 +105,9 @@ class SubscriptionPaymentsTable
                     ->label('Status')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'approved' => 'Disahkan & Lulus',
-                        'rejected' => 'Ditolak',
-                        default => 'Menunggu Pengesahan',
+                        'approved' => 'Approved & Active',
+                        'rejected' => 'Rejected',
+                        default => 'Pending Approval',
                     })
                     ->color(fn (string $state): string => match ($state) {
                         'approved' => 'success',
@@ -109,12 +116,12 @@ class SubscriptionPaymentsTable
                     }),
 
                 TextColumn::make('paid_at')
-                    ->label('Tarikh Bayar')
+                    ->label('Payment Date')
                     ->dateTime('d M Y, h:i A')
                     ->sortable(),
 
                 TextColumn::make('approver.name')
-                    ->label('Disahkan Oleh')
+                    ->label('Approved By')
                     ->placeholder('-')
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -123,64 +130,65 @@ class SubscriptionPaymentsTable
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options([
-                        'pending_approval' => 'Menunggu Pengesahan',
-                        'approved' => 'Disahkan & Lulus',
-                        'rejected' => 'Ditolak',
+                        'pending_approval' => 'Pending Approval',
+                        'approved' => 'Approved',
+                        'rejected' => 'Rejected',
                     ]),
 
                 SelectFilter::make('payer_role')
-                    ->label('Peranan Pembayar')
+                    ->label('Payer Role')
                     ->options([
                         'partner' => 'Partner',
                         'business_owner' => 'Business Owner',
                     ]),
 
                 SelectFilter::make('subscription_product_id')
-                    ->label('Produk / Pelan')
+                    ->label('Product / Plan')
                     ->relationship('product', 'name'),
             ])
             ->actions([
+                // PIOS Owner only approves Partner payments; Business Owner payments are handled exclusively by their sponsoring Partner
                 Action::make('approve')
-                    ->label('Sahkan')
+                    ->label('Approve')
                     ->icon(Heroicon::OutlinedCheckCircle)
                     ->color('success')
-                    ->visible(fn (SubscriptionPayment $record): bool => $record->isPending())
+                    ->visible(fn (SubscriptionPayment $record): bool => $record->isPending() && $record->payer_role === 'partner')
                     ->requiresConfirmation()
-                    ->modalHeading('Sahkan Pembayaran Langganan')
-                    ->modalDescription(fn (SubscriptionPayment $record): string => "Adakah anda pasti ingin mengesahkan bayaran RM {$record->amount} bagi {$record->product?->name}? Langganan akan diaktifkan/dilanjutkan selama {$record->period_days} hari dan resit rasmi akan dikeluarkan.")
+                    ->modalHeading('Approve Subscription Payment')
+                    ->modalDescription(fn (SubscriptionPayment $record): string => "Are you sure you want to approve payment of RM {$record->amount} for {$record->product?->name}? Subscription will be activated/extended for {$record->period_days} days and an official receipt generated.")
                     ->action(function (SubscriptionPayment $record): void {
                         app(SubscriptionService::class)->approvePayment($record, auth()->user());
 
                         Notification::make()
-                            ->title('Bayaran Telah Disahkan')
-                            ->body("Resit rasmi {$record->receipt_no} telah dikeluarkan dan langganan telah diaktifkan.")
+                            ->title('Subscription Payment Approved')
+                            ->body("Payment for {$record->payerName()} approved. Official Receipt {$record->receipt_no} generated.")
                             ->success()
                             ->send();
                     }),
 
                 Action::make('reject')
-                    ->label('Tolak')
+                    ->label('Reject')
                     ->icon(Heroicon::OutlinedXCircle)
                     ->color('danger')
-                    ->visible(fn (SubscriptionPayment $record): bool => $record->isPending())
+                    ->visible(fn (SubscriptionPayment $record): bool => $record->isPending() && $record->payer_role === 'partner')
                     ->form([
                         Textarea::make('reason')
-                            ->label('Sebab Penolakan')
-                            ->placeholder('Contoh: Slip tidak jelas / Bayaran tidak diterima dalam akaun.')
+                            ->label('Rejection Reason')
+                            ->placeholder('e.g., Unverified transaction slip / Incorrect amount.')
                             ->required(),
                     ])
                     ->action(function (SubscriptionPayment $record, array $data): void {
                         app(SubscriptionService::class)->rejectPayment($record, auth()->user(), $data['reason']);
 
                         Notification::make()
-                            ->title('Bayaran Ditolak')
-                            ->body('Status bayaran telah dikemaskini kepada ditolak.')
+                            ->title('Payment Rejected')
+                            ->body('Payment request marked as rejected.')
                             ->danger()
                             ->send();
                     }),
 
                 Action::make('receipt')
-                    ->label('Cetak Resit')
+                    ->label('View Receipt')
                     ->icon(Heroicon::OutlinedDocumentText)
                     ->color('info')
                     ->visible(fn (SubscriptionPayment $record): bool => $record->isApproved() && filled($record->receipt_no))

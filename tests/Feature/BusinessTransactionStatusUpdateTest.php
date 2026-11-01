@@ -229,6 +229,42 @@ class BusinessTransactionStatusUpdateTest extends TestCase
         ]);
     }
 
+    public function test_transactions_view_renders_completed_order_with_terminal_state(): void
+    {
+        [$user, $partner, $bo] = $this->businessOwnerUser('P00909', 'BO00909', 'Test BO');
+        $customer = $this->customer($bo, $partner, 'C00909');
+        $order = $this->createOrder($bo, $partner, $customer, 'ORD-00909', OrderStatus::Completed);
+
+        $response = $this->actingAs($user)->get(route('business.transactions.index'));
+
+        $response->assertOk();
+        $response->assertSee('id="txRow-'.$order->id.'"', escape: false);
+        $response->assertSee('data-is-terminal="1"', escape: false);
+        $response->assertSee('data-status="completed"', escape: false);
+        $response->assertSee('id="modalActionBtn"', escape: false);
+        $response->assertSee('is-hidden', escape: false);
+    }
+
+    public function test_transactions_view_renders_submitted_order_with_mark_paid_action(): void
+    {
+        [$user, $partner, $bo] = $this->businessOwnerUser('P00910', 'BO00910', 'Test BO');
+        $customer = $this->customer($bo, $partner, 'C00910');
+        $order = $this->createOrder($bo, $partner, $customer, 'ORD-00910', OrderStatus::Submitted);
+
+        $response = $this->actingAs($user)->get(route('business.transactions.index'));
+
+        $response->assertOk();
+        $response->assertSee('id="txRow-'.$order->id.'"', escape: false);
+        $response->assertSee('data-is-terminal="0"', escape: false);
+        $response->assertSee('data-status="submitted"', escape: false);
+        $response->assertSee('id="markPaidModal"', escape: false);
+        $response->assertSee('id="paymentReferenceInput"', escape: false);
+        $response->assertSee('openMarkPaidModal', escape: false);
+        $response->assertSee('id="modalActionBtn"', escape: false);
+        $response->assertSee('id="statusStepper"', escape: false);
+        $response->assertSee('id="detailsStepper"', escape: false);
+    }
+
     private function createOrder(
         BusinessOwner $bo,
         Partner $partner,

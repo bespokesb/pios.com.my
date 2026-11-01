@@ -17,14 +17,30 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'password', 'role', 'status', 'last_login_at'])]
+#[Fillable(['name', 'email', 'avatar', 'password', 'role', 'status', 'last_login_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    public function avatarUrl(): string
+    {
+        if ($this->avatar && Storage::disk('public')->exists($this->avatar)) {
+            return Storage::disk('public')->url($this->avatar);
+        }
+
+        if ($this->avatar && file_exists(public_path($this->avatar))) {
+            return asset($this->avatar);
+        }
+
+        $name = $this->businessOwner?->applicant_name ?: $this->name;
+
+        return 'https://ui-avatars.com/api/?name='.urlencode($name).'&background=0D9488&color=fff';
+    }
 
     public function canAccessPanel(Panel $panel): bool
     {

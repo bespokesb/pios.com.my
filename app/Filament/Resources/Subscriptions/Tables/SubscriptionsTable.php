@@ -14,13 +14,13 @@ class SubscriptionsTable
         return $table
             ->columns([
                 TextColumn::make('subscription_no')
-                    ->label('No. Langganan')
+                    ->label('Subscription No')
                     ->weight('bold')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('subscriber')
-                    ->label('Pelanggan')
+                    ->label('Subscriber')
                     ->state(fn (Subscription $record): string => $record->subscriberName().' ('.$record->subscriberIdentifier().')')
                     ->searchable(query: function ($query, string $search): void {
                         $query->whereHas('businessOwner', function ($q) use ($search): void {
@@ -33,7 +33,7 @@ class SubscriptionsTable
                     }),
 
                 TextColumn::make('subscriber_type')
-                    ->label('Peranan')
+                    ->label('Role')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'partner' => 'Partner',
@@ -47,7 +47,7 @@ class SubscriptionsTable
                     }),
 
                 TextColumn::make('product.name')
-                    ->label('Produk / Pelan')
+                    ->label('Product / Plan')
                     ->weight('medium')
                     ->searchable(),
 
@@ -55,31 +55,33 @@ class SubscriptionsTable
                     ->label('Status')
                     ->badge()
                     ->formatStateUsing(fn (Subscription $record): string => match ($record->status) {
-                        'active' => $record->isActive() ? 'Aktif' : 'Tamat Tempoh',
-                        'pending_approval' => 'Menunggu Pengesahan',
-                        'pending_payment' => 'Menunggu Bayaran',
+                        'active' => $record->isActive() ? 'Active' : 'Expired',
+                        'pending_approval' => 'Pending Approval',
+                        'pending_payment' => 'Pending Payment',
+                        'trial' => 'Trial (48h)',
                         default => ucfirst($record->status),
                     })
                     ->color(fn (Subscription $record): string => match ($record->status) {
                         'active' => $record->isActive() ? 'success' : 'danger',
+                        'trial' => $record->isActive() ? 'amber' : 'danger',
                         'pending_approval' => 'warning',
                         default => 'gray',
                     }),
 
                 TextColumn::make('days_left')
-                    ->label('Baki Hari')
-                    ->state(fn (Subscription $record): string => $record->isActive() ? ($record->daysRemaining().' Hari') : '-')
+                    ->label('Days Remaining')
+                    ->state(fn (Subscription $record): string => $record->isActive() ? ($record->daysRemaining().' Days') : '-')
                     ->color(fn (Subscription $record): string => $record->daysRemaining() <= 5 ? 'danger' : 'success')
                     ->weight('bold'),
 
                 TextColumn::make('expires_at')
-                    ->label('Tarikh Luput')
+                    ->label('Expiry Date')
                     ->dateTime('d M Y, h:i A')
                     ->placeholder('-')
                     ->sortable(),
 
                 TextColumn::make('last_renewed_at')
-                    ->label('Tarikh Diperbaharui')
+                    ->label('Last Renewed')
                     ->dateTime('d M Y')
                     ->placeholder('-')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -89,20 +91,21 @@ class SubscriptionsTable
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options([
-                        'active' => 'Aktif',
-                        'pending_approval' => 'Menunggu Pengesahan',
-                        'pending_payment' => 'Menunggu Bayaran',
+                        'active' => 'Active',
+                        'trial' => 'Trial',
+                        'pending_approval' => 'Pending Approval',
+                        'pending_payment' => 'Pending Payment',
                     ]),
 
                 SelectFilter::make('subscriber_type')
-                    ->label('Peranan')
+                    ->label('Role')
                     ->options([
                         'partner' => 'Partner',
                         'business_owner' => 'Business Owner',
                     ]),
 
                 SelectFilter::make('subscription_product_id')
-                    ->label('Produk / Pelan')
+                    ->label('Product / Plan')
                     ->relationship('product', 'name'),
             ]);
     }

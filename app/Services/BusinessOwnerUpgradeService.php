@@ -62,6 +62,8 @@ class BusinessOwnerUpgradeService
                 newValues: $bo->getAttributes(),
             );
 
+            app(SubscriptionService::class)->ensureInitialBgeSubscription($bo);
+
             return $bo;
         });
     }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Casts\PhoneNumber;
 use App\Enums\RecordStatus;
+use App\Services\IdentifierGenerator;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,6 +39,13 @@ use Illuminate\Support\Collection;
 class Partner extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::deleted(function (): void {
+            app(IdentifierGenerator::class)->sync('partner', static::class, 'partner_no');
+        });
+    }
 
     /**
      * Maximum number of active, HQ-approved direct sub-partners a partner may have.

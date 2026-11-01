@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Casts\PhoneNumber;
 use App\Enums\RecordStatus;
+use App\Services\IdentifierGenerator;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -36,11 +37,23 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'status',
     'ustazai_api_key',
     'ustazai_sender',
+    'whatsapp_provider',
+    'whatsapp_api_token',
+    'whatsapp_instance_id',
+    'whatsapp_status',
+    'whatsapp_last_tested_at',
     'created_by',
 ])]
 class BusinessOwner extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::deleted(function (): void {
+            app(IdentifierGenerator::class)->sync('business_owner', static::class, 'business_owner_no');
+        });
+    }
 
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
@@ -128,6 +141,37 @@ class BusinessOwner extends Model
         return $this->hasMany(Promotion::class);
     }
 
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function isWhatsAppConfigured(): bool
+    {
+        if ($this->whatsapp_provider === 'manual') {
+            return true;
+        }
+
+        if ($this->whatsapp_provider === 'fonnte') {
+            return filled($this->whatsapp_api_token);
+        }
+
+        if ($this->whatsapp_provider === 'ultramsg') {
+            return filled($this->whatsapp_api_token) && filled($this->whatsapp_instance_id);
+        }
+
+        return false;
+    }
+
+    public function whatsAppProviderLabel(): string
+    {
+        return match ($this->whatsapp_provider) {
+            'fonnte' => 'Fonnte (API)',
+            'ultramsg' => 'UltraMsg (API)',
+            default => 'Manual (wa.me)',
+        };
+    }
+
     protected function casts(): array
     {
         return [
@@ -136,6 +180,8 @@ class BusinessOwner extends Model
             'hp_no' => PhoneNumber::class,
             'spouse_hp_no' => PhoneNumber::class,
             'ustazai_api_key' => 'encrypted',
+            'whatsapp_api_token' => 'encrypted',
+            'whatsapp_last_tested_at' => 'datetime',
         ];
     }
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Resit Rasmi Langganan — {{ $payment->receipt_no }}</title>
+    <title>Official Subscription Receipt — {{ $payment->receipt_no }}</title>
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <style>
         * { box-sizing: border-box; }
@@ -47,7 +47,7 @@
 <body>
     <div class="print-bar">
         <a href="javascript:history.back()" class="back-link">
-            &larr; Kembali
+            &larr; Back
         </a>
         <button type="button" onclick="window.print()" class="print-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -55,7 +55,7 @@
                 <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                 <rect x="6" y="14" width="12" height="8"></rect>
             </svg>
-            Cetak Resit
+            Print Receipt
         </button>
     </div>
 
@@ -64,44 +64,44 @@
             <div class="brand-col">
                 <img src="{{ asset('assets/images/desktop_center_logo.png') }}" alt="PIOS BizGrowth Engine" class="brand-logo" onerror="this.src='{{ asset('favicon-192x192.png') }}'">
                 <div class="brand-name">Pak Itam Online Supermarket Sdn Bhd</div>
-                <div class="brand-sub">Platform Perniagaan &amp; Pengurusan Digital (PIOS)</div>
+                <div class="brand-sub">Digital Business &amp; Back-Office Platform (PIOS)</div>
             </div>
             <div class="receipt-badge">
-                <h1 class="receipt-title">Resit Rasmi</h1>
+                <h1 class="receipt-title">Official Receipt</h1>
                 <div class="receipt-no">{{ $payment->receipt_no }}</div>
-                <div class="paid-stamp">LULUS &amp; DISAHKAN</div>
+                <div class="paid-stamp">APPROVED &amp; VERIFIED</div>
             </div>
         </header>
 
         <section class="grid-info">
             <div class="info-block">
-                <h4>Maklumat Pembayar</h4>
+                <h4>Payer Information</h4>
                 <p><strong>{{ $payment->payerName() }}</strong></p>
-                <p>{{ $payment->payer_role === 'partner' ? 'Rakan Kongsi PIOS (Partner)' : 'Pemilik Perniagaan (Business Owner)' }}</p>
-                <p>ID Rujukan: <strong>{{ $payment->payerIdentifier() }}</strong></p>
+                <p>{{ $payment->payer_role === 'partner' ? 'PIOS Partner' : 'Business Owner' }}</p>
+                <p>Reference ID: <strong>{{ $payment->payerIdentifier() }}</strong></p>
                 @if($payment->payerHpNo())
-                    <p>No. Telefon: {{ $payment->payerHpNo() }}</p>
+                    <p>Phone: {{ $payment->payerHpNo() }}</p>
                 @endif
-                <p>Emel: {{ $payment->user?->email }}</p>
+                <p>Email: {{ $payment->user?->email ?: '-' }}</p>
             </div>
             <div class="info-block">
-                <h4>Maklumat Transaksi</h4>
-                <p>No. Bayaran: <strong>{{ $payment->payment_no }}</strong></p>
-                <p>Tarikh Bayaran: {{ $payment->paid_at ? $payment->paid_at->format('d M Y, h:i A') : $payment->created_at->format('d M Y, h:i A') }}</p>
-                <p>Tarikh Pengesahan: <strong>{{ $payment->approved_at ? $payment->approved_at->format('d M Y, h:i A') : '-' }}</strong></p>
-                <p>Kaedah Bayaran: 
+                <h4>Transaction Information</h4>
+                <p>Payment No: <strong>{{ $payment->payment_no }}</strong></p>
+                <p>Payment Date: {{ $payment->paid_at ? $payment->paid_at->format('d M Y, h:i A') : $payment->created_at->format('d M Y, h:i A') }}</p>
+                <p>Verification Date: <strong>{{ $payment->approved_at ? $payment->approved_at->format('d M Y, h:i A') : '-' }}</strong></p>
+                <p>Payment Method: 
                     <strong>
                         @if($payment->payment_method === 'qr_code')
                             QR Payment / DuitNow
                         @elseif($payment->payment_method === 'cash')
-                            Tunai (Cash)
+                            Cash
                         @else
-                            Pindahan Bank (Online Transfer)
+                            Bank Transfer (Online)
                         @endif
                     </strong>
                 </p>
                 @if($payment->reference_no)
-                    <p>No. Rujukan Transaksi: {{ $payment->reference_no }}</p>
+                    <p>Transaction Reference No: {{ $payment->reference_no }}</p>
                 @endif
             </div>
         </section>
@@ -109,10 +109,10 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 50px;">Bil</th>
-                    <th>Keterangan Pelan / Produk</th>
-                    <th style="width: 120px;">Tempoh</th>
-                    <th class="num" style="width: 140px;">Jumlah (RM)</th>
+                    <th style="width: 50px;">No</th>
+                    <th>Description / Product Plan</th>
+                    <th style="width: 120px;">Duration</th>
+                    <th class="num" style="width: 140px;">Amount (MYR)</th>
                 </tr>
             </thead>
             <tbody>
@@ -121,13 +121,13 @@
                     <td>
                         <strong>{{ $product->name }}</strong>
                         @if($product->code === 'bge')
-                            <div style="font-size: 12px; color: #0d9488; margin-top: 3px;">&bull; Langganan Wajib Sistem BizGrowth Engine (BGE)</div>
+                            <div style="font-size: 12px; color: #0d9488; margin-top: 3px;">&bull; Core BizGrowth Engine (BGE) Subscription</div>
                         @endif
                         @if($subscription && $subscription->expires_at)
-                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Tempoh Aktif Sah Sehingga: <strong>{{ $subscription->expires_at->format('d M Y') }}</strong></div>
+                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Active Validity Until: <strong>{{ $subscription->expires_at->format('d M Y') }}</strong></div>
                         @endif
                     </td>
-                    <td>{{ $payment->period_days }} Hari</td>
+                    <td>{{ $payment->period_days }} Days</td>
                     <td class="num">RM {{ number_format((float) $payment->amount, 2) }}</td>
                 </tr>
             </tbody>
@@ -135,29 +135,28 @@
 
         <div class="totals-box">
             <div class="totals-row">
-                <span>Jumlah Kasar:</span>
+                <span>Subtotal:</span>
                 <span>RM {{ number_format((float) $payment->amount, 2) }}</span>
             </div>
             <div class="totals-row">
-                <span>Cukai / Yuran Tambahan:</span>
+                <span>Tax / Processing Fee:</span>
                 <span>RM 0.00</span>
             </div>
             <div class="totals-row grand-total">
-                <span>JUMLAH BERSIH:</span>
+                <span>TOTAL PAID:</span>
                 <span>RM {{ number_format((float) $payment->amount, 2) }}</span>
             </div>
         </div>
 
         <div class="verification-box">
-            <div><strong>Pengesahan Transaksi:</strong></div>
-            <div>Disahkan Oleh: <strong>{{ $payment->approver?->name ?: 'Pihak Pengurusan PIOS' }}</strong> pada {{ $payment->approved_at ? $payment->approved_at->format('d/m/Y h:i A') : '-' }}.</div>
-            <div style="margin-top: 4px;">Dokumen ini adalah resit janaan komputer yang sah daripada platform PIOS BizGrowth Engine. Tiada tandatangan fizikal diperlukan.</div>
+            <div><strong>Transaction Verification:</strong></div>
+            <div>Verified By: <strong>{{ $payment->approver?->name ?: 'PIOS Partner / Management' }}</strong> on {{ $payment->approved_at ? $payment->approved_at->format('d/m/Y h:i A') : '-' }}.</div>
+            <div style="margin-top: 4px;">This is a computer-generated official receipt issued by PIOS BizGrowth Engine. No physical signature is required.</div>
         </div>
 
         <div class="footer-note">
-            &copy; {{ date('Y') }} Pak Itam Online Supermarket Sdn Bhd (PIOS). Hak Cipta Terpelihara.
+            &copy; {{ date('Y') }} Pak Itam Online Supermarket Sdn Bhd (PIOS). All Rights Reserved.
         </div>
     </div>
 </body>
 </html>
-

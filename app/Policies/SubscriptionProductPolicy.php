@@ -32,4 +32,3 @@ class SubscriptionProductPolicy
         return $user->isSysAdmin() || $user->isPiosOwner();
     }
 }
-

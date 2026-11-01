@@ -6,6 +6,7 @@ use App\Casts\PhoneNumber;
 use App\Enums\CustomerCategory;
 use App\Enums\RecordStatus;
 use App\Models\Concerns\ScopesByOwnerVisibility;
+use App\Services\IdentifierGenerator;
 use App\Support\Phone;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -62,6 +63,10 @@ class Customer extends Model
                 // indexed lookup key in the same canonical form.
                 $customer->hp_no_normalized = Phone::toWhatsApp($customer->hp_no) ?: null;
             }
+        });
+
+        static::deleted(function (): void {
+            app(IdentifierGenerator::class)->sync('customer', static::class, 'customer_no');
         });
     }
 

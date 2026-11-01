@@ -48,7 +48,7 @@ class AdminPanelProvider extends PanelProvider
                 __('pios.nav.group.business_owner'),
                 __('pios.nav.group.products'),
                 __('pios.nav.group.fees'),
-                'Langganan',
+                'Subscriptions',
                 __('pios.nav.group.reports'),
                 __('pios.nav.group.system'),
             ])

@@ -17,15 +17,15 @@ class SubscriptionPaymentResource extends Resource
 
     protected static ?string $slug = 'subscription-payments';
 
-    protected static ?string $navigationLabel = 'Pengesahan Bayaran & Resit';
+    protected static ?string $navigationLabel = 'Payment Approvals & Receipts';
 
-    protected static ?string $modelLabel = 'Bayaran Langganan';
+    protected static ?string $modelLabel = 'Subscription Payment';
 
-    protected static ?string $pluralModelLabel = 'Bayaran Langganan';
+    protected static ?string $pluralModelLabel = 'Subscription Payments';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Langganan';
+    protected static string|UnitEnum|null $navigationGroup = 'Subscriptions';
 
     public static function canAccess(): bool
     {

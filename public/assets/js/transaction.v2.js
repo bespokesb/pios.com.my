@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Helper: Render Stepper Nodes ---
     const STEP_ORDER = ['submitted', 'paid', 'packed', 'shipped', 'completed'];
 
-    function renderStepper(stepperEl, currentStatus) {
+    function renderStepper(stepperEl, currentStatus, context = {}) {
         if (!stepperEl) return;
         const normalized = (currentStatus || '').toLowerCase();
         const currentIndex = STEP_ORDER.indexOf(normalized);
@@ -116,17 +116,55 @@ document.addEventListener('DOMContentLoaded', () => {
             const stepIndex = STEP_ORDER.indexOf(stepName);
             const bar = node.querySelector('.stepper-bar');
 
-            node.classList.remove('done', 'active', 'upcoming', 'cancelled');
+            node.classList.remove('done', 'active', 'upcoming', 'cancelled', 'next-action', 'clickable');
+            node.onclick = null;
+            node.removeAttribute('title');
             if (bar) bar.classList.remove('done');
 
             if (normalized === 'cancelled') {
                 node.classList.add('cancelled');
+            } else if (normalized === 'completed') {
+                node.classList.add('done');
+                if (bar) bar.classList.add('done');
             } else if (currentIndex !== -1) {
                 if (stepIndex < currentIndex) {
                     node.classList.add('done');
                     if (bar) bar.classList.add('done');
                 } else if (stepIndex === currentIndex) {
                     node.classList.add('active');
+                } else if (stepIndex === currentIndex + 1 || (normalized === 'paid' && (stepName === 'packed' || stepName === 'shipped'))) {
+                    node.classList.add('next-action', 'clickable');
+                    if (context && context.orderId) {
+                        if (stepName === 'paid') {
+                            node.setAttribute('title', '👉 Mark Paid');
+                            node.onclick = (e) => {
+                                if (e) { e.preventDefault(); e.stopPropagation(); }
+                                closeTxModal();
+                                openMarkPaidModal(context.orderId, context.orderNo, context.customer, context.amount);
+                            };
+                        } else if (stepName === 'packed') {
+                            node.setAttribute('title', '👉 Mark Packed');
+                            node.onclick = (e) => {
+                                if (e) { e.preventDefault(); e.stopPropagation(); }
+                                closeTxModal();
+                                openQuickStatusUpdate(context.orderId, context.orderNo, 'packed', 'Packed');
+                            };
+                        } else if (stepName === 'shipped') {
+                            node.setAttribute('title', '👉 Ship Order');
+                            node.onclick = (e) => {
+                                if (e) { e.preventDefault(); e.stopPropagation(); }
+                                closeTxModal();
+                                openShipOrderModal(context.orderId, context.orderNo, context.customer, context.tracking);
+                            };
+                        } else if (stepName === 'completed') {
+                            node.setAttribute('title', '👉 Mark Completed');
+                            node.onclick = (e) => {
+                                if (e) { e.preventDefault(); e.stopPropagation(); }
+                                closeTxModal();
+                                openQuickStatusUpdate(context.orderId, context.orderNo, 'completed', 'Completed');
+                            };
+                        }
+                    }
                 } else {
                     node.classList.add('upcoming');
                 }
@@ -135,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    window.renderStepper = renderStepper;
 
     // --- 1. Filtering Functionality ---
     function applyFilters() {
@@ -269,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Stepper
-        renderStepper(detailsStepper, status);
+        renderStepper(detailsStepper, status, { orderId, orderNo, customer, amount, tracking });
 
         // Tracking Section
         if (modalTrackingSection) {
@@ -334,62 +373,83 @@ document.addEventListener('DOMContentLoaded', () => {
         // Modal Action Button (dynamic based on status)
         if (modalActionBtn) {
             const normalized = (status || '').toLowerCase().trim();
-            // Reset classes
-            modalActionBtn.classList.remove('btn-step-paid', 'btn-step-ship', 'btn-step-complete');
-            modalActionBtn.style.display = 'none';
+
+            // Store context on the button for the click handler
+            const _orderId = orderId;
+            const _orderNo = orderNo;
+            const _customer = customer;
+            const _amount = amount;
+            const _tracking = tracking;
+
+            modalActionBtn.dataset.orderId = _orderId;
+            modalActionBtn.dataset.orderNo = _orderNo;
+            modalActionBtn.dataset.customer = _customer;
+            modalActionBtn.dataset.amount = _amount;
+            modalActionBtn.dataset.tracking = _tracking;
+
+            // Reset classes & click handler
+            modalActionBtn.classList.remove('btn-step-paid', 'btn-step-ship', 'btn-step-complete', 'is-visible');
             modalActionBtn.onclick = null;
 
-            if (!isTerminal && normalized !== 'cancelled') {
-                // Store context on the button for the click handler
-                const _orderId = orderId;
-                const _orderNo = orderNo;
-                const _customer = customer;
-                const _amount = amount;
-                const _tracking = tracking;
-
-                modalActionBtn.dataset.orderId = _orderId;
-                modalActionBtn.dataset.orderNo = _orderNo;
-                modalActionBtn.dataset.customer = _customer;
-                modalActionBtn.dataset.amount = _amount;
-                modalActionBtn.dataset.tracking = _tracking;
-
-                if (normalized === 'draft') {
-                    modalActionBtn.style.display = 'inline-flex';
-                    modalActionBtn.classList.add('btn-step-paid');
-                    modalActionBtn.textContent = 'Submit Order';
-                    modalActionBtn.onclick = function(e) {
-                        if (e) { e.preventDefault(); e.stopPropagation(); }
-                        closeTxModal();
-                        openQuickStatusUpdate(_orderId, _orderNo, 'submitted', 'Submitted');
-                    };
-                } else if (normalized === 'submitted') {
-                    modalActionBtn.style.display = 'inline-flex';
-                    modalActionBtn.classList.add('btn-step-paid');
-                    modalActionBtn.textContent = 'Mark Paid';
-                    modalActionBtn.onclick = function(e) {
-                        if (e) { e.preventDefault(); e.stopPropagation(); }
-                        closeTxModal();
-                        openMarkPaidModal(_orderId, _orderNo, _customer, _amount);
-                    };
-                } else if (normalized === 'paid' || normalized === 'packed') {
-                    modalActionBtn.style.display = 'inline-flex';
-                    modalActionBtn.classList.add('btn-step-ship');
-                    modalActionBtn.textContent = 'Ship Order';
-                    modalActionBtn.onclick = function(e) {
-                        if (e) { e.preventDefault(); e.stopPropagation(); }
-                        closeTxModal();
-                        openShipOrderModal(_orderId, _orderNo, _customer, _tracking);
-                    };
-                } else if (normalized === 'shipped') {
-                    modalActionBtn.style.display = 'inline-flex';
-                    modalActionBtn.classList.add('btn-step-complete');
-                    modalActionBtn.textContent = 'Mark Completed';
-                    modalActionBtn.onclick = function(e) {
-                        if (e) { e.preventDefault(); e.stopPropagation(); }
-                        closeTxModal();
-                        openQuickStatusUpdate(_orderId, _orderNo, 'completed', 'Completed');
-                    };
-                }
+            // Terminal states (Completed or Cancelled): REMOVE / HIDE the action button completely!
+            if (isTerminal || normalized === 'completed' || normalized === 'cancelled') {
+                modalActionBtn.classList.add('is-hidden');
+                modalActionBtn.style.setProperty('display', 'none', 'important');
+                modalActionBtn.textContent = '';
+                modalActionBtn.setAttribute('data-action', '');
+            } else if (normalized === 'submitted') {
+                // Submitted: Show Mark Paid button
+                modalActionBtn.classList.remove('is-hidden');
+                modalActionBtn.classList.add('btn-step-paid', 'is-visible');
+                modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
+                modalActionBtn.textContent = 'Mark Paid';
+                modalActionBtn.setAttribute('data-action', 'mark-paid');
+                modalActionBtn.onclick = function(e) {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    closeTxModal();
+                    openMarkPaidModal(_orderId, _orderNo, _customer, _amount);
+                };
+            } else if (normalized === 'paid' || normalized === 'packed') {
+                // Paid or Packed: Show Ship Order button
+                modalActionBtn.classList.remove('is-hidden');
+                modalActionBtn.classList.add('btn-step-ship', 'is-visible');
+                modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
+                modalActionBtn.textContent = 'Ship Order';
+                modalActionBtn.setAttribute('data-action', 'ship');
+                modalActionBtn.onclick = function(e) {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    closeTxModal();
+                    openShipOrderModal(_orderId, _orderNo, _customer, _tracking);
+                };
+            } else if (normalized === 'shipped') {
+                // Shipped: Show Mark Completed button
+                modalActionBtn.classList.remove('is-hidden');
+                modalActionBtn.classList.add('btn-step-complete', 'is-visible');
+                modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
+                modalActionBtn.textContent = 'Mark Completed';
+                modalActionBtn.setAttribute('data-action', 'complete');
+                modalActionBtn.onclick = function(e) {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    closeTxModal();
+                    openQuickStatusUpdate(_orderId, _orderNo, 'completed', 'Completed');
+                };
+            } else if (normalized === 'draft') {
+                // Draft: Show Submit Order button
+                modalActionBtn.classList.remove('is-hidden');
+                modalActionBtn.classList.add('btn-step-paid', 'is-visible');
+                modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
+                modalActionBtn.textContent = 'Submit Order';
+                modalActionBtn.setAttribute('data-action', 'submit');
+                modalActionBtn.onclick = function(e) {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    closeTxModal();
+                    openQuickStatusUpdate(_orderId, _orderNo, 'submitted', 'Submitted');
+                };
+            } else {
+                modalActionBtn.classList.add('is-hidden');
+                modalActionBtn.style.setProperty('display', 'none', 'important');
+                modalActionBtn.textContent = '';
+                modalActionBtn.setAttribute('data-action', '');
             }
         }
 
@@ -404,6 +464,14 @@ document.addEventListener('DOMContentLoaded', () => {
         txModal.classList.remove('active');
         txModal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+
+        if (modalActionBtn) {
+            modalActionBtn.classList.remove('is-visible', 'btn-step-paid', 'btn-step-ship', 'btn-step-complete');
+            modalActionBtn.classList.add('is-hidden');
+            modalActionBtn.style.setProperty('display', 'none', 'important');
+            modalActionBtn.textContent = '';
+            modalActionBtn.onclick = null;
+        }
     }
 
     if (closeTxModalBtn) closeTxModalBtn.addEventListener('click', closeTxModal);

@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Helper: Render Stepper Nodes ---
     const STEP_ORDER = ['submitted', 'paid', 'packed', 'shipped', 'completed'];
 
-    function renderStepper(stepperEl, currentStatus) {
+    function renderStepper(stepperEl, currentStatus, context = {}) {
         if (!stepperEl) return;
         const normalized = (currentStatus || '').toLowerCase();
         const currentIndex = STEP_ORDER.indexOf(normalized);
@@ -116,7 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const stepIndex = STEP_ORDER.indexOf(stepName);
             const bar = node.querySelector('.stepper-bar');
 
-            node.classList.remove('done', 'active', 'upcoming', 'cancelled');
+            node.classList.remove('done', 'active', 'upcoming', 'cancelled', 'next-action', 'clickable');
+            node.onclick = null;
+            node.removeAttribute('title');
             if (bar) bar.classList.remove('done');
 
             if (normalized === 'cancelled') {
@@ -127,6 +129,40 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (bar) bar.classList.add('done');
                 } else if (stepIndex === currentIndex) {
                     node.classList.add('active');
+                } else if (stepIndex === currentIndex + 1 || (normalized === 'paid' && (stepName === 'packed' || stepName === 'shipped'))) {
+                    // Next actionable step
+                    node.classList.add('next-action', 'clickable');
+                    if (context && context.orderId) {
+                        if (stepName === 'paid') {
+                            node.setAttribute('title', '👉 Klik untuk Sahkan Bayaran (Mark Paid)');
+                            node.onclick = (e) => {
+                                if (e) { e.preventDefault(); e.stopPropagation(); }
+                                closeTxModal();
+                                openMarkPaidModal(context.orderId, context.orderNo, context.customer, context.amount);
+                            };
+                        } else if (stepName === 'packed') {
+                            node.setAttribute('title', '👉 Klik untuk Tanda Dibungkus (Mark Packed)');
+                            node.onclick = (e) => {
+                                if (e) { e.preventDefault(); e.stopPropagation(); }
+                                closeTxModal();
+                                openQuickStatusUpdate(context.orderId, context.orderNo, 'packed', 'Packed');
+                            };
+                        } else if (stepName === 'shipped') {
+                            node.setAttribute('title', '👉 Klik untuk Hantar Pesanan (Ship Order)');
+                            node.onclick = (e) => {
+                                if (e) { e.preventDefault(); e.stopPropagation(); }
+                                closeTxModal();
+                                openShipOrderModal(context.orderId, context.orderNo, context.customer, context.tracking);
+                            };
+                        } else if (stepName === 'completed') {
+                            node.setAttribute('title', '👉 Klik untuk Tanda Selesai (Mark Completed)');
+                            node.onclick = (e) => {
+                                if (e) { e.preventDefault(); e.stopPropagation(); }
+                                closeTxModal();
+                                openQuickStatusUpdate(context.orderId, context.orderNo, 'completed', 'Completed');
+                            };
+                        }
+                    }
                 } else {
                     node.classList.add('upcoming');
                 }
@@ -135,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    window.renderStepper = renderStepper;
 
     // --- 1. Filtering Functionality ---
     function applyFilters() {
@@ -269,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Stepper
-        renderStepper(detailsStepper, status);
+        renderStepper(detailsStepper, status, { orderId, orderNo, customer, amount, tracking });
 
         // Tracking Section
         if (modalTrackingSection) {
@@ -314,7 +351,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Payment Description
+        const normalized = (status || '').toLowerCase().trim();
+
+        // Payment Description & Banner
         if (modalPaymentStatus) {
             if (status === 'completed') {
                 modalPaymentStatus.textContent = 'Order completed and delivered.';
@@ -331,65 +370,91 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        const pendingPaymentBanner = document.getElementById('modalPendingPaymentBanner');
+        if (pendingPaymentBanner) {
+            pendingPaymentBanner.style.display = (normalized === 'submitted') ? 'flex' : 'none';
+        }
+
         // Modal Action Button (dynamic based on status)
         if (modalActionBtn) {
             const normalized = (status || '').toLowerCase().trim();
-            // Reset classes
-            modalActionBtn.classList.remove('btn-step-paid', 'btn-step-ship', 'btn-step-complete');
-            modalActionBtn.style.display = 'none';
+
+            // Store context on the button for the click handler
+            const _orderId = orderId;
+            const _orderNo = orderNo;
+            const _customer = customer;
+            const _amount = amount;
+            const _tracking = tracking;
+
+            modalActionBtn.dataset.orderId = _orderId;
+            modalActionBtn.dataset.orderNo = _orderNo;
+            modalActionBtn.dataset.customer = _customer;
+            modalActionBtn.dataset.amount = _amount;
+            modalActionBtn.dataset.tracking = _tracking;
+
+            // Reset classes & click handler
+            modalActionBtn.classList.remove('btn-step-paid', 'btn-step-ship', 'btn-step-complete', 'is-visible');
             modalActionBtn.onclick = null;
 
-            if (!isTerminal && normalized !== 'cancelled') {
-                // Store context on the button for the click handler
-                const _orderId = orderId;
-                const _orderNo = orderNo;
-                const _customer = customer;
-                const _amount = amount;
-                const _tracking = tracking;
-
-                modalActionBtn.dataset.orderId = _orderId;
-                modalActionBtn.dataset.orderNo = _orderNo;
-                modalActionBtn.dataset.customer = _customer;
-                modalActionBtn.dataset.amount = _amount;
-                modalActionBtn.dataset.tracking = _tracking;
-
-                if (normalized === 'draft') {
-                    modalActionBtn.style.display = 'inline-flex';
-                    modalActionBtn.classList.add('btn-step-paid');
-                    modalActionBtn.textContent = 'Submit Order';
-                    modalActionBtn.onclick = function(e) {
-                        if (e) { e.preventDefault(); e.stopPropagation(); }
-                        closeTxModal();
-                        openQuickStatusUpdate(_orderId, _orderNo, 'submitted', 'Submitted');
-                    };
-                } else if (normalized === 'submitted') {
-                    modalActionBtn.style.display = 'inline-flex';
-                    modalActionBtn.classList.add('btn-step-paid');
-                    modalActionBtn.textContent = 'Mark Paid';
-                    modalActionBtn.onclick = function(e) {
-                        if (e) { e.preventDefault(); e.stopPropagation(); }
-                        closeTxModal();
-                        openMarkPaidModal(_orderId, _orderNo, _customer, _amount);
-                    };
-                } else if (normalized === 'paid' || normalized === 'packed') {
-                    modalActionBtn.style.display = 'inline-flex';
-                    modalActionBtn.classList.add('btn-step-ship');
-                    modalActionBtn.textContent = 'Ship Order';
-                    modalActionBtn.onclick = function(e) {
-                        if (e) { e.preventDefault(); e.stopPropagation(); }
-                        closeTxModal();
-                        openShipOrderModal(_orderId, _orderNo, _customer, _tracking);
-                    };
-                } else if (normalized === 'shipped') {
-                    modalActionBtn.style.display = 'inline-flex';
-                    modalActionBtn.classList.add('btn-step-complete');
-                    modalActionBtn.textContent = 'Mark Completed';
-                    modalActionBtn.onclick = function(e) {
-                        if (e) { e.preventDefault(); e.stopPropagation(); }
-                        closeTxModal();
-                        openQuickStatusUpdate(_orderId, _orderNo, 'completed', 'Completed');
-                    };
-                }
+            // Terminal states (Completed or Cancelled): REMOVE / HIDE the action button completely!
+            if (isTerminal || normalized === 'completed' || normalized === 'cancelled') {
+                modalActionBtn.classList.add('is-hidden');
+                modalActionBtn.style.setProperty('display', 'none', 'important');
+                modalActionBtn.textContent = '';
+                modalActionBtn.setAttribute('data-action', '');
+            } else if (normalized === 'submitted') {
+                // Submitted: Show Mark Paid button
+                modalActionBtn.classList.remove('is-hidden');
+                modalActionBtn.classList.add('btn-step-paid', 'is-visible');
+                modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
+                modalActionBtn.textContent = 'Mark Paid';
+                modalActionBtn.setAttribute('data-action', 'mark-paid');
+                modalActionBtn.onclick = function(e) {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    closeTxModal();
+                    openMarkPaidModal(_orderId, _orderNo, _customer, _amount);
+                };
+            } else if (normalized === 'paid' || normalized === 'packed') {
+                // Paid or Packed: Show Ship Order button
+                modalActionBtn.classList.remove('is-hidden');
+                modalActionBtn.classList.add('btn-step-ship', 'is-visible');
+                modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
+                modalActionBtn.textContent = 'Ship Order';
+                modalActionBtn.setAttribute('data-action', 'ship');
+                modalActionBtn.onclick = function(e) {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    closeTxModal();
+                    openShipOrderModal(_orderId, _orderNo, _customer, _tracking);
+                };
+            } else if (normalized === 'shipped') {
+                // Shipped: Show Mark Completed button
+                modalActionBtn.classList.remove('is-hidden');
+                modalActionBtn.classList.add('btn-step-complete', 'is-visible');
+                modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
+                modalActionBtn.textContent = 'Mark Completed';
+                modalActionBtn.setAttribute('data-action', 'complete');
+                modalActionBtn.onclick = function(e) {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    closeTxModal();
+                    openQuickStatusUpdate(_orderId, _orderNo, 'completed', 'Completed');
+                };
+            } else if (normalized === 'draft') {
+                // Draft: Show Submit Order button
+                modalActionBtn.classList.remove('is-hidden');
+                modalActionBtn.classList.add('btn-step-paid', 'is-visible');
+                modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
+                modalActionBtn.textContent = 'Submit Order';
+                modalActionBtn.setAttribute('data-action', 'submit');
+                modalActionBtn.onclick = function(e) {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    closeTxModal();
+                    openQuickStatusUpdate(_orderId, _orderNo, 'submitted', 'Submitted');
+                };
+            } else {
+                modalActionBtn.classList.add('is-hidden');
+                modalActionBtn.style.setProperty('display', 'none', 'important');
+                modalActionBtn.textContent = '';
+                modalActionBtn.setAttribute('data-action', '');
             }
         }
 
@@ -404,6 +469,14 @@ document.addEventListener('DOMContentLoaded', () => {
         txModal.classList.remove('active');
         txModal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+
+        if (modalActionBtn) {
+            modalActionBtn.classList.remove('is-visible', 'btn-step-paid', 'btn-step-ship', 'btn-step-complete');
+            modalActionBtn.classList.add('is-hidden');
+            modalActionBtn.style.setProperty('display', 'none', 'important');
+            modalActionBtn.textContent = '';
+            modalActionBtn.onclick = null;
+        }
     }
 
     if (closeTxModalBtn) closeTxModalBtn.addEventListener('click', closeTxModal);
@@ -506,6 +579,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStatusModal.classList.add('active');
         updateStatusModal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
+        const modalBody = updateStatusModal.querySelector('.tx-modal-body');
+        if (modalBody) modalBody.scrollTop = 0;
     }
     window.openUpdateStatusModal = openUpdateStatusModal;
 
@@ -527,6 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStatusModal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
     }
+    window.closeUpdateStatusModal = closeStatusModal;
 
     if (closeStatusModalBtn) closeStatusModalBtn.addEventListener('click', closeStatusModal);
     if (cancelStatusModalBtn) cancelStatusModalBtn.addEventListener('click', closeStatusModal);
@@ -562,6 +638,8 @@ document.addEventListener('DOMContentLoaded', () => {
         markPaidModal.classList.add('active');
         markPaidModal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
+        const modalBody = markPaidModal.querySelector('.tx-modal-body');
+        if (modalBody) modalBody.scrollTop = 0;
     }
     window.openMarkPaidModal = openMarkPaidModal;
 
@@ -571,6 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
         markPaidModal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
     }
+    window.closeMarkPaidModal = closeMarkPaidModal;
 
     if (closeMarkPaidModalBtn) closeMarkPaidModalBtn.addEventListener('click', closeMarkPaidModal);
     if (cancelMarkPaidModalBtn) cancelMarkPaidModalBtn.addEventListener('click', closeMarkPaidModal);
@@ -586,17 +665,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const orderId = markPaidOrderId ? markPaidOrderId.value : null;
             if (!orderId) return;
 
-            const referenceNo = paymentReferenceInput ? paymentReferenceInput.value.trim() : '';
-            if (!referenceNo) {
-                if (markPaidModalError) {
-                    markPaidModalError.textContent = 'Please enter a payment reference number.';
-                    markPaidModalError.style.display = 'block';
-                }
-                if (paymentReferenceInput) paymentReferenceInput.focus();
-                return;
-            }
-
             const paymentType = paymentMethodSelect ? paymentMethodSelect.value : 'bank_transfer';
+            let referenceNo = paymentReferenceInput ? paymentReferenceInput.value.trim() : '';
+            if (!referenceNo) {
+                referenceNo = (paymentType === 'cash') ? 'CASH-PAYMENT' : 'MANUAL-' + Date.now();
+            }
 
             if (submitMarkPaidBtn) submitMarkPaidBtn.disabled = true;
             if (submitMarkPaidBtnText) submitMarkPaidBtnText.textContent = 'Verifying...';
@@ -695,6 +768,8 @@ document.addEventListener('DOMContentLoaded', () => {
         shipOrderModal.classList.add('active');
         shipOrderModal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
+        const modalBody = shipOrderModal.querySelector('.tx-modal-body');
+        if (modalBody) modalBody.scrollTop = 0;
     }
     window.openShipOrderModal = openShipOrderModal;
 
@@ -704,6 +779,7 @@ document.addEventListener('DOMContentLoaded', () => {
         shipOrderModal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
     }
+    window.closeShipOrderModal = closeShipOrderModal;
 
     if (closeShipOrderModalBtn) closeShipOrderModalBtn.addEventListener('click', closeShipOrderModal);
     if (cancelShipOrderModalBtn) cancelShipOrderModalBtn.addEventListener('click', closeShipOrderModal);
@@ -934,18 +1010,63 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    window.triggerMarkPaidFromCurrentModal = function() {
+        if (!modalActionBtn) return;
+        const orderId = modalActionBtn.dataset.orderId;
+        const orderNo = modalActionBtn.dataset.orderNo;
+        const customer = modalActionBtn.dataset.customer;
+        const amount = modalActionBtn.dataset.amount;
+        closeTxModal();
+        openMarkPaidModal(orderId, orderNo, customer, amount);
+    };
+
     function updateActionButtons(container, order) {
         const actionGroup = container.querySelector('.tx-action-group') || container.querySelector('.tx-card-actions');
         if (!actionGroup) return;
 
-        // Clean up any stray step/update buttons in the Action column (next action lives inside View modal)
-        const stepBtn = actionGroup.querySelector('.btn-tx-step');
-        if (stepBtn) stepBtn.remove();
-        const statusBtn = actionGroup.querySelector('.btn-tx-status');
-        if (statusBtn) statusBtn.remove();
+        // Clean up previous quick action button
+        const oldQuickBtn = actionGroup.querySelector('.btn-tx-quick-paid, .btn-tx-quick-ship, .btn-tx-quick-complete, .btn-tx-step, .btn-tx-status');
+        if (oldQuickBtn) oldQuickBtn.remove();
+
+        const status = (order.status || '').toLowerCase();
+        const orderId = order.id;
+        const orderNo = order.order_no;
+        const customer = container.getAttribute('data-customer') || '';
+        const amount = container.getAttribute('data-amount') || '0';
+        const tracking = order.tracking_number || '';
+
+        let quickBtn = null;
+        if (status === 'submitted') {
+            quickBtn = document.createElement('button');
+            quickBtn.type = 'button';
+            quickBtn.className = 'btn-tx-quick-paid';
+            quickBtn.textContent = '💳 Mark Paid';
+            quickBtn.onclick = () => openMarkPaidModal(orderId, orderNo, customer, amount);
+        } else if (status === 'paid' || status === 'packed') {
+            quickBtn = document.createElement('button');
+            quickBtn.type = 'button';
+            quickBtn.className = 'btn-tx-quick-ship';
+            quickBtn.textContent = '🚚 Ship';
+            quickBtn.onclick = () => openShipOrderModal(orderId, orderNo, customer, tracking);
+        } else if (status === 'shipped') {
+            quickBtn = document.createElement('button');
+            quickBtn.type = 'button';
+            quickBtn.className = 'btn-tx-quick-complete';
+            quickBtn.textContent = '✅ Complete';
+            quickBtn.onclick = () => openQuickStatusUpdate(orderId, orderNo, 'completed', 'Completed');
+        }
+
+        if (quickBtn) {
+            const viewBtn = actionGroup.querySelector('.btn-tx-view');
+            if (viewBtn && viewBtn.nextSibling) {
+                actionGroup.insertBefore(quickBtn, viewBtn.nextSibling);
+            } else {
+                actionGroup.appendChild(quickBtn);
+            }
+        }
 
         // If order is paid/packed/shipped/completed, ensure Receipt button exists
-        const isPaid = ['paid', 'packed', 'shipped', 'completed'].includes((order.status || '').toLowerCase());
+        const isPaid = ['paid', 'packed', 'shipped', 'completed'].includes(status);
         let receiptLink = actionGroup.querySelector('a[title="View Receipt"]');
         if (isPaid && !receiptLink) {
             receiptLink = document.createElement('a');

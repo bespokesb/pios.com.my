@@ -7,6 +7,7 @@ use App\Http\Controllers\Business\DashboardController;
 use App\Http\Controllers\Business\FeeController;
 use App\Http\Controllers\Business\ProductController;
 use App\Http\Controllers\Business\ReportController;
+use App\Http\Controllers\Business\SettingController;
 use App\Http\Controllers\Business\SubscriptionController;
 use App\Http\Controllers\Business\TransactionController;
 use App\Http\Controllers\MarketplaceController;
@@ -93,11 +94,21 @@ Route::middleware(['auth', EnsureBusinessOwnerPortalAccess::class])->group(funct
     // Subscriptions (Langganan BGE & Sistem)
     Route::get('/business/subscriptions', [SubscriptionController::class, 'index'])->name('business.subscriptions.index');
     Route::post('/business/subscriptions', [SubscriptionController::class, 'store'])->name('business.subscriptions.store');
+    Route::post('/business/subscriptions/renew-whatsapp', [SubscriptionController::class, 'renewViaWhatsApp'])->name('business.subscriptions.renew-whatsapp');
     Route::get('/subscriptions', [SubscriptionController::class, 'index']);
 
     // Reports
     Route::get('/business/reports', [ReportController::class, 'index'])->name('business.reports.index');
     Route::get('/reports', [ReportController::class, 'index']);
+
+    // Settings (Tetapan WhatsApp Blaster, Profil & Kata Laluan)
+    Route::get('/business/settings', [SettingController::class, 'index'])->name('business.settings.index');
+    Route::post('/business/settings/whatsapp', [SettingController::class, 'updateWhatsApp'])->name('business.settings.whatsapp.update');
+    Route::post('/business/settings/whatsapp/test', [SettingController::class, 'testWhatsApp'])->name('business.settings.whatsapp.test');
+    Route::post('/business/settings/profile', [SettingController::class, 'updateProfile'])->name('business.settings.profile.update');
+    Route::post('/business/settings/password', [SettingController::class, 'updatePassword'])->name('business.settings.password.update');
+    Route::post('/business/products/{product}/blast', [SettingController::class, 'blastProduct'])->name('business.products.blast');
+    Route::get('/settings', [SettingController::class, 'index']);
 });
 
 // Public Customer Marketplace

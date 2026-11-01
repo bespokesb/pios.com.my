@@ -10,6 +10,7 @@ use App\Services\AuditLogger;
 use App\Services\IdentifierGenerator;
 use App\Services\RegistrationAccountCreator;
 use App\Services\RegistrationApprover;
+use App\Services\SubscriptionService;
 use App\Services\WhatsAppPassSender;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -22,6 +23,26 @@ class CreateBusinessOwner extends CreateRecord
     protected static string $resource = BusinessOwnerResource::class;
 
     private array $accountData = [];
+
+    protected function getCreateFormAction(): Action
+    {
+        return parent::getCreateFormAction()
+            ->extraAttributes([
+                'wire:loading.attr' => 'disabled',
+                'wire:target' => 'create',
+                'x-on:click' => 'setTimeout(() => { $el.disabled = true; }, 0)',
+            ]);
+    }
+
+    protected function getCreateAnotherFormAction(): Action
+    {
+        return parent::getCreateAnotherFormAction()
+            ->extraAttributes([
+                'wire:loading.attr' => 'disabled',
+                'wire:target' => 'createAnother',
+                'x-on:click' => 'setTimeout(() => { $el.disabled = true; }, 0)',
+            ]);
+    }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
@@ -53,6 +74,17 @@ class CreateBusinessOwner extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
+        $recentDuplicate = BusinessOwner::query()
+            ->where('created_by', auth()->id())
+            ->where('applicant_name', $data['applicant_name'])
+            ->where('created_at', '>=', now()->subSeconds(15))
+            ->latest()
+            ->first();
+
+        if ($recentDuplicate) {
+            return $recentDuplicate;
+        }
+
         return BusinessOwner::query()->create($data);
     }
 
@@ -81,6 +113,8 @@ class CreateBusinessOwner extends CreateRecord
         }
 
         app(RegistrationApprover::class)->generateSetupFee($this->record);
+        app(SubscriptionService::class)->ensureInitialBgeSubscription($this->record);
+        app(SubscriptionService::class)->ensureInitialBgeSubscription($this->record);
 
         if ($password !== null) {
             $waUrl = WhatsAppPassSender::forBusinessOwner($this->record->fresh(), $password);
@@ -136,7 +170,7 @@ class CreateBusinessOwner extends CreateRecord
 
     private function validateDuplicateContact(array $data): void
     {
-        foreach (['ic_no' => 'IC No', 'hp_no' => 'HP No'] as $field => $label) {
+        foreach (['ic_no' => 'IC No', 'hp_no' => 'HP No', 'email' => 'Email address'] as $field => $label) {
             if (blank($data[$field] ?? null)) {
                 continue;
             }
@@ -147,6 +181,7 @@ class CreateBusinessOwner extends CreateRecord
                 ->exists()) {
                 throw ValidationException::withMessages([
                     "data.{$field}" => "{$label} already belongs to another Business Owner for this Partner.",
+                    $field => "{$label} already belongs to another Business Owner for this Partner.",
                 ]);
             }
         }

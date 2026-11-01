@@ -224,7 +224,7 @@ class BusinessProductManagementTest extends TestCase
         $indexResponse->assertSee($product->firstShareableImageUrl(), escape: false);
     }
 
-    public function test_business_owner_can_update_product_with_new_image(): void
+    public function test_business_owner_keeps_existing_image_when_uploading_new_image(): void
     {
         $product = Product::factory()->forBusinessOwner($this->bo)->create([
             'name' => 'Produk Asal',
@@ -245,9 +245,37 @@ class BusinessProductManagementTest extends TestCase
 
         $product->refresh();
         $this->assertNotNull($product->media_assets);
-        $this->assertCount(1, $product->media_assets);
-        Storage::disk('public')->assertExists($product->media_assets[0]);
-        $this->assertStringNotContainsString('old_photo.jpg', $product->media_assets[0]);
+        $this->assertCount(2, $product->media_assets);
+        $this->assertSame('products/old_photo.jpg', $product->media_assets[0]);
+        Storage::disk('public')->assertExists($product->media_assets[1]);
+    }
+
+    public function test_business_owner_can_delete_specific_existing_image(): void
+    {
+        Storage::disk('public')->put('products/to_delete.jpg', 'fake-image-content');
+        Storage::disk('public')->put('products/to_keep.jpg', 'fake-image-content-2');
+
+        $product = Product::factory()->forBusinessOwner($this->bo)->create([
+            'name' => 'Produk Dua Gambar',
+            'selling_price' => 50.00,
+            'media_assets' => ['products/to_delete.jpg', 'products/to_keep.jpg'],
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->put(route('business.products.update', $product), [
+                'name' => 'Produk Dua Gambar',
+                'media_manager_active' => 1,
+                'existing_media' => ['products/to_keep.jpg'],
+                'removed_media' => ['products/to_delete.jpg'],
+            ]);
+
+        $response->assertRedirect(route('business.products.index'));
+        $response->assertSessionHas('success');
+
+        $product->refresh();
+        $this->assertSame(['products/to_keep.jpg'], $product->media_assets);
+        Storage::disk('public')->assertMissing('products/to_delete.jpg');
+        Storage::disk('public')->assertExists('products/to_keep.jpg');
     }
 
     public function test_business_owner_can_remove_video_via_update(): void

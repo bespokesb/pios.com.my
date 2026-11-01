@@ -14,6 +14,7 @@ use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionProduct;
 use App\Models\User;
 use App\Services\SubscriptionService;
+use App\Services\WhatsAppPassSender;
 use Database\Seeders\SubscriptionProductSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -290,6 +291,253 @@ class SubscriptionModuleTest extends TestCase
         $response->assertSee('Bengkel Abu');
         $response->assertSee('BizGrowth Engine (BGE)');
         $response->assertSee('RM 30.00');
-        $response->assertSee('LULUS &amp; DISAHKAN', escape: false);
+        $response->assertSee('APPROVED &amp; VERIFIED', escape: false);
+        $response->assertSee('Official Receipt');
+    }
+
+    public function test_partner_directly_records_and_confirms_bo_payment_with_bundle(): void
+    {
+        $partnerUser = User::factory()->create([
+            'name' => 'Partner Syazwan',
+            'role' => UserRole::Partner,
+            'status' => UserStatus::Active,
+        ]);
+        $partner = Partner::factory()->create([
+            'user_id' => $partnerUser->id,
+            'applicant_name' => 'Partner Syazwan',
+        ]);
+
+        $boUser = User::factory()->create(['role' => UserRole::BusinessOwner, 'status' => UserStatus::Active]);
+        $bo = BusinessOwner::factory()->create([
+            'user_id' => $boUser->id,
+            'partner_id' => $partner->id,
+            'applicant_name' => 'Kedai Kopi Rozita',
+            'hp_no' => '0198887766',
+        ]);
+
+        $service = app(SubscriptionService::class);
+
+        // Partner records 2-month bundle (RM 60.00, 60 days) via Cash
+        $payment = $service->recordPartnerPaymentForBo(
+            $partnerUser,
+            $bo,
+            months: 2,
+            paymentMethod: 'cash',
+            referenceNo: 'CASH-REF-001',
+            notes: 'Received cash at shop.'
+        );
+
+        $this->assertNotNull($payment);
+        $this->assertSame('approved', $payment->status);
+        $this->assertEquals(60.00, (float) $payment->amount);
+        $this->assertSame(60, $payment->period_days);
+        $this->assertSame('cash', $payment->payment_method);
+        $this->assertNotNull($payment->receipt_no);
+        $this->assertStringStartsWith('RCT', $payment->receipt_no);
+        $this->assertSame($partnerUser->id, $payment->approved_by);
+
+        // Verify Subscription countdown (extends existing 48h trial by 60 days)
+        $sub = $payment->subscription->fresh();
+        $this->assertTrue($sub->isActive());
+        $this->assertSame('active', $sub->status);
+        $this->assertGreaterThanOrEqual(60, $sub->daysRemaining());
+        $this->assertLessThanOrEqual(62, $sub->daysRemaining());
+
+        // Verify Official Receipt reflects bundle details in English
+        $response = $this->actingAs($boUser)
+            ->get(route('subscriptions.receipt', $payment->payment_no));
+
+        $response->assertOk();
+        $response->assertSee($payment->receipt_no);
+        $response->assertSee('RM 60.00');
+        $response->assertSee('60 Days');
+        $response->assertSee('Cash');
+        $response->assertSee('Partner Syazwan');
+
+        // Verify WhatsApp receipt text generator
+        $waReceiptUrl = WhatsAppPassSender::forSubscriptionReceiptToBo($payment);
+        $this->assertNotNull($waReceiptUrl);
+        $this->assertStringContainsString('60198887766', $waReceiptUrl);
+        $this->assertStringContainsString(rawurlencode('RM 60.00'), $waReceiptUrl);
+        $this->assertStringContainsString(rawurlencode('2 Month(s) (60 Days)'), $waReceiptUrl);
+        $this->assertStringContainsString(rawurlencode($payment->receipt_no), $waReceiptUrl);
+    }
+
+    public function test_owner_cannot_approve_bo_payment_only_partner_or_sysadmin_can(): void
+    {
+        $owner = User::factory()->create(['role' => UserRole::PiosOwner, 'status' => UserStatus::Active]);
+        $partnerUser = User::factory()->create(['role' => UserRole::Partner, 'status' => UserStatus::Active]);
+        $partner = Partner::factory()->create(['user_id' => $partnerUser->id]);
+
+        $boUser = User::factory()->create(['role' => UserRole::BusinessOwner, 'status' => UserStatus::Active]);
+        $bo = BusinessOwner::factory()->create([
+            'user_id' => $boUser->id,
+            'partner_id' => $partner->id,
+        ]);
+
+        $bge = SubscriptionProduct::where('code', 'bge')->first();
+
+        $payment = app(SubscriptionService::class)->submitPayment($boUser, $bge, [
+            'payment_method' => 'bank_transfer',
+        ]);
+
+        $service = app(SubscriptionService::class);
+
+        // Owner cannot approve BO payment (verification is exclusively by Partner)
+        $this->assertFalse($service->canApprove($owner, $payment));
+
+        // Partner CAN approve
+        $this->assertTrue($service->canApprove($partnerUser, $payment));
+
+        // Attempting owner approval throws ValidationException
+        $this->expectException(ValidationException::class);
+        $service->approvePayment($payment, $owner);
+    }
+
+    public function test_partner_can_approve_bo_payment_with_bundle_via_filament_table(): void
+    {
+        Filament::setCurrentPanel('partner');
+
+        $partnerUser = User::factory()->create([
+            'name' => 'Partner Firdaus',
+            'role' => UserRole::Partner,
+            'status' => UserStatus::Active,
+        ]);
+        $partner = Partner::factory()->create(['user_id' => $partnerUser->id]);
+
+        $boUser = User::factory()->create(['role' => UserRole::BusinessOwner, 'status' => UserStatus::Active]);
+        $bo = BusinessOwner::factory()->create([
+            'user_id' => $boUser->id,
+            'partner_id' => $partner->id,
+            'applicant_name' => 'Kedai Runcit Mak Esah',
+        ]);
+
+        $bge = SubscriptionProduct::where('code', 'bge')->first();
+
+        // Business owner submitted payment (default 30 days, RM 30)
+        $payment = app(SubscriptionService::class)->submitPayment($boUser, $bge, [
+            'payment_method' => 'cash',
+        ]);
+
+        $this->actingAs($partnerUser);
+
+        Livewire::test(ListPartnerBoPaymentApprovals::class)
+            ->callTableAction('approve', $payment, [
+                'months' => 2, // 2 Months bundle (RM 60, 60 days)
+                'payment_method' => 'cash',
+                'notes' => 'Confirmed 2 months bundle.',
+            ])
+            ->assertHasNoTableActionErrors();
+
+        $payment->refresh();
+        $this->assertSame('approved', $payment->status);
+        $this->assertEquals(60.00, (float) $payment->amount);
+        $this->assertSame(60, $payment->period_days);
+        $this->assertNotNull($payment->receipt_no);
+
+        $sub = $payment->subscription->fresh();
+        $this->assertTrue($sub->isActive());
+        $this->assertSame('active', $sub->status);
+    }
+
+    public function test_new_business_owner_gets_initial_48_hour_bge_trial_subscription(): void
+    {
+        $partnerUser = User::factory()->create(['role' => UserRole::Partner, 'status' => UserStatus::Active]);
+        $partner = Partner::factory()->create(['user_id' => $partnerUser->id]);
+
+        $boUser = User::factory()->create(['role' => UserRole::BusinessOwner, 'status' => UserStatus::Active]);
+        $bo = BusinessOwner::factory()->create([
+            'user_id' => $boUser->id,
+            'partner_id' => $partner->id,
+            'created_at' => now(),
+        ]);
+
+        $subscription = app(SubscriptionService::class)->ensureInitialBgeSubscription($bo);
+
+        $this->assertNotNull($subscription);
+        $this->assertSame('trial', $subscription->status);
+        $this->assertTrue($subscription->isActive());
+        $this->assertTrue($subscription->isTrial());
+        $this->assertFalse($subscription->isExpired());
+        $this->assertGreaterThan(0, $subscription->hoursRemaining());
+        $this->assertLessThanOrEqual(48, $subscription->hoursRemaining());
+    }
+
+    public function test_business_owner_created_more_than_48_hours_ago_is_marked_expired(): void
+    {
+        $partnerUser = User::factory()->create(['role' => UserRole::Partner, 'status' => UserStatus::Active]);
+        $partner = Partner::factory()->create(['user_id' => $partnerUser->id]);
+
+        $boUser = User::factory()->create(['role' => UserRole::BusinessOwner, 'status' => UserStatus::Active]);
+        $bo = BusinessOwner::factory()->create([
+            'user_id' => $boUser->id,
+            'partner_id' => $partner->id,
+            'created_at' => now()->subHours(49),
+        ]);
+
+        $subscription = app(SubscriptionService::class)->ensureInitialBgeSubscription($bo);
+
+        $this->assertNotNull($subscription);
+        $this->assertSame('expired', $subscription->status);
+        $this->assertFalse($subscription->isActive());
+        $this->assertFalse($subscription->isTrial());
+        $this->assertTrue($subscription->isExpired());
+        $this->assertSame(0, $subscription->hoursRemaining());
+    }
+
+    public function test_business_owner_with_active_trial_sees_trial_banner_on_dashboard(): void
+    {
+        $partnerUser = User::factory()->create(['role' => UserRole::Partner, 'status' => UserStatus::Active]);
+        $partner = Partner::factory()->create(['user_id' => $partnerUser->id]);
+
+        $boUser = User::factory()->create(['role' => UserRole::BusinessOwner, 'status' => UserStatus::Active]);
+        $bo = BusinessOwner::factory()->create([
+            'user_id' => $boUser->id,
+            'partner_id' => $partner->id,
+            'created_at' => now()->subHours(2),
+        ]);
+
+        $response = $this->actingAs($boUser)->get(route('business.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('48-Hour Free Trial');
+        $response->assertSee('Your BizGrowth Engine (BGE) trial access has');
+        $response->assertDontSee('id="bgeExpiredModalOverlay"', escape: false);
+    }
+
+    public function test_business_owner_with_expired_trial_sees_popup_modal_with_partner_whatsapp(): void
+    {
+        $partnerUser = User::factory()->create(['role' => UserRole::Partner, 'status' => UserStatus::Active]);
+        $partner = Partner::factory()->create([
+            'user_id' => $partnerUser->id,
+            'applicant_name' => 'Dato Partner Hebat',
+            'partner_no' => 'P1001',
+            'hp_no' => '0123456789',
+        ]);
+
+        $boUser = User::factory()->create(['role' => UserRole::BusinessOwner, 'status' => UserStatus::Active]);
+        $bo = BusinessOwner::factory()->create([
+            'user_id' => $boUser->id,
+            'partner_id' => $partner->id,
+            'applicant_name' => 'Kedai Jaya',
+            'created_at' => now()->subHours(50),
+        ]);
+
+        $response = $this->actingAs($boUser)->get(route('business.dashboard'));
+
+        $response->assertOk();
+        // Modal overlay present
+        $response->assertSee('id="bgeExpiredModalOverlay"', escape: false);
+        $response->assertSee('BGE Subscription Required');
+        $response->assertSee('Your 48-hour BizGrowth Engine (BGE) free trial period has ended.');
+        $response->assertSee('Dato Partner Hebat');
+        $response->assertSee('P1001');
+        $response->assertSee('Contact Partner via WhatsApp');
+        $response->assertSee('https://wa.me/60123456789', escape: false);
+
+        // Subscriptions page does not display the blocking modal so they can pay
+        $subResponse = $this->actingAs($boUser)->get(route('business.subscriptions.index'));
+        $subResponse->assertOk();
+        $subResponse->assertDontSee('id="bgeExpiredModalOverlay"', escape: false);
     }
 }

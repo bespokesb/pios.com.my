@@ -193,6 +193,70 @@ class PartnerRegistrationTest extends TestCase
         $this->assertContains('admin/partners/{record}/edit', $routes);
     }
 
+    public function test_rapid_double_click_on_create_partner_does_not_create_duplicate_record(): void
+    {
+        $admin = $this->adminUser();
+        $this->actingAs($admin);
+
+        // First click
+        Livewire::test(CreatePartner::class)
+            ->fillForm([
+                'applicant_name' => 'Fast Click Partner',
+                'status' => 'active',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(1, Partner::query()->where('applicant_name', 'Fast Click Partner')->count());
+
+        // Second click within 15 seconds (same user, same applicant name)
+        Livewire::test(CreatePartner::class)
+            ->fillForm([
+                'applicant_name' => 'Fast Click Partner',
+                'status' => 'active',
+            ])
+            ->call('create');
+
+        $this->assertSame(1, Partner::query()->where('applicant_name', 'Fast Click Partner')->count());
+    }
+
+    public function test_edit_partner_links_existing_unlinked_user_and_saves_successfully(): void
+    {
+        $admin = $this->adminUser();
+        $this->actingAs($admin);
+
+        $unlinkedUser = User::factory()->create([
+            'email' => 'unlinked-partner@pios.test',
+            'name' => 'Unlinked Partner User',
+            'role' => UserRole::Partner,
+            'status' => UserStatus::Active,
+        ]);
+
+        $partner = Partner::query()->create([
+            'user_id' => null,
+            'partner_no' => 'P000999',
+            'applicant_name' => 'Unlinked Partner',
+            'email' => 'unlinked-partner@pios.test',
+            'status' => 'active',
+        ]);
+
+        Livewire::test(EditPartner::class, ['record' => $partner->id])
+            ->fillForm([
+                'create_user' => true,
+                'account_password' => 'linked-pass-123',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $partner->refresh();
+        $this->assertSame($unlinkedUser->id, $partner->user_id);
+        $this->assertTrue(Hash::check('linked-pass-123', $unlinkedUser->fresh()->password));
+        $this->assertDatabaseHas('business_owners', [
+            'user_id' => $unlinkedUser->id,
+            'email' => 'unlinked-partner@pios.test',
+        ]);
+    }
+
     private function adminUser(): User
     {
         return User::factory()->create([

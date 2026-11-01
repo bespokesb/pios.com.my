@@ -54,7 +54,7 @@ class PartnerPanelProvider extends PanelProvider
             ->navigationGroups([
                 __('pios.nav.group.register'),
                 'Customers',
-                'Langganan',
+                'Subscriptions',
             ])
             ->resources([
                 PartnerResource::class,

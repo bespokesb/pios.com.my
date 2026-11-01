@@ -21,15 +21,15 @@ class SubscriptionProductResource extends Resource
 
     protected static ?string $slug = 'subscription-products';
 
-    protected static ?string $navigationLabel = 'Pelan / Produk Langganan';
+    protected static ?string $navigationLabel = 'Subscription Products';
 
-    protected static ?string $modelLabel = 'Produk Langganan';
+    protected static ?string $modelLabel = 'Subscription Product';
 
-    protected static ?string $pluralModelLabel = 'Produk Langganan';
+    protected static ?string $pluralModelLabel = 'Subscription Products';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSparkles;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Langganan';
+    protected static string|UnitEnum|null $navigationGroup = 'Subscriptions';
 
     public static function canAccess(): bool
     {

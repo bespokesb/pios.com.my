@@ -165,6 +165,23 @@ class Product extends Model
             ->all();
     }
 
+    /**
+     * All shareable image items with raw asset path and resolved public URL.
+     *
+     * @return array<int, array{path: string, url: string}>
+     */
+    public function imageItems(): array
+    {
+        return collect($this->media_assets ?? [])
+            ->filter(fn ($asset): bool => is_string($asset) && $this->isImageAsset($asset))
+            ->map(fn (string $asset): array => [
+                'path' => $asset,
+                'url' => $this->resolveMediaUrl($asset),
+            ])
+            ->values()
+            ->all();
+    }
+
     public function firstShareableImageUrl(): ?string
     {
         foreach ($this->media_assets ?? [] as $asset) {

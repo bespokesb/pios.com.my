@@ -20,15 +20,15 @@ class PartnerSubscriptionResource extends Resource
 
     protected static ?string $slug = 'subscriptions';
 
-    protected static ?string $navigationLabel = 'Langganan Saya';
+    protected static ?string $navigationLabel = 'My Subscriptions';
 
-    protected static ?string $modelLabel = 'Langganan Rakan Kongsi';
+    protected static ?string $modelLabel = 'Partner Subscription';
 
-    protected static ?string $pluralModelLabel = 'Langganan & Bayaran Saya';
+    protected static ?string $pluralModelLabel = 'My Subscriptions & Payments';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSparkles;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Langganan';
+    protected static string|UnitEnum|null $navigationGroup = 'Subscriptions';
 
     public static function canAccess(): bool
     {
@@ -51,33 +51,33 @@ class PartnerSubscriptionResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('payment_no')
-                    ->label('No. Bayaran')
+                    ->label('Payment No')
                     ->weight('bold')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('receipt_no')
-                    ->label('No. Resit')
+                    ->label('Receipt No')
                     ->badge()
                     ->color('success')
                     ->placeholder('-')
                     ->searchable(),
 
                 TextColumn::make('product.name')
-                    ->label('Pelan / Produk')
+                    ->label('Plan / Product')
                     ->searchable(),
 
                 TextColumn::make('amount')
-                    ->label('Jumlah (RM)')
+                    ->label('Amount (MYR)')
                     ->money('MYR')
                     ->sortable(),
 
                 TextColumn::make('payment_method')
-                    ->label('Kaedah')
+                    ->label('Method')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'qr_code' => 'QR DuitNow',
-                        'cash' => 'Tunai (Cash)',
+                        'cash' => 'Cash',
                         'bank_transfer' => 'Bank Transfer',
                         default => ucfirst($state),
                     })
@@ -96,9 +96,9 @@ class PartnerSubscriptionResource extends Resource
                     ->label('Status')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'approved' => 'Disahkan & Aktif',
-                        'rejected' => 'Ditolak',
-                        default => 'Menunggu Pengesahan Owner',
+                        'approved' => 'Approved & Active',
+                        'rejected' => 'Rejected',
+                        default => 'Pending PIOS Owner Approval',
                     })
                     ->color(fn (string $state): string => match ($state) {
                         'approved' => 'success',
@@ -107,18 +107,18 @@ class PartnerSubscriptionResource extends Resource
                     }),
 
                 TextColumn::make('paid_at')
-                    ->label('Tarikh Bayar')
+                    ->label('Payment Date')
                     ->dateTime('d M Y, h:i A')
                     ->sortable(),
 
                 TextColumn::make('approver.name')
-                    ->label('Disahkan Oleh (Owner)')
+                    ->label('Approved By (Owner)')
                     ->placeholder('-'),
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([
                 Action::make('receipt')
-                    ->label('Cetak Resit')
+                    ->label('Print Receipt')
                     ->icon(Heroicon::OutlinedDocumentText)
                     ->color('info')
                     ->visible(fn (SubscriptionPayment $record): bool => $record->isApproved() && filled($record->receipt_no))

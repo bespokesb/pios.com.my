@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProductController extends Controller
@@ -62,12 +63,22 @@ class ProductController extends Controller
         $proposals = ProductProposal::query()->visibleTo($user)->latest()->take(5)->get();
 
         $bo = $user->businessOwner;
+        $customers = $bo
+            ? $bo->customers()
+                ->whereNotNull('hp_no')
+                ->where('hp_no', '!=', '')
+                ->select(['id', 'name', 'hp_no'])
+                ->orderBy('name')
+                ->get()
+            : collect();
         $productLimit = Product::MAX_PER_BUSINESS_OWNER;
         $productCount = $bo ? $bo->productCount() : Product::query()->visibleTo($user)->count();
         $canAddProduct = $productCount < $productLimit;
         $remainingSlots = max(0, $productLimit - $productCount);
 
         return view('business.products', compact(
+            'bo',
+            'customers',
             'products',
             'productTypes',
             'proposals',
@@ -322,7 +333,12 @@ class ProductController extends Controller
             'coverage_area' => ['nullable', 'string', 'max:255'],
             'area' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', 'in:active,inactive'],
-            'media_files' => ['nullable', 'array', 'max:4'],
+            'media_manager_active' => ['nullable', 'boolean'],
+            'existing_media' => ['nullable', 'array'],
+            'existing_media.*' => ['string'],
+            'removed_media' => ['nullable', 'array'],
+            'removed_media.*' => ['string'],
+            'media_files' => ['nullable', 'array', 'max:8'],
             'media_files.*' => ['file', 'mimes:jpg,jpeg,png,webp,mp4,webm,mov', 'max:30720'],
             'video_file' => ['nullable', 'file', 'mimes:mp4,webm,mov', 'max:30720'],
             'remove_video' => ['nullable', 'boolean'],
@@ -357,16 +373,52 @@ class ProductController extends Controller
             $product->status = $validated['status'] === 'active' ? ProductStatus::Active : ProductStatus::Inactive;
         }
 
-        // Handle new image media files
-        if ($request->hasFile('media_files')) {
-            $uploadedPaths = [];
-            foreach ($request->file('media_files') as $file) {
-                if ($file->isValid()) {
-                    $uploadedPaths[] = $file->store('products', 'public');
+        // Handle image media gallery (Preserve existing + Append new + Delete removed)
+        $originalAssets = is_array($product->media_assets) ? $product->media_assets : [];
+
+        if ($request->boolean('media_manager_active') || $request->has('existing_media') || $request->has('removed_media')) {
+            $submittedExisting = (array) $request->input('existing_media', []);
+            $removedMedia = (array) $request->input('removed_media', []);
+
+            // Keep only items that were originally part of this product's media_assets and not in removed_media
+            $finalAssets = [];
+            foreach ($submittedExisting as $path) {
+                if (is_string($path) && in_array($path, $originalAssets, true) && ! in_array($path, $removedMedia, true)) {
+                    $finalAssets[] = $path;
                 }
             }
-            if (! empty($uploadedPaths)) {
-                $product->media_assets = $uploadedPaths;
+
+            // Physically delete files that were explicitly removed from storage (if in public disk)
+            foreach ($removedMedia as $path) {
+                if (is_string($path) && in_array($path, $originalAssets, true)) {
+                    if (Storage::disk('public')->exists($path)) {
+                        Storage::disk('public')->delete($path);
+                    }
+                }
+            }
+
+            // Append newly uploaded files
+            if ($request->hasFile('media_files')) {
+                foreach ($request->file('media_files') as $file) {
+                    if ($file->isValid()) {
+                        $finalAssets[] = $file->store('products', 'public');
+                    }
+                }
+            }
+
+            $product->media_assets = array_values($finalAssets);
+        } else {
+            // When media_manager_active is not present, preserve existing images and append new uploads
+            if ($request->hasFile('media_files')) {
+                $newPaths = [];
+                foreach ($request->file('media_files') as $file) {
+                    if ($file->isValid()) {
+                        $newPaths[] = $file->store('products', 'public');
+                    }
+                }
+                if (! empty($newPaths)) {
+                    $product->media_assets = array_values(array_merge($originalAssets, $newPaths));
+                }
             }
         }
 

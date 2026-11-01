@@ -29,6 +29,7 @@ class RegistrationAccountCreator
             status: $status,
             attach: fn (User $user): bool => $partner->forceFill(['user_id' => $user->id])->save(),
             password: $password,
+            ownerId: $partner->id,
         );
     }
 
@@ -45,6 +46,7 @@ class RegistrationAccountCreator
             status: $status,
             attach: fn (User $user): bool => $businessOwner->forceFill(['user_id' => $user->id])->save(),
             password: $password,
+            ownerId: $businessOwner->id,
         );
     }
 
@@ -72,17 +74,63 @@ class RegistrationAccountCreator
         callable $attach,
         UserStatus $status = UserStatus::Active,
         ?string $password = null,
+        ?int $ownerId = null,
     ): User {
         if (blank($email)) {
             throw ValidationException::withMessages([
+                'data.email' => 'Email is required to create a login account.',
                 'email' => 'Email is required to create a login account.',
             ]);
         }
 
-        if (User::query()->where('email', $email)->exists()) {
-            throw ValidationException::withMessages([
-                'email' => 'A user account already exists for this email.',
-            ]);
+        $existingUser = User::query()->where('email', $email)->first();
+
+        if ($existingUser) {
+            if ($existingUser->isAdmin() || $existingUser->isPiosOwner()) {
+                throw ValidationException::withMessages([
+                    'data.email' => 'This email belongs to an administrative account and cannot be used.',
+                    'email' => 'This email belongs to an administrative account and cannot be used.',
+                ]);
+            }
+
+            if ($role === UserRole::Partner) {
+                $otherPartner = Partner::query()->where('user_id', $existingUser->id)->first();
+                if ($otherPartner && $otherPartner->id !== $ownerId) {
+                    throw ValidationException::withMessages([
+                        'data.email' => 'A user account already exists for another Partner with this email.',
+                        'email' => 'A user account already exists for another Partner with this email.',
+                    ]);
+                }
+            }
+
+            if ($role === UserRole::BusinessOwner) {
+                $otherBo = BusinessOwner::query()->where('user_id', $existingUser->id)->first();
+                if ($otherBo && $otherBo->id !== $ownerId) {
+                    throw ValidationException::withMessages([
+                        'data.email' => 'A user account already exists for another Business Owner with this email.',
+                        'email' => 'A user account already exists for another Business Owner with this email.',
+                    ]);
+                }
+            }
+
+            $userUpdates = [
+                'name' => $name,
+                'role' => $role,
+                'status' => $status,
+            ];
+
+            if (filled($password)) {
+                $userUpdates['password'] = Hash::make($password);
+            }
+
+            $existingUser->forceFill($userUpdates)->save();
+            $attach($existingUser);
+
+            if (blank($password) && blank($existingUser->password)) {
+                $this->sendActivationLink($existingUser, $panelId);
+            }
+
+            return $existingUser;
         }
 
         // If a password was set at creation the account uses it directly; otherwise

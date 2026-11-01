@@ -17,19 +17,19 @@ class SubscriptionProductForm
     {
         return $schema
             ->components([
-                Section::make('Maklumat Produk / Pelan Langganan')
-                    ->description('Tetapkan butiran pelan, harga bulanan, dan had sasaran peranan.')
+                Section::make('Subscription Product / Plan Information')
+                    ->description('Set plan details, monthly pricing, validity period, and target user roles.')
                     ->schema([
                         Grid::make(2)->schema([
                             TextInput::make('name')
-                                ->label('Nama Pelan / Produk')
-                                ->placeholder('Contoh: BizGrowth Engine (BGE) / Sistem POS Pintar')
+                                ->label('Plan / Product Name')
+                                ->placeholder('e.g. BizGrowth Engine (BGE) / Smart POS System')
                                 ->required()
                                 ->maxLength(255),
 
                             TextInput::make('code')
-                                ->label('Kod Unik Sistem')
-                                ->placeholder('Contoh: bge, partner_fee, pos_system')
+                                ->label('System Unique Code')
+                                ->placeholder('e.g. bge, partner_fee, pos_system')
                                 ->required()
                                 ->unique(ignoreRecord: true)
                                 ->maxLength(50),
@@ -37,25 +37,25 @@ class SubscriptionProductForm
 
                         Grid::make(3)->schema([
                             TextInput::make('price')
-                                ->label('Harga Langganan (RM)')
+                                ->label('Subscription Price (MYR)')
                                 ->numeric()
                                 ->prefix('RM')
                                 ->default(30.00)
                                 ->required(),
 
                             TextInput::make('period_days')
-                                ->label('Tempoh Sah (Hari)')
+                                ->label('Validity Period (Days)')
                                 ->numeric()
-                                ->suffix('Hari')
+                                ->suffix('Days')
                                 ->default(30)
                                 ->required(),
 
                             Select::make('target_role')
-                                ->label('Sasaran Pengguna')
+                                ->label('Target User Role')
                                 ->options([
-                                    'all' => 'Semua (Partner & Business Owner)',
-                                    'partner' => 'Partner Sahaja',
-                                    'business_owner' => 'Business Owner Sahaja',
+                                    'all' => 'All (Partner & Business Owner)',
+                                    'partner' => 'Partner Only',
+                                    'business_owner' => 'Business Owner Only',
                                 ])
                                 ->default('all')
                                 ->required(),
@@ -63,43 +63,43 @@ class SubscriptionProductForm
 
                         Grid::make(3)->schema([
                             Toggle::make('is_mandatory')
-                                ->label('Wajib Langgan (Default Mandatory)')
-                                ->helperText('Jika diaktifkan, produk ini adalah wajib dilanggan oleh pengguna yang disasarkan.')
+                                ->label('Mandatory (Default Core Plan)')
+                                ->helperText('If enabled, this plan is mandatory for targeted users.')
                                 ->default(false),
 
                             Toggle::make('is_active')
-                                ->label('Status Aktif (Boleh Dilanggan)')
-                                ->helperText('Nyahaktifkan untuk menyembunyikan pelan ini daripada portal langganan.')
+                                ->label('Active (Available for Subscription)')
+                                ->helperText('Disable to hide this plan from the subscription portal.')
                                 ->default(true),
 
                             TextInput::make('sort_order')
-                                ->label('Susunan Paparan')
+                                ->label('Display Order')
                                 ->numeric()
                                 ->default(0),
                         ]),
 
                         Textarea::make('description')
-                            ->label('Keterangan & Ciri-ciri Produk')
+                            ->label('Product Description & Features')
                             ->rows(3)
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Maklumat Bayaran & DuitNow QR')
-                    ->description('Tetapkan kod QR DuitNow dan arahan bayaran bank untuk rujukan pembayar.')
+                Section::make('Payment Details & DuitNow QR')
+                    ->description('Set DuitNow QR code and bank account payment instructions for payer reference.')
                     ->schema([
                         FileUpload::make('qr_code_image')
-                            ->label('Imej Kod QR DuitNow / QR Pay')
+                            ->label('DuitNow QR Code Image')
                             ->disk('public')
                             ->directory('subscriptions/qrcodes')
                             ->image()
                             ->visibility('public')
-                            ->helperText('Muat naik gambar QR DuitNow untuk memudahkan pembayar mengimbas dan membayar.'),
+                            ->helperText('Upload a DuitNow QR code image for fast scan and pay.'),
 
                         Textarea::make('payment_instructions')
-                            ->label('Arahan Pembayaran & Butiran Akaun Bank')
+                            ->label('Payment Instructions & Bank Account Details')
                             ->rows(4)
-                            ->placeholder("Contoh:\nBank: Maybank\nNo. Akaun: 5621-0678-9012\nNama: Pak Itam Online Supermarket Sdn Bhd\n\nSila muat naik slip transaksi selepas membuat bayaran.")
-                            ->helperText('Arahan ini akan dipaparkan dalam modal pembayaran pengguna.'),
+                            ->placeholder("Bank: Maybank\nAccount No: 512345678901\nAccount Name: Pak Itam Online Supermarket Sdn Bhd\nReference: <Your Phone No / BO No>")
+                            ->columnSpanFull(),
                     ]),
             ]);
     }

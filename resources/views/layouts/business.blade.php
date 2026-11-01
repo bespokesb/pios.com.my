@@ -167,6 +167,21 @@
             --dash-mob-menu-bg: #134C49;
             --color-teal: #0D9488;
             --color-green: #059669;
+            --trial-banner-height: 0px;
+        }
+
+        body.has-trial-banner {
+            --trial-banner-height: 46px;
+        }
+
+        /* Enforce theme fonts globally across all pages and elements */
+        body, input, button, select, textarea {
+            font-family: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif) !important;
+        }
+
+        h1, h2, h3, h4, h5, h6,
+        .dash-heading, .cust-heading, .prod-heading, .fees-heading, .tx-heading {
+            font-family: var(--font-heading, 'Poppins', var(--font-sans)) !important;
         }
 
         /* Action buttons standard teal theme */
@@ -225,15 +240,135 @@
             .mobile-transaction-header,
             .mobile-fees-header,
             .mobile-reports-header,
+            .mobile-settings-header,
             .mobile-header,
             .fullscreen-menu {
                 display: none !important;
             }
             .desktop-sidebar {
                 display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                position: sticky !important;
+                top: var(--trial-banner-height, 0px) !important;
+                height: calc(100vh - var(--trial-banner-height, 0px)) !important;
+                max-height: calc(100vh - var(--trial-banner-height, 0px)) !important;
+                padding: 16px 14px 14px 16px !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+                z-index: 90 !important;
+            }
+            .desktop-sidebar .sidebar-brand {
+                flex-shrink: 0 !important;
+                padding: 4px 6px 14px !important;
+            }
+            .desktop-sidebar .sidebar-logo {
+                height: 38px !important;
+                max-height: 38px !important;
+                width: auto !important;
+                object-fit: contain !important;
+            }
+            .desktop-sidebar .sidebar-nav {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 4px !important;
+                flex: 1 1 auto !important;
+                min-height: 0 !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                padding-right: 2px !important;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+            }
+            .desktop-sidebar .sidebar-nav::-webkit-scrollbar {
+                width: 4px;
+            }
+            .desktop-sidebar .sidebar-nav::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 4px;
+            }
+            .desktop-sidebar .sidebar-item {
+                display: flex !important;
+                align-items: center !important;
+                gap: 12px !important;
+                padding: 8px 12px !important;
+                border-radius: 10px !important;
+                font-size: 0.90rem !important;
+                font-weight: 500 !important;
+                flex-shrink: 0 !important;
+                transition: all 0.15s ease !important;
+            }
+            .desktop-sidebar .sidebar-footer {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-shrink: 0 !important;
+                margin-top: auto !important;
+                padding-top: 12px !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            .desktop-sidebar .sidebar-user {
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+                min-width: 0 !important;
+                flex: 1 !important;
+            }
+            .desktop-sidebar .user-avatar-img {
+                width: 34px !important;
+                height: 34px !important;
+                min-width: 34px !important;
+                border-radius: 50% !important;
+                object-fit: cover !important;
+                border: 2px solid rgba(255, 255, 255, 0.3) !important;
+                flex-shrink: 0 !important;
+            }
+            .desktop-sidebar .user-profile-info {
+                min-width: 0 !important;
+                flex: 1 !important;
+                overflow: hidden !important;
+            }
+            .desktop-sidebar .user-name-text {
+                display: block !important;
+                font-size: 0.85rem !important;
+                font-weight: 600 !important;
+                color: #FFFFFF !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                line-height: 1.2 !important;
+            }
+            .desktop-sidebar .sidebar-logout-btn {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 34px !important;
+                height: 34px !important;
+                min-width: 34px !important;
+                border-radius: 8px !important;
+                background: rgba(255, 255, 255, 0.10) !important;
+                color: #FFFFFF !important;
+                cursor: pointer !important;
+                border: none !important;
+                transition: all 0.2s ease !important;
+                flex-shrink: 0 !important;
+                margin-left: 6px !important;
+            }
+            .desktop-sidebar .sidebar-logout-btn:hover {
+                background: rgba(239, 68, 68, 0.25) !important;
+                color: #F87171 !important;
             }
             .desktop-only {
                 display: block !important;
+            }
+            .settings-main {
+                padding: 32px 36px 60px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box !important;
             }
         }
 
@@ -248,7 +383,8 @@
             .mobile-tx-header,
             .mobile-transaction-header,
             .mobile-fees-header,
-            .mobile-reports-header {
+            .mobile-reports-header,
+            .mobile-settings-header {
                 display: flex !important;
                 align-items: center !important;
                 justify-content: space-between !important;
@@ -431,7 +567,8 @@
             .trans-layout,
             .tx-layout,
             .fees-layout,
-            .reports-layout {
+            .reports-layout,
+            .settings-layout {
                 display: block !important;
                 width: 100% !important;
             }
@@ -441,11 +578,13 @@
             .trans-main,
             .tx-main,
             .fees-main,
-            .reports-main {
+            .reports-main,
+            .settings-main {
                 width: 100% !important;
                 padding: 16px !important;
                 box-sizing: border-box !important;
             }
+        }
     </style>
     <script>
         window.openPiosMenu = function (e) {
@@ -509,7 +648,31 @@
     @stack('styles')
 </head>
 
-<body class="{{ $bodyClass ?? 'dashboard-body' }}">
+@php
+    $currentBgeSub = $bgeSubscription ?? (auth()->check() && auth()->user()->businessOwner ? app(\App\Services\SubscriptionService::class)->ensureInitialBgeSubscription(auth()->user()->businessOwner) : null);
+    $showTrialTopBanner = $currentBgeSub && $currentBgeSub->isTrial();
+    $showExpiredTopBanner = $currentBgeSub && $currentBgeSub->isExpired() && !request()->routeIs('business.subscriptions.*');
+@endphp
+
+<body class="{{ $bodyClass ?? 'dashboard-body' }} {{ ($showTrialTopBanner || $showExpiredTopBanner) ? 'has-trial-banner' : '' }}">
+
+    @if($showTrialTopBanner)
+        <div class="bge-trial-topbanner" style="background: linear-gradient(90deg, #134C49 0%, #1E3A8A 100%); color: #FFFFFF; padding: 10px 20px; font-size: 0.86rem; display: flex; align-items: center; justify-content: space-between; z-index: 100; position: sticky; top: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.15); min-height: 44px; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="background: #E7C46A; color: #0F172A; font-size: 0.72rem; font-weight: 800; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.05em;">48-Hour Free Trial</span>
+                <span>Your BizGrowth Engine (BGE) trial access has <strong>{{ $currentBgeSub->hoursRemaining() }} hours remaining</strong>. Please renew your subscription for uninterrupted access.</span>
+            </div>
+            <a href="{{ route('business.subscriptions.index') }}" style="background: #E7C46A; color: #0F172A; font-weight: 700; padding: 5px 14px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; white-space: nowrap; margin-left: 12px;">Renew BGE</a>
+        </div>
+    @elseif($showExpiredTopBanner)
+        <div class="bge-trial-topbanner" style="background: linear-gradient(90deg, #991B1B 0%, #7F1D1D 100%); color: #FFFFFF; padding: 10px 20px; font-size: 0.86rem; display: flex; align-items: center; justify-content: space-between; z-index: 100; position: sticky; top: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.15); min-height: 44px; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="background: #FEE2E2; color: #991B1B; font-size: 0.72rem; font-weight: 800; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.05em;">Trial Expired</span>
+                <span>Your 48-hour BizGrowth Engine (BGE) trial period has ended. Please renew your subscription for continued access.</span>
+            </div>
+            <a href="{{ route('business.subscriptions.index') }}" style="background: #F87171; color: #FFFFFF; font-weight: 700; padding: 5px 14px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; white-space: nowrap; margin-left: 12px;">Renew BGE Now</a>
+        </div>
+    @endif
 
     <!-- Mobile Top Header (Shown only on Mobile < 992px) -->
     <x-business.mobile-header :title="$headerTitle ?? 'Dashboard'" :customHeaderClass="$mobileHeaderClass ?? 'mobile-dash-header'" />
@@ -527,11 +690,27 @@
         </main>
     </div>
 
+    <!-- BGE Subscription Expired / Pending Modal -->
+    @if(isset($isBgeExpired) && $isBgeExpired && !request()->routeIs('business.subscriptions.*'))
+        <x-business.bge-expired-modal />
+    @endif
+
     <!-- Scripts -->
     <script src="{{ asset('assets/js/dashboard.js') }}?v={{ file_exists(public_path('assets/js/dashboard.js')) ? filemtime(public_path('assets/js/dashboard.js')) : time() }}"></script>
     <script>
         // Mobile menu clean handler
         (function () {
+            function syncTrialBannerHeight() {
+                var banner = document.querySelector('.bge-trial-topbanner');
+                if (banner && banner.offsetHeight > 0) {
+                    document.documentElement.style.setProperty('--trial-banner-height', banner.offsetHeight + 'px');
+                } else {
+                    document.documentElement.style.setProperty('--trial-banner-height', '0px');
+                }
+            }
+            window.addEventListener('resize', syncTrialBannerHeight);
+            syncTrialBannerHeight();
+
             const toggleBtn = document.getElementById('mobileMenuToggleBtn');
             if (toggleBtn) {
                 toggleBtn.onclick = function (e) {

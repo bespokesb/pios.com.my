@@ -516,7 +516,7 @@
                     'has_video' => $prod->hasVideo(),
                     'video_url' => $prod->videoUrl(),
                     'image_url' => $prod->firstShareableImageUrl(),
-                    'images' => $prod->imageUrls(),
+                    'images' => $prod->imageItems(),
                     'update_url' => route('business.products.update', $prod),
                     'delete_url' => route('business.products.destroy', $prod),
                 ];
@@ -547,12 +547,22 @@
                         </svg>
                         <span class="btn-text">View</span>
                     </a>
-                    <a href="{{ $waShareUrl }}" target="_blank" class="btn-prod-action btn-blast text-decoration-none" title="Blast to WhatsApp">
+                    <button type="button" class="btn-prod-action btn-blast btn-open-blast"
+                        data-product-id="{{ $prod->id }}"
+                        data-product-name="{{ $prod->name }}"
+                        data-product-price="{{ number_format((float)$prod->selling_price, 2) }}"
+                        data-product-no="{{ $prod->product_no }}"
+                        data-product-url="{{ route('public.product.show', $prod->product_no) }}"
+                        data-product-desc="{{ $prod->description ?? '' }}"
+                        data-product-image="{{ $prod->firstShareableImageUrl() ?? '' }}"
+                        data-blast-url="{{ route('business.products.blast', $prod) }}"
+                        data-wa-manual-url="{{ $waShareUrl }}"
+                        title="Blast ke WhatsApp">
                         <svg class="action-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M17.472 14.382c-.301-.15-1.782-.879-2.057-.98-.276-.1-.476-.15-.677.15-.201.3-.777.98-.953 1.18-.175.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.787-1.677-2.088-.175-.3-.019-.463.132-.613.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.677-1.632-.928-2.235-.245-.587-.493-.508-.677-.517-.175-.01-.376-.01-.577-.01-.201 0-.527.075-.803.376-.276.3-1.054 1.03-1.054 2.511 0 1.482 1.079 2.911 1.23 3.112.15.2 2.124 3.243 5.145 4.548.719.311 1.28.497 1.718.636.722.23 1.379.197 1.9-.12.57-.348 1.782-.728 2.033-1.431.25-.703.25-1.306.175-1.431-.075-.125-.276-.2-.577-.35zM12 2a10 10 0 0 0-8.59 15.11L2 22l4.98-1.31A10 10 0 1 0 12 2z"></path>
                         </svg>
                         <span class="btn-text">Blast</span>
-                    </a>
+                    </button>
                     <button type="button" class="btn-prod-action btn-edit btn-edit-product" data-product="{{ json_encode($prodJson) }}" title="Edit Product">
                         <svg class="action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -1064,20 +1074,56 @@
                         </div>
                     </div>
 
-                    <!-- Gambar Produk Sedia Ada & Ganti -->
-                    <div>
-                        <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Gambar Produk</label>
+                    <!-- Gambar Produk (Galeri, Kekal Gambar & Padam) -->
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px;">
+                        <input type="hidden" name="media_manager_active" value="1">
+                        <div id="editRemovedMediaContainer"></div>
 
-                        <!-- Existing Images Preview (if exists) -->
-                        <div id="editCurrentImagesBox" style="display: none; margin-bottom: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px;">
-                            <div style="font-size: 0.74rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Gambar Sedia Ada:</div>
-                            <div id="editCurrentImagesGrid" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.84rem; font-weight: 700; color: #1E293B; margin: 0;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                Gambar Produk (Galeri)
+                            </label>
+                            <span id="editTotalImagesBadge" style="font-size: 0.74rem; font-weight: 600; color: #0D9488; background: #CCFBF1; padding: 2px 8px; border-radius: 10px;">Kekal &amp; Tambah</span>
+                        </div>
+                        <p style="font-size: 0.78rem; color: #64748B; margin: 0 0 12px; line-height: 1.45;">
+                            Gambar sedia ada akan <strong>dikekalkan secara automatik</strong>. Anda boleh klik butang <strong>Padam (&times;)</strong> pada mana-mana gambar jika ingin memadamnya, atau muat naik gambar baru untuk ditambah ke galeri.
+                        </p>
+
+                        <!-- Existing Images Section -->
+                        <div id="editCurrentImagesBox" style="display: none; margin-bottom: 14px; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 10px; padding: 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-size: 0.78rem; font-weight: 700; color: #334155;">Gambar Sedia Ada:</span>
+                                <span id="editExistingCount" style="font-size: 0.72rem; color: #64748B;"></span>
+                            </div>
+                            <div id="editCurrentImagesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px;"></div>
+                            <div id="editNoExistingMsg" style="display: none; font-size: 0.76rem; color: #EF4444; font-style: italic; margin-top: 8px; background: #FEF2F2; padding: 6px 10px; border-radius: 6px;">
+                                Semua gambar sedia ada telah ditandakan untuk dipadam.
+                            </div>
                         </div>
 
-                        <label style="display: block; font-size: 0.78rem; font-weight: 500; color: #64748B; margin-bottom: 6px;">Ganti / Tambah Gambar Baru (Pilihan - Maks 4 fail):</label>
-                        <input type="file" id="editMediaFileInput" name="media_files[]" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="width: 100%; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 0.88rem; box-sizing: border-box; background: #FFFFFF;">
-                        <span style="font-size: 0.72rem; color: #64748B;">Biarkan kosong jika ingin mengekalkan gambar sedia ada.</span>
-                        <div id="editMediaPreviewGrid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; margin-top: 10px;"></div>
+                        <!-- Upload New Images Dropzone / File Picker -->
+                        <div>
+                            <label style="display: block; font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Tambah Gambar Baru (Pilihan):</label>
+                            <div id="editMediaDropzone" style="border: 2px dashed #CBD5E1; border-radius: 10px; background: #FFFFFF; padding: 14px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 4px; display: block;">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <p style="margin: 0; font-size: 0.82rem; color: #475569; font-weight: 500;">
+                                    Klik atau tarik gambar baru ke sini untuk <span style="color: #0D9488; font-weight: 700; text-decoration: underline;">Tambah Gambar</span>
+                                </p>
+                                <p style="margin: 2px 0 0; font-size: 0.70rem; color: #94A3B8;">Format JPG, PNG, WEBP &bull; Gambar lama tidak akan hilang</p>
+                                <input type="file" id="editMediaFileInput" name="media_files[]" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="display: none;">
+                            </div>
+
+                            <div id="editMediaPreviewGrid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; margin-top: 10px; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 10px; padding: 10px;"></div>
+                        </div>
                     </div>
 
                     <!-- Coverage Area / Territory -->
@@ -1306,6 +1352,163 @@
                 <div class="modal-footer">
                     <button type="button" id="cancelDeleteBtn" class="btn-modal-cancel">Cancel</button>
                     <button type="submit" class="btn-modal-danger">Ya, Padam Produk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- WhatsApp Blaster Modal -->
+    <div class="modal-overlay" id="blastProductModal" style="display: none;">
+        <div class="modal-card" style="max-width: 580px !important;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #064E3B 0%, #065F46 100%); color: #FFF; border-bottom: none; border-radius: 16px 16px 0 0;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(37,211,102,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="#25D366">
+                            <path d="M17.472 14.382c-.301-.15-1.782-.879-2.057-.98-.276-.1-.476-.15-.677.15-.201.3-.777.98-.953 1.18-.175.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.787-1.677-2.088-.175-.3-.019-.463.132-.613.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.677-1.632-.928-2.235-.245-.587-.493-.508-.677-.517-.175-.01-.376-.01-.577-.01-.201 0-.527.075-.803.376-.276.3-1.054 1.03-1.054 2.511 0 1.482 1.079 2.911 1.23 3.112.15.2 2.124 3.243 5.145 4.548.719.311 1.28.497 1.718.636.722.23 1.379.197 1.9-.12.57-.348 1.782-.728 2.033-1.431.25-.703.25-1.306.175-1.431-.075-.125-.276-.2-.577-.35zM12 2a10 10 0 0 0-8.59 15.11L2 22l4.98-1.31A10 10 0 1 0 12 2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="modal-title" style="color: #FFF !important; margin: 0; font-size: 1.08rem; font-weight: 700;">Blast Promosi WhatsApp</h3>
+                        <p style="margin: 2px 0 0; font-size: 0.78rem; color: #A7F3D0;" id="blastProductSubheading">Hantar promosi produk ke pelanggan</p>
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" id="closeBlastBtn" aria-label="Close modal" style="color: #FFF;">&times;</button>
+            </div>
+
+            <form id="blastProductForm">
+                @csrf
+                <div class="modal-body" style="padding: 20px 24px; gap: 16px;">
+                    <!-- Provider Info Banner -->
+                    @php
+                        $currentProvider = $bo?->whatsapp_provider ?? 'manual';
+                        $providerStatus = $bo?->whatsapp_status ?? 'unconfigured';
+                        $isAutoProvider = in_array($currentProvider, ['fonnte', 'ultramsg']);
+                    @endphp
+
+                    <div style="background: {{ $isAutoProvider ? '#ECFDF5' : '#F8FAFC' }}; border: 1px solid {{ $isAutoProvider ? '#A7F3D0' : '#E2E8F0' }}; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.3rem;">
+                                @if($currentProvider === 'fonnte') ⚡
+                                @elseif($currentProvider === 'ultramsg') 🚀
+                                @else 💬
+                                @endif
+                            </span>
+                            <div>
+                                <div style="font-size: 0.85rem; font-weight: 700; color: #0F172A;">
+                                    Mod Penghantaran:
+                                    <span style="color: {{ $isAutoProvider ? '#059669' : '#0284C7' }};">
+                                        {{ $bo?->whatsAppProviderLabel() ?? 'Manual (wa.me)' }}
+                                    </span>
+                                </div>
+                                <div style="font-size: 0.75rem; color: #64748B;">
+                                    @if($isAutoProvider)
+                                        Auto Blaster via API (Status: <strong>{{ ucfirst($providerStatus) }}</strong>)
+                                    @else
+                                        Pautan terus WhatsApp peribadi (Percuma tanpa API)
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{{ route('business.settings.index') }}" style="font-size: 0.78rem; font-weight: 600; color: #0D9488; text-decoration: none; padding: 6px 12px; background: #FFF; border: 1px solid #CCFBF1; border-radius: 8px; white-space: nowrap;">
+                            ⚙️ Tetapan
+                        </a>
+                    </div>
+
+                    <!-- Target Selection -->
+                    <div>
+                        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #1E293B; margin-bottom: 8px;">
+                            Penerima WhatsApp
+                        </label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1.5px solid #0D9488; background: #F0FDFA; border-radius: 10px; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: #0F172A;" class="blast-target-label">
+                                <input type="radio" name="blast_target" value="all" checked style="accent-color: #0D9488;">
+                                <span>Semua Pelanggan ({{ $customers->count() }})</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1.5px solid #E2E8F0; background: #FFF; border-radius: 10px; cursor: pointer; font-size: 0.82rem; font-weight: 500; color: #475569;" class="blast-target-label">
+                                <input type="radio" name="blast_target" value="selected" style="accent-color: #0D9488;">
+                                <span>Pilih Tertentu</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1.5px solid #E2E8F0; background: #FFF; border-radius: 10px; cursor: pointer; font-size: 0.82rem; font-weight: 500; color: #475569;" class="blast-target-label">
+                                <input type="radio" name="blast_target" value="custom" style="accent-color: #0D9488;">
+                                <span>No. Khas / Ujian</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Custom Phone Input (Hidden by default) -->
+                    <div id="blastCustomPhoneBox" style="display: none;">
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 6px;">
+                            Nombor Telefon Khas / Ujian
+                        </label>
+                        <input type="text" id="blastCustomPhone" name="custom_phone" placeholder="Contoh: 0123456789 atau 60123456789" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 8px; padding: 8px 12px; font-size: 0.88rem; outline: none; box-sizing: border-box;">
+                    </div>
+
+                    <!-- Customer Selection Box (Hidden by default) -->
+                    <div id="blastSelectedBox" style="display: none; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; max-height: 180px; overflow-y: auto; background: #FAFAFA;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.78rem;">
+                            <span style="font-weight: 600; color: #475569;">Pilih pelanggan untuk menerima:</span>
+                            <button type="button" id="blastSelectAllBtn" style="background: none; border: none; color: #0D9488; font-weight: 600; cursor: pointer; padding: 0;">Pilih Semua</button>
+                        </div>
+                        @if($customers->isEmpty())
+                            <p style="font-size: 0.8rem; color: #94A3B8; margin: 0; text-align: center; padding: 12px;">Tiada pelanggan berdaftar dengan nombor telefon ditemui.</p>
+                        @else
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                @foreach($customers as $c)
+                                    <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; padding: 6px 8px; background: #FFF; border: 1px solid #E2E8F0; border-radius: 6px; cursor: pointer;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <input type="checkbox" name="customer_ids[]" value="{{ $c->id }}" class="blast-customer-check" style="accent-color: #0D9488;">
+                                            <span style="font-weight: 600; color: #1E293B;">{{ $c->name }}</span>
+                                        </div>
+                                        <span style="color: #64748B; font-family: monospace; font-size: 0.75rem;">{{ $c->hp_no }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Promo Message Box -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #1E293B; margin: 0;">
+                                Sunting Teks Promosi
+                            </label>
+                            <span style="font-size: 0.72rem; color: #64748B;">Tag <code>{name}</code> diganti automatik</span>
+                        </div>
+                        <textarea id="blastMessageText" rows="6" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 12px; font-size: 0.85rem; line-height: 1.5; outline: none; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+                    </div>
+
+                    <!-- Result / Status Feedback -->
+                    <div id="blastStatusFeedback" style="display: none; padding: 12px; border-radius: 8px; font-size: 0.85rem; line-height: 1.45;"></div>
+                </div>
+
+                <div class="modal-footer" style="padding: 16px 24px; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; gap: 10px; border-radius: 0 0 16px 16px;">
+                    <button type="button" id="cancelBlastBtn" class="btn-modal-cancel">Tutup</button>
+
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" id="copyBlastTextBtn" style="padding: 9px 14px; font-size: 0.82rem; font-weight: 600; color: #475569; background: #FFF; border: 1px solid #CBD5E1; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span id="copyBlastTextLabel">Salin Teks</span>
+                        </button>
+
+                        @if($isAutoProvider)
+                            <button type="button" id="submitAutoBlastBtn" style="padding: 9px 18px; font-size: 0.85rem; font-weight: 700; color: #FFF; background: #0D9488; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(13,148,136,0.25);">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M17.472 14.382c-.301-.15-1.782-.879-2.057-.98-.276-.1-.476-.15-.677.15-.201.3-.777.98-.953 1.18-.175.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.787-1.677-2.088-.175-.3-.019-.463.132-.613.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.677-1.632-.928-2.235-.245-.587-.493-.508-.677-.517-.175-.01-.376-.01-.577-.01-.201 0-.527.075-.803.376-.276.3-1.054 1.03-1.054 2.511 0 1.482 1.079 2.911 1.23 3.112.15.2 2.124 3.243 5.145 4.548.719.311 1.28.497 1.718.636.722.23 1.379.197 1.9-.12.57-.348 1.782-.728 2.033-1.431.25-.703.25-1.306.175-1.431-.075-.125-.276-.2-.577-.35zM12 2a10 10 0 0 0-8.59 15.11L2 22l4.98-1.31A10 10 0 1 0 12 2z"></path>
+                                </svg>
+                                <span id="autoBlastBtnLabel">Hantar Blast Sekarang</span>
+                            </button>
+                        @else
+                            <a id="openManualWaBtn" href="#" target="_blank" style="padding: 9px 18px; font-size: 0.85rem; font-weight: 700; color: #FFF; background: #25D366; border: none; border-radius: 8px; text-decoration: none; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(37,211,102,0.25);">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M17.472 14.382c-.301-.15-1.782-.879-2.057-.98-.276-.1-.476-.15-.677.15-.201.3-.777.98-.953 1.18-.175.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.787-1.677-2.088-.175-.3-.019-.463.132-.613.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.677-1.632-.928-2.235-.245-.587-.493-.508-.677-.517-.175-.01-.376-.01-.577-.01-.201 0-.527.075-.803.376-.276.3-1.054 1.03-1.054 2.511 0 1.482 1.079 2.911 1.23 3.112.15.2 2.124 3.243 5.145 4.548.719.311 1.28.497 1.718.636.722.23 1.379.197 1.9-.12.57-.348 1.782-.728 2.033-1.431.25-.703.25-1.306.175-1.431-.075-.125-.276-.2-.577-.35zM12 2a10 10 0 0 0-8.59 15.11L2 22l4.98-1.31A10 10 0 1 0 12 2z"></path>
+                                </svg>
+                                <span>Buka di WhatsApp (wa.me)</span>
+                            </a>
+                        @endif
+                    </div>
                 </div>
             </form>
         </div>
@@ -1701,9 +1904,17 @@
                 });
             }
 
-            // Edit Image Preview
+            // Edit Image Manager (Dropzone + Existing Images + Delete Buttons)
+            const editDropzone = document.getElementById('editMediaDropzone');
             const editFileInput = document.getElementById('editMediaFileInput');
             const editPreviewGrid = document.getElementById('editMediaPreviewGrid');
+
+            if (editDropzone && editFileInput) {
+                editDropzone.addEventListener('click', () => {
+                    editFileInput.click();
+                });
+            }
+
             if (editFileInput && editPreviewGrid) {
                 editFileInput.addEventListener('change', (e) => {
                     editPreviewGrid.innerHTML = '';
@@ -1713,14 +1924,122 @@
                         return;
                     }
                     editPreviewGrid.style.display = 'grid';
-                    files.slice(0, 4).forEach(file => {
+
+                    const headerBar = document.createElement('div');
+                    headerBar.style.cssText = 'grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.76rem; font-weight: 700; color: #0D9488;';
+                    headerBar.innerHTML = '<span>Gambar Baru Untuk Ditambah (' + files.length + '):</span>';
+
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.type = 'button';
+                    cancelBtn.textContent = 'Batal Gambar Baru';
+                    cancelBtn.style.cssText = 'background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; padding: 2px 8px; border-radius: 6px; font-size: 0.70rem; cursor: pointer; font-weight: 600;';
+                    cancelBtn.addEventListener('click', () => {
+                        editFileInput.value = '';
+                        editPreviewGrid.innerHTML = '';
+                        editPreviewGrid.style.display = 'none';
+                    });
+                    headerBar.appendChild(cancelBtn);
+                    editPreviewGrid.appendChild(headerBar);
+
+                    files.forEach(file => {
                         if (file.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(file.name)) {
+                            const card = document.createElement('div');
+                            card.style.cssText = 'position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 2px dashed #0D9488; background: #F0FDFA; box-shadow: 0 1px 3px rgba(0,0,0,0.06);';
+
                             const img = document.createElement('img');
                             img.src = URL.createObjectURL(file);
-                            img.style.cssText = 'width: 100%; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #CBD5E1;';
-                            editPreviewGrid.appendChild(img);
+                            img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;';
+                            card.appendChild(img);
+
+                            const newTag = document.createElement('span');
+                            newTag.textContent = 'Baru';
+                            newTag.style.cssText = 'position: absolute; bottom: 3px; left: 3px; background: rgba(13, 148, 136, 0.95); color: #FFF; font-size: 0.60rem; font-weight: 700; padding: 1px 5px; border-radius: 4px; text-transform: uppercase;';
+                            card.appendChild(newTag);
+
+                            editPreviewGrid.appendChild(card);
                         }
                     });
+                });
+            }
+
+            function renderExistingImages(images) {
+                const currentImagesBox = document.getElementById('editCurrentImagesBox');
+                const currentImagesGrid = document.getElementById('editCurrentImagesGrid');
+                const countBadge = document.getElementById('editExistingCount');
+                const noMsg = document.getElementById('editNoExistingMsg');
+                const removedContainer = document.getElementById('editRemovedMediaContainer');
+
+                if (currentImagesGrid) currentImagesGrid.innerHTML = '';
+                if (removedContainer) removedContainer.innerHTML = '';
+                if (noMsg) noMsg.style.display = 'none';
+
+                if (!Array.isArray(images) || images.length === 0) {
+                    if (currentImagesBox) currentImagesBox.style.display = 'none';
+                    return;
+                }
+
+                if (currentImagesBox) currentImagesBox.style.display = 'block';
+                if (countBadge) countBadge.textContent = images.length + ' gambar tersimpan';
+
+                images.forEach((item, idx) => {
+                    const url = (typeof item === 'object' && item !== null) ? item.url : item;
+                    const path = (typeof item === 'object' && item !== null) ? item.path : item;
+
+                    const card = document.createElement('div');
+                    card.style.cssText = 'position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #CBD5E1; background: #0F172A; box-shadow: 0 1px 3px rgba(0,0,0,0.08);';
+
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.alt = 'Gambar ' + (idx + 1);
+                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;';
+                    card.appendChild(img);
+
+                    // Hidden input to retain this image
+                    const keepInput = document.createElement('input');
+                    keepInput.type = 'hidden';
+                    keepInput.name = 'existing_media[]';
+                    keepInput.value = path;
+                    card.appendChild(keepInput);
+
+                    if (idx === 0) {
+                        const utamaBadge = document.createElement('span');
+                        utamaBadge.textContent = 'Utama';
+                        utamaBadge.style.cssText = 'position: absolute; bottom: 3px; left: 3px; background: rgba(13, 148, 136, 0.95); color: #FFF; font-size: 0.60rem; font-weight: 700; padding: 1px 5px; border-radius: 4px; text-transform: uppercase;';
+                        card.appendChild(utamaBadge);
+                    }
+
+                    // Delete button
+                    const delBtn = document.createElement('button');
+                    delBtn.type = 'button';
+                    delBtn.title = 'Padam gambar ini';
+                    delBtn.innerHTML = '&times;';
+                    delBtn.style.cssText = 'position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; background: #EF4444; color: #FFFFFF; border: none; font-size: 16px; font-weight: bold; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.35); transition: transform 0.15s ease;';
+                    delBtn.addEventListener('mouseenter', () => { delBtn.style.transform = 'scale(1.15)'; });
+                    delBtn.addEventListener('mouseleave', () => { delBtn.style.transform = 'scale(1)'; });
+
+                    delBtn.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        // Put in removed_media
+                        if (removedContainer) {
+                            const remInput = document.createElement('input');
+                            remInput.type = 'hidden';
+                            remInput.name = 'removed_media[]';
+                            remInput.value = path;
+                            removedContainer.appendChild(remInput);
+                        }
+
+                        // Remove card
+                        card.remove();
+
+                        const remaining = currentImagesGrid.querySelectorAll('input[name="existing_media[]"]').length;
+                        if (countBadge) countBadge.textContent = remaining + ' gambar tersimpan';
+                        if (remaining === 0 && noMsg) {
+                            noMsg.style.display = 'block';
+                        }
+                    });
+
+                    card.appendChild(delBtn);
+                    currentImagesGrid.appendChild(card);
                 });
             }
 
@@ -1786,31 +2105,13 @@
                     if (editVideoPlayer) editVideoPlayer.src = '';
                     if (editVideoPreviewBox) editVideoPreviewBox.style.display = 'none';
 
-                    // Existing images preview
-                    const currentImagesBox = document.getElementById('editCurrentImagesBox');
-                    const currentImagesGrid = document.getElementById('editCurrentImagesGrid');
-                    if (currentImagesBox && currentImagesGrid) {
-                        currentImagesGrid.innerHTML = '';
-                        const imgs = (Array.isArray(data.images) && data.images.length > 0)
-                            ? data.images
-                            : (data.image_url ? [data.image_url] : []);
-
-                        if (imgs.length > 0) {
-                            imgs.forEach(url => {
-                                const thumb = document.createElement('img');
-                                thumb.src = url;
-                                thumb.style.cssText = 'width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #CBD5E1;';
-                                currentImagesGrid.appendChild(thumb);
-                            });
-                            currentImagesBox.style.display = 'block';
-                        } else {
-                            currentImagesBox.style.display = 'none';
-                        }
-                    }
+                    // Existing images preview with delete button
+                    const imgs = (Array.isArray(data.images) && data.images.length > 0)
+                        ? data.images
+                        : (data.image_url ? [{path: data.image_url, url: data.image_url}] : []);
+                    renderExistingImages(imgs);
 
                     // Reset edit media file input and preview
-                    const editFileInput = document.getElementById('editMediaFileInput');
-                    const editPreviewGrid = document.getElementById('editMediaPreviewGrid');
                     if (editFileInput) editFileInput.value = '';
                     if (editPreviewGrid) {
                         editPreviewGrid.innerHTML = '';
@@ -1848,6 +2149,236 @@
 
             if (closeDeleteBtn) closeDeleteBtn.addEventListener('click', () => closeModalEl(deleteModal));
             if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', () => closeModalEl(deleteModal));
+
+            // =========================================================================
+            // 4. WhatsApp Blaster Modal Wiring
+            // =========================================================================
+            const blastModal = document.getElementById('blastProductModal');
+            const closeBlastBtn = document.getElementById('closeBlastBtn');
+            const cancelBlastBtn = document.getElementById('cancelBlastBtn');
+            const blastProductSubheading = document.getElementById('blastProductSubheading');
+            const blastMessageText = document.getElementById('blastMessageText');
+            const blastCustomPhoneBox = document.getElementById('blastCustomPhoneBox');
+            const blastCustomPhone = document.getElementById('blastCustomPhone');
+            const blastSelectedBox = document.getElementById('blastSelectedBox');
+            const blastSelectAllBtn = document.getElementById('blastSelectAllBtn');
+            const blastStatusFeedback = document.getElementById('blastStatusFeedback');
+            const copyBlastTextBtn = document.getElementById('copyBlastTextBtn');
+            const copyBlastTextLabel = document.getElementById('copyBlastTextLabel');
+            const submitAutoBlastBtn = document.getElementById('submitAutoBlastBtn');
+            const autoBlastBtnLabel = document.getElementById('autoBlastBtnLabel');
+            const openManualWaBtn = document.getElementById('openManualWaBtn');
+
+            let currentBlastUrl = '';
+            let currentWaManualUrl = '';
+
+            // Open Blast Modal
+            document.querySelectorAll('.btn-open-blast').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const prodName = this.getAttribute('data-product-name') || '';
+                    const prodPrice = this.getAttribute('data-product-price') || '0.00';
+                    const prodUrl = this.getAttribute('data-product-url') || '';
+                    const prodDesc = this.getAttribute('data-product-desc') || '';
+                    currentBlastUrl = this.getAttribute('data-blast-url') || '';
+                    currentWaManualUrl = this.getAttribute('data-wa-manual-url') || '';
+
+                    if (blastProductSubheading) {
+                        blastProductSubheading.textContent = 'Blast promosi untuk "' + prodName + '"';
+                    }
+
+                    // Build initial promo message template
+                    let template = 'Salam {name},\n\n'
+                        + 'Tawaran Istimewa Produk: *' + prodName + '*\n'
+                        + 'Harga: *RM ' + prodPrice + '*\n';
+                    if (prodDesc && prodDesc.trim().length > 0) {
+                        template += '\n' + prodDesc.trim() + '\n';
+                    }
+                    template += '\nKlik pautan untuk buat pesanan terus:\n' + prodUrl;
+
+                    if (blastMessageText) {
+                        blastMessageText.value = template;
+                    }
+
+                    // Reset status feedback
+                    if (blastStatusFeedback) {
+                        blastStatusFeedback.style.display = 'none';
+                        blastStatusFeedback.innerHTML = '';
+                    }
+
+                    // Reset target radio to 'all'
+                    const allRadio = document.querySelector('input[name="blast_target"][value="all"]');
+                    if (allRadio) {
+                        allRadio.checked = true;
+                        updateTargetBoxes('all');
+                    }
+
+                    updateManualWaLink();
+                    openModalEl(blastModal);
+                });
+            });
+
+            function updateTargetBoxes(selectedTarget) {
+                // Update active border on radio labels
+                document.querySelectorAll('.blast-target-label').forEach(lbl => {
+                    const r = lbl.querySelector('input[type="radio"]');
+                    if (r && r.value === selectedTarget) {
+                        lbl.style.borderColor = '#0D9488';
+                        lbl.style.background = '#F0FDFA';
+                    } else {
+                        lbl.style.borderColor = '#E2E8F0';
+                        lbl.style.background = '#FFFFFF';
+                    }
+                });
+
+                if (blastCustomPhoneBox) {
+                    blastCustomPhoneBox.style.display = (selectedTarget === 'custom') ? 'block' : 'none';
+                }
+                if (blastSelectedBox) {
+                    blastSelectedBox.style.display = (selectedTarget === 'selected') ? 'block' : 'none';
+                }
+            }
+
+            document.querySelectorAll('input[name="blast_target"]').forEach(r => {
+                r.addEventListener('change', function() {
+                    updateTargetBoxes(this.value);
+                });
+            });
+
+            if (blastSelectAllBtn) {
+                blastSelectAllBtn.addEventListener('click', function() {
+                    const checks = document.querySelectorAll('.blast-customer-check');
+                    const allChecked = Array.from(checks).every(c => c.checked);
+                    checks.forEach(c => c.checked = !allChecked);
+                    this.textContent = allChecked ? 'Pilih Semua' : 'Nyahpilih Semua';
+                });
+            }
+
+            function updateManualWaLink() {
+                if (openManualWaBtn && blastMessageText) {
+                    const text = blastMessageText.value.replace(/\{name\}/g, 'Pelanggan');
+                    openManualWaBtn.href = 'https://wa.me/?text=' + encodeURIComponent(text);
+                }
+            }
+
+            if (blastMessageText) {
+                blastMessageText.addEventListener('input', updateManualWaLink);
+            }
+
+            // Copy Blast Text
+            if (copyBlastTextBtn && blastMessageText) {
+                copyBlastTextBtn.addEventListener('click', function() {
+                    blastMessageText.select();
+                    navigator.clipboard.writeText(blastMessageText.value).then(() => {
+                        if (copyBlastTextLabel) {
+                            const orig = copyBlastTextLabel.textContent;
+                            copyBlastTextLabel.textContent = 'Disalin!';
+                            setTimeout(() => { copyBlastTextLabel.textContent = orig; }, 2000);
+                        }
+                    }).catch(() => {
+                        document.execCommand('copy');
+                        if (copyBlastTextLabel) {
+                            copyBlastTextLabel.textContent = 'Disalin!';
+                            setTimeout(() => { copyBlastTextLabel.textContent = 'Salin Teks'; }, 2000);
+                        }
+                    });
+                });
+            }
+
+            // Submit Auto Blast (Fonnte / UltraMsg)
+            if (submitAutoBlastBtn) {
+                submitAutoBlastBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (!currentBlastUrl) return;
+
+                    const targetVal = document.querySelector('input[name="blast_target"]:checked')?.value || 'all';
+                    const customPhoneVal = blastCustomPhone ? blastCustomPhone.value.trim() : '';
+                    const messageVal = blastMessageText ? blastMessageText.value : '';
+
+                    if (targetVal === 'custom' && !customPhoneVal) {
+                        alert('Sila masukkan nombor telefon khas.');
+                        blastCustomPhone?.focus();
+                        return;
+                    }
+
+                    const selectedCustIds = [];
+                    if (targetVal === 'selected') {
+                        document.querySelectorAll('.blast-customer-check:checked').forEach(c => {
+                            selectedCustIds.push(c.value);
+                        });
+                        if (selectedCustIds.length === 0) {
+                            alert('Sila tandakan sekurang-kurangnya seorang pelanggan.');
+                            return;
+                        }
+                    }
+
+                    submitAutoBlastBtn.disabled = true;
+                    if (autoBlastBtnLabel) autoBlastBtnLabel.textContent = 'Menghantar Blast...';
+
+                    if (blastStatusFeedback) {
+                        blastStatusFeedback.style.display = 'block';
+                        blastStatusFeedback.style.background = '#EFF6FF';
+                        blastStatusFeedback.style.border = '1px solid #BFDBFE';
+                        blastStatusFeedback.style.color = '#1D4ED8';
+                        blastStatusFeedback.innerHTML = '⏳ Menghubungi pembekal WhatsApp dan memulakan blast... Sila tunggu sebentar.';
+                    }
+
+                    const payload = {
+                        target: targetVal,
+                        custom_phone: customPhoneVal,
+                        customer_ids: selectedCustIds,
+                        message: messageVal,
+                        _token: '{{ csrf_token() }}'
+                    };
+
+                    fetch(currentBlastUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+                    .then(({ status, body }) => {
+                        submitAutoBlastBtn.disabled = false;
+                        if (autoBlastBtnLabel) autoBlastBtnLabel.textContent = 'Hantar Blast Sekarang';
+
+                        if (status >= 200 && status < 300 && body.success) {
+                            if (blastStatusFeedback) {
+                                blastStatusFeedback.style.display = 'block';
+                                blastStatusFeedback.style.background = '#ECFDF5';
+                                blastStatusFeedback.style.border = '1px solid #A7F3D0';
+                                blastStatusFeedback.style.color = '#065F46';
+                                blastStatusFeedback.innerHTML = '✅ <strong>Penghantaran Berjaya!</strong> ' + (body.message || 'Mesej blast telah dihantar.');
+                            }
+                        } else {
+                            if (blastStatusFeedback) {
+                                blastStatusFeedback.style.display = 'block';
+                                blastStatusFeedback.style.background = '#FEF2F2';
+                                blastStatusFeedback.style.border = '1px solid #FECACA';
+                                blastStatusFeedback.style.color = '#991B1B';
+                                blastStatusFeedback.innerHTML = '❌ <strong>Gagal Hantar:</strong> ' + (body.message || 'Ralat tidak diketahui.');
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        submitAutoBlastBtn.disabled = false;
+                        if (autoBlastBtnLabel) autoBlastBtnLabel.textContent = 'Hantar Blast Sekarang';
+                        if (blastStatusFeedback) {
+                            blastStatusFeedback.style.display = 'block';
+                            blastStatusFeedback.style.background = '#FEF2F2';
+                            blastStatusFeedback.style.border = '1px solid #FECACA';
+                            blastStatusFeedback.style.color = '#991B1B';
+                            blastStatusFeedback.innerHTML = '❌ <strong>Ralat:</strong> Tidak dapat menghubungi pelayan. Sila cuba lagi.';
+                        }
+                    });
+                });
+            }
+
+            if (closeBlastBtn) closeBlastBtn.addEventListener('click', () => closeModalEl(blastModal));
+            if (cancelBlastBtn) cancelBlastBtn.addEventListener('click', () => closeModalEl(blastModal));
         });
     </script>
     @endpush

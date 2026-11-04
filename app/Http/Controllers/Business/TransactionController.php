@@ -87,6 +87,8 @@ class TransactionController extends Controller
             'payment_type' => ['nullable', 'string', 'max:50'],
             'delivery_provider' => ['nullable', 'string', 'max:100'],
             'tracking_number' => ['nullable', 'string', 'max:255'],
+            'return_action' => ['nullable', 'string', 'in:money_refund,product_replace,others'],
+            'return_description' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $newStatus = OrderStatus::tryFrom($validated['status']);
@@ -159,6 +161,13 @@ class TransactionController extends Controller
                 $order->transitionTo($newStatus, $trackingNumber ?: null);
             }
 
+            // Save Return Next Action if order is Returned
+            if ($newStatus === OrderStatus::Cancelled && $order->shipped_at !== null) {
+                $order->return_action = $validated['return_action'] ?? 'money_refund';
+                $order->return_description = $validated['return_description'] ?? null;
+                $order->save();
+            }
+
             // Record payment reference if provided when marked Paid
             if ($newStatus === OrderStatus::Paid && filled($validated['reference_no'] ?? null)) {
                 $refNo = trim((string) $validated['reference_no']);
@@ -223,6 +232,9 @@ class TransactionController extends Controller
                     ])->values()->all(),
                     'paid_at' => $order->paid_at?->format('d M Y, h:i A'),
                     'shipped_at' => $order->shipped_at?->format('d M Y, h:i A'),
+                    'return_action' => $order->return_action,
+                    'return_action_label' => $order->returnActionLabel(),
+                    'return_description' => $order->return_description,
                 ],
                 'metrics' => [
                     'totalRevenue' => number_format((float) $totalRevenue, 2),

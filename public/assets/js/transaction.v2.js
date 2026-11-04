@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalShippedAt = document.getElementById('modalShippedAt');
     const modalTrackingSection = document.getElementById('modalTrackingSection');
     const modalTrackingNumber = document.getElementById('modalTrackingNumber');
+    const modalReturnSection = document.getElementById('modalReturnSection');
+    const modalReturnAction = document.getElementById('modalReturnAction');
+    const modalReturnDescription = document.getElementById('modalReturnDescription');
     const modalItemsContainer = document.getElementById('modalItemsContainer');
     const detailsStepper = document.getElementById('detailsStepper');
     const modalActionBtn = document.getElementById('modalActionBtn');
@@ -46,6 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusOptionsGrid = document.getElementById('statusOptionsGrid');
     const trackingInputGroup = document.getElementById('trackingInputGroup');
     const trackingNumberInput = document.getElementById('trackingNumberInput');
+    const returnActionGroup = document.getElementById('returnActionGroup');
+    const returnDescriptionInput = document.getElementById('returnDescriptionInput');
     const statusModalError = document.getElementById('statusModalError');
     const saveStatusBtn = document.getElementById('saveStatusBtn');
     const saveStatusBtnText = document.getElementById('saveStatusBtnText');
@@ -286,7 +291,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const date = row.getAttribute('data-date') || '-';
         const paidAt = row.getAttribute('data-paid-at') || '-';
         const shippedAt = row.getAttribute('data-shipped-at') || '-';
+        const returnAction = row.getAttribute('data-return-action-label') || row.getAttribute('data-return-action') || '';
+        const returnDescription = row.getAttribute('data-return-description') || '';
         const isTerminal = row.getAttribute('data-is-terminal') === '1';
+        const isReturned = (status.toLowerCase() === 'cancelled' && shippedAt && shippedAt !== '-');
 
         let items = [];
         try {
@@ -303,8 +311,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modalPaidAt) modalPaidAt.textContent = paidAt;
 
         if (modalStatusBadge) {
-            modalStatusBadge.textContent = statusLabel;
-            modalStatusBadge.className = `badge-status badge-${status.toLowerCase()}`;
+            modalStatusBadge.textContent = isReturned ? 'Returned' : statusLabel;
+            modalStatusBadge.className = `badge-status ${isReturned ? 'badge-returned' : 'badge-' + status.toLowerCase()}`;
         }
 
         // Stepper
@@ -318,6 +326,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (modalShippedAt) modalShippedAt.textContent = shippedAt;
             } else {
                 modalTrackingSection.style.display = 'none';
+            }
+        }
+
+        // Return Details Section
+        if (modalReturnSection) {
+            if (isReturned && (returnAction || returnDescription)) {
+                modalReturnSection.style.display = 'block';
+                if (modalReturnAction) modalReturnAction.textContent = returnAction || '-';
+                if (modalReturnDescription) modalReturnDescription.textContent = returnDescription || '-';
+            } else {
+                modalReturnSection.style.display = 'none';
             }
         }
 
@@ -531,6 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const isShippedStage = ((currentStatus || '').toLowerCase().trim() === 'shipped');
+            updateStatusModal.dataset.isShippedStage = isShippedStage ? '1' : '0';
 
             nextStatuses.forEach(st => {
                 const isSelected = (st.value === targetToSelect);
@@ -569,6 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (radio) radio.checked = true;
 
                     toggleTrackingField(st.value);
+                    toggleReturnActionField(st.value, isShippedStage);
 
                     if (saveStatusBtnText) {
                         if (st.value === 'cancelled' && isShippedStage) {
@@ -585,6 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             toggleTrackingField(targetToSelect);
+            toggleReturnActionField(targetToSelect, isShippedStage);
 
             if (saveStatusBtnText) {
                 if (targetToSelect === 'cancelled' && isShippedStage) {
@@ -599,6 +621,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (trackingNumberInput) {
             trackingNumberInput.value = currentTracking;
+        }
+
+        if (returnDescriptionInput) {
+            returnDescriptionInput.value = '';
+        }
+
+        if (returnActionGroup) {
+            const defaultRadio = returnActionGroup.querySelector('input[value="money_refund"]');
+            if (defaultRadio) defaultRadio.checked = true;
         }
 
         if (statusModalError) {
@@ -623,6 +654,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             trackingInputGroup.style.display = 'none';
+        }
+    }
+
+    function toggleReturnActionField(statusValue, isShippedStage) {
+        if (!returnActionGroup) return;
+        if (statusValue === 'cancelled' && isShippedStage) {
+            returnActionGroup.style.display = 'block';
+            if (returnDescriptionInput) {
+                setTimeout(() => returnDescriptionInput.focus(), 80);
+            }
+        } else {
+            returnActionGroup.style.display = 'none';
         }
     }
 
@@ -953,6 +996,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            let returnAction = null;
+            let returnDescription = null;
+            const isShippedStage = updateStatusModal.dataset.isShippedStage === '1';
+
+            if (targetStatus === 'cancelled' && isShippedStage) {
+                const checkedAction = returnActionGroup ? returnActionGroup.querySelector('input[name="return_action"]:checked') : null;
+                returnAction = checkedAction ? checkedAction.value : 'money_refund';
+                returnDescription = returnDescriptionInput ? returnDescriptionInput.value.trim() : '';
+            }
+
             // Set loading state
             if (saveStatusBtn) saveStatusBtn.disabled = true;
             if (saveStatusBtnText) saveStatusBtnText.textContent = 'Updating...';
@@ -967,7 +1020,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify({
                         status: targetStatus,
-                        tracking_number: trackingNumber
+                        tracking_number: trackingNumber,
+                        return_action: returnAction,
+                        return_description: returnDescription
                     })
                 });
 
@@ -1014,6 +1069,9 @@ document.addEventListener('DOMContentLoaded', () => {
             el.setAttribute('data-status', order.status);
             el.setAttribute('data-status-label', order.status_label);
             el.setAttribute('data-tracking', order.tracking_number || '');
+            el.setAttribute('data-return-action', order.return_action || '');
+            el.setAttribute('data-return-action-label', order.return_action_label || '');
+            el.setAttribute('data-return-description', order.return_description || '');
             el.setAttribute('data-is-terminal', order.is_terminal ? '1' : '0');
             el.setAttribute('data-next-statuses', JSON.stringify(order.next_statuses || []));
             if (order.paid_at) el.setAttribute('data-paid-at', order.paid_at);
@@ -1021,10 +1079,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Update Status Badge
             const badge = el.querySelector('.badge-status');
+            const isReturned = (order.status === 'cancelled' && (order.shipped_at || el.getAttribute('data-shipped-at')));
             if (badge) {
-                const isReturned = (order.status === 'cancelled' && (order.shipped_at || el.getAttribute('data-shipped-at')));
                 badge.className = `badge-status ${isReturned ? 'badge-returned' : 'badge-' + order.status}`;
                 badge.textContent = order.status_label;
+            }
+
+            // Update Return Action label in Desktop row
+            const statusCell = el.querySelector('.col-status-cell');
+            if (statusCell) {
+                let returnTextEl = statusCell.querySelector('.row-return-action');
+                if (isReturned && order.return_action_label) {
+                    if (!returnTextEl) {
+                        returnTextEl = document.createElement('div');
+                        returnTextEl.className = 'row-return-action';
+                        returnTextEl.style.cssText = 'font-size: 0.73rem; color: #E11D48; font-weight: 600; margin-top: 3px;';
+                        statusCell.appendChild(returnTextEl);
+                    }
+                    returnTextEl.textContent = order.return_action_label;
+                } else if (returnTextEl) {
+                    returnTextEl.remove();
+                }
+            }
+
+            // Update Return Action label in Mobile card
+            const cardTopRight = el.querySelector('.tx-card-top > div:last-child');
+            if (cardTopRight) {
+                let cardReturnEl = cardTopRight.querySelector('.card-return-action');
+                if (isReturned && order.return_action_label) {
+                    if (!cardReturnEl) {
+                        cardReturnEl = document.createElement('span');
+                        cardReturnEl.className = 'card-return-action';
+                        cardReturnEl.style.cssText = 'font-size: 0.72rem; color: #E11D48; font-weight: 600;';
+                        cardTopRight.appendChild(cardReturnEl);
+                    }
+                    cardReturnEl.textContent = order.return_action_label;
+                } else if (cardReturnEl) {
+                    cardReturnEl.remove();
+                }
             }
 
             // Update Tracking Tag

@@ -433,6 +433,9 @@
                             data-date="{{ $order->created_at->format('d M Y, h:i A') }}"
                             data-paid-at="{{ $order->paid_at?->format('d M Y, h:i A') ?? '-' }}"
                             data-shipped-at="{{ $order->shipped_at?->format('d M Y, h:i A') ?? '-' }}"
+                            data-return-action="{{ $order->return_action ?? '' }}"
+                            data-return-action-label="{{ $order->returnActionLabel() ?? '' }}"
+                            data-return-description="{{ $order->return_description ?? '' }}"
                             data-is-terminal="{{ $order->status->isTerminal() ? '1' : '0' }}"
                             data-next-statuses="{{ json_encode(collect($order->status->nextStatuses())->map(fn ($s) => ['value' => $s->value, 'label' => $s->label()])) }}"
                             data-items="{{ json_encode($order->items->map(fn ($it) => ['name' => $it->product_name, 'qty' => $it->quantity, 'price' => number_format((float)$it->unit_price, 2), 'total' => number_format((float)$it->line_total, 2)])) }}">
@@ -456,6 +459,11 @@
                             <td class="col-amount">RM {{ number_format((float)$order->total, 2) }}</td>
                             <td class="col-status-cell">
                                 <span class="badge-status {{ $badgeClass }}">{{ $order->statusLabel() }}</span>
+                                @if ($order->isReturned() && $order->returnActionLabel())
+                                    <div class="row-return-action" style="font-size: 0.73rem; color: #E11D48; font-weight: 600; margin-top: 3px;">
+                                        {{ $order->returnActionLabel() }}
+                                    </div>
+                                @endif
                             </td>
                             <td style="text-align: right;">
                                 <div class="tx-action-group">
@@ -516,6 +524,9 @@
                 data-date="{{ $order->created_at->format('d M Y, h:i A') }}"
                 data-paid-at="{{ $order->paid_at?->format('d M Y, h:i A') ?? '-' }}"
                 data-shipped-at="{{ $order->shipped_at?->format('d M Y, h:i A') ?? '-' }}"
+                data-return-action="{{ $order->return_action ?? '' }}"
+                data-return-action-label="{{ $order->returnActionLabel() ?? '' }}"
+                data-return-description="{{ $order->return_description ?? '' }}"
                 data-is-terminal="{{ $order->status->isTerminal() ? '1' : '0' }}"
                 data-next-statuses="{{ json_encode(collect($order->status->nextStatuses())->map(fn ($s) => ['value' => $s->value, 'label' => $s->label()])) }}"
                 data-items="{{ json_encode($order->items->map(fn ($it) => ['name' => $it->product_name, 'qty' => $it->quantity, 'price' => number_format((float)$it->unit_price, 2), 'total' => number_format((float)$it->line_total, 2)])) }}">
@@ -531,7 +542,12 @@
                             @endif
                         </div>
                     </div>
-                    <span class="badge-status {{ $badgeClass }}">{{ $order->statusLabel() }}</span>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                        <span class="badge-status {{ $badgeClass }}">{{ $order->statusLabel() }}</span>
+                        @if ($order->isReturned() && $order->returnActionLabel())
+                            <span class="card-return-action" style="font-size: 0.72rem; color: #E11D48; font-weight: 600;">{{ $order->returnActionLabel() }}</span>
+                        @endif
+                    </div>
                 </div>
                 <div class="tx-card-middle">
                     <span class="tx-card-customer">{{ $customerName }}</span>
@@ -635,6 +651,31 @@
                         </div>
                     </div>
 
+                    <!-- Return Next Action Input Group (visible when status === 'cancelled' && isShippedStage) -->
+                    <div class="tracking-input-card" id="returnActionGroup" style="display: none; border-left: 3px solid #E11D48; background: #FFF1F2; padding: 14px; border-radius: 10px; margin-top: 10px;">
+                        <label class="section-label" style="display: block; margin-bottom: 8px; color: #9F1239; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.03em;">
+                            RETURN NEXT ACTION <span style="color: #EF4444;">*</span>
+                        </label>
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: #334155; cursor: pointer; font-weight: 500;">
+                                <input type="radio" name="return_action" value="money_refund" checked style="accent-color: #E11D48; cursor: pointer; width: 16px; height: 16px;">
+                                <span>Money Refund</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: #334155; cursor: pointer; font-weight: 500;">
+                                <input type="radio" name="return_action" value="product_replace" style="accent-color: #E11D48; cursor: pointer; width: 16px; height: 16px;">
+                                <span>Product Replace</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: #334155; cursor: pointer; font-weight: 500;">
+                                <input type="radio" name="return_action" value="others" style="accent-color: #E11D48; cursor: pointer; width: 16px; height: 16px;">
+                                <span>Others</span>
+                            </label>
+                        </div>
+                        <label for="returnDescriptionInput" class="section-label" style="display: block; margin-bottom: 4px; font-size: 0.8rem; color: #475569; font-weight: 600;">
+                            Description =
+                        </label>
+                        <textarea name="return_description" id="returnDescriptionInput" rows="2" class="tracking-input-field" style="width: 100%; resize: vertical; min-height: 56px; font-family: inherit; font-size: 0.85rem;" placeholder="Reason or next action details..."></textarea>
+                    </div>
+
                     <!-- Error Alert Box -->
                     <div id="statusModalError" style="display: none; margin-top: 12px; padding: 10px 14px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; color: #991B1B; font-size: 0.85rem;"></div>
                 </div>
@@ -733,6 +774,19 @@
                         <div class="info-row">
                             <span class="info-key">Shipped At:</span>
                             <span class="info-val" id="modalShippedAt">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Return Next Action Section (visible when status === 'cancelled' && isReturned) -->
+                    <div class="tx-modal-section full-width" id="modalReturnSection" style="display: none; border-left: 3px solid #E11D48; background: #FFF1F2; padding: 12px 14px; border-radius: 8px; margin-bottom: 12px;">
+                        <div class="section-label" style="color: #9F1239; font-weight: 700; margin-bottom: 6px;">Return Details & Next Action</div>
+                        <div class="info-row" style="margin-bottom: 4px;">
+                            <span class="info-key" style="color: #881337;">Next Action:</span>
+                            <span class="info-val font-semibold" style="color: #E11D48;" id="modalReturnAction">-</span>
+                        </div>
+                        <div class="info-row" style="align-items: flex-start;">
+                            <span class="info-key" style="color: #881337;">Description:</span>
+                            <span class="info-val" id="modalReturnDescription" style="color: #334155; white-space: pre-wrap;">-</span>
                         </div>
                     </div>
 
@@ -1284,6 +1338,23 @@
         }
         body.transaction-body.dark-mode-active .tx-modal-body::-webkit-scrollbar-thumb:hover {
             background-color: #475569 !important;
+        }
+        body.transaction-body.dark-mode-active #returnActionGroup,
+        body.transaction-body.dark-mode-active #modalReturnSection {
+            background: rgba(225, 29, 72, 0.12) !important;
+            border-left-color: #FB7185 !important;
+        }
+        body.transaction-body.dark-mode-active #returnActionGroup .section-label,
+        body.transaction-body.dark-mode-active #modalReturnSection .section-label,
+        body.transaction-body.dark-mode-active #modalReturnSection .info-key {
+            color: #FDA4AF !important;
+        }
+        body.transaction-body.dark-mode-active #returnActionGroup label,
+        body.transaction-body.dark-mode-active #modalReturnDescription {
+            color: #E2E8F0 !important;
+        }
+        body.transaction-body.dark-mode-active #modalReturnAction {
+            color: #FB7185 !important;
         }
     </style>
 

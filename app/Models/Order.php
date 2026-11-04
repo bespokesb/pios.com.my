@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use InvalidArgumentException;
 
-#[Fillable(['business_owner_id', 'partner_id', 'customer_id', 'order_no', 'status', 'subtotal', 'total', 'tracking_number', 'ordered_at', 'paid_at', 'shipped_at'])]
+#[Fillable(['business_owner_id', 'partner_id', 'customer_id', 'order_no', 'status', 'subtotal', 'total', 'tracking_number', 'ordered_at', 'paid_at', 'shipped_at', 'return_action', 'return_description'])]
 class Order extends Model
 {
     use ScopesByOwnerVisibility;
@@ -85,6 +85,16 @@ class Order extends Model
         }
 
         return $this->status->label();
+    }
+
+    public function returnActionLabel(): ?string
+    {
+        return match ($this->return_action) {
+            'money_refund' => 'Money Refund',
+            'product_replace' => 'Product Replace',
+            'others' => 'Others',
+            default => $this->return_action ? ucfirst(str_replace('_', ' ', $this->return_action)) : null,
+        };
     }
 
     public function businessOwner(): BelongsTo

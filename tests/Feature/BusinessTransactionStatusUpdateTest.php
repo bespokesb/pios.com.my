@@ -307,6 +307,99 @@ class BusinessTransactionStatusUpdateTest extends TestCase
         $response->assertSee('data-status-label="Returned"', escape: false);
     }
 
+    public function test_shipped_order_cancelled_saves_return_action_and_description(): void
+    {
+        [$user, $partner, $bo] = $this->businessOwnerUser('P00913', 'BO00913', 'Test BO');
+        $customer = $this->customer($bo, $partner, 'C00913');
+        $order = $this->createOrder($bo, $partner, $customer, 'ORD-00913', OrderStatus::Shipped, 'JNT-554433');
+
+        $response = $this->actingAs($user)->postJson(route('business.transactions.status', $order), [
+            'status' => 'cancelled',
+            'return_action' => 'money_refund',
+            'return_description' => 'Customer requested refund due to wrong item size',
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => "Order #{$order->order_no} status updated to Returned.",
+                'order' => [
+                    'id' => $order->id,
+                    'status' => 'cancelled',
+                    'status_label' => 'Returned',
+                    'return_action' => 'money_refund',
+                    'return_action_label' => 'Money Refund',
+                    'return_description' => 'Customer requested refund due to wrong item size',
+                ],
+            ]);
+
+        $fresh = $order->fresh();
+        $this->assertSame(OrderStatus::Cancelled, $fresh->status);
+        $this->assertTrue($fresh->isReturned());
+        $this->assertSame('money_refund', $fresh->return_action);
+        $this->assertSame('Money Refund', $fresh->returnActionLabel());
+        $this->assertSame('Customer requested refund due to wrong item size', $fresh->return_description);
+
+        $this->assertDatabaseHas(Order::class, [
+            'id' => $order->id,
+            'return_action' => 'money_refund',
+            'return_description' => 'Customer requested refund due to wrong item size',
+        ]);
+    }
+
+    public function test_shipped_order_cancelled_supports_product_replace_and_others(): void
+    {
+        [$user, $partner, $bo] = $this->businessOwnerUser('P00914', 'BO00914', 'Test BO');
+        $customer = $this->customer($bo, $partner, 'C00914');
+        $order1 = $this->createOrder($bo, $partner, $customer, 'ORD-00914-A', OrderStatus::Shipped, 'JNT-667788');
+
+        $this->actingAs($user)->postJson(route('business.transactions.status', $order1), [
+            'status' => 'cancelled',
+            'return_action' => 'product_replace',
+            'return_description' => 'Damaged in transit, send replacement',
+        ])->assertOk();
+
+        $fresh1 = $order1->fresh();
+        $this->assertSame('product_replace', $fresh1->return_action);
+        $this->assertSame('Product Replace', $fresh1->returnActionLabel());
+        $this->assertSame('Damaged in transit, send replacement', $fresh1->return_description);
+
+        $order2 = $this->createOrder($bo, $partner, $customer, 'ORD-00914-B', OrderStatus::Shipped, 'JNT-990011');
+        $this->actingAs($user)->postJson(route('business.transactions.status', $order2), [
+            'status' => 'cancelled',
+            'return_action' => 'others',
+            'return_description' => 'Special handling needed',
+        ])->assertOk();
+
+        $fresh2 = $order2->fresh();
+        $this->assertSame('others', $fresh2->return_action);
+        $this->assertSame('Others', $fresh2->returnActionLabel());
+        $this->assertSame('Special handling needed', $fresh2->return_description);
+    }
+
+    public function test_transactions_view_renders_return_action_and_modal_elements(): void
+    {
+        [$user, $partner, $bo] = $this->businessOwnerUser('P00915', 'BO00915', 'Test BO');
+        $customer = $this->customer($bo, $partner, 'C00915');
+        $order = $this->createOrder($bo, $partner, $customer, 'ORD-00915', OrderStatus::Shipped, 'JNT-889900');
+        $order->transitionTo(OrderStatus::Cancelled);
+        $order->return_action = 'money_refund';
+        $order->return_description = 'Refund completed to bank account';
+        $order->save();
+
+        $response = $this->actingAs($user)->get(route('business.transactions.index'));
+
+        $response->assertOk();
+        $response->assertSee('id="returnActionGroup"', escape: false);
+        $response->assertSee('id="returnDescriptionInput"', escape: false);
+        $response->assertSee('id="modalReturnSection"', escape: false);
+        $response->assertSee('id="modalReturnAction"', escape: false);
+        $response->assertSee('id="modalReturnDescription"', escape: false);
+        $response->assertSee('data-return-action="money_refund"', escape: false);
+        $response->assertSee('data-return-action-label="Money Refund"', escape: false);
+        $response->assertSee('Money Refund');
+    }
+
     private function createOrder(
         BusinessOwner $bo,
         Partner $partner,

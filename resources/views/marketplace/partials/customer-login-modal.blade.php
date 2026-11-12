@@ -13,8 +13,8 @@
                 <button @click="isLoginOpen = false" class="absolute top-4 right-4 text-white/70 hover:text-white font-bold text-xl leading-none cursor-pointer" aria-label="Close">&times;</button>
                 
                 <div class="flex items-center justify-center gap-3 mb-3">
-                    <div class="relative flex items-center justify-center h-12 w-12 rounded-full border-2 border-[#E7C46A] bg-[#16436E] p-1 shadow-md">
-                        <img src="{{ asset('favicon-192x192.png') }}" alt="PIOS" class="h-10 w-10 rounded-full object-contain">
+                    <div class="relative flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-2xl overflow-hidden shadow-md shrink-0 border border-white/20 bg-white/10">
+                        <img src="{{ asset('pwa-icon-192x192.png') }}" alt="PIOS" class="h-full w-full object-cover rounded-2xl">
                     </div>
                     <div class="text-left">
                         <h2 class="font-display font-black text-2xl tracking-wide leading-none text-white">pios</h2>

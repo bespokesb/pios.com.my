@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pios-cache-v2';
+const CACHE_NAME = 'pios-cache-v5';
 const ASSETS_TO_CACHE = [
     '/',
     '/market',
@@ -6,6 +6,8 @@ const ASSETS_TO_CACHE = [
     '/favicon.ico',
     '/favicon-192x192.png',
     '/favicon-512x512.png',
+    '/pwa-icon-192x192.png',
+    '/pwa-icon-512x512.png',
     '/apple-touch-icon.png',
     '/brand/pak-itam-logo.png',
     '/brand/pios-wordmark.png'

@@ -233,4 +233,88 @@ class CustomerStatusEditTest extends TestCase
         $respProg->assertDontSee('Special Health Honey');
         $respProg->assertDontSee('Consultation Service Package');
     }
+
+    public function test_customer_page_renders_all_menu_category_tabs_and_filters_correctly(): void
+    {
+        $cLead = Customer::factory()->create([
+            'business_owner_id' => $this->bo->id,
+            'partner_id' => $this->partner->id,
+            'name' => 'Lead Usman',
+            'category' => CustomerCategory::Lead,
+        ]);
+
+        $cProspect = Customer::factory()->create([
+            'business_owner_id' => $this->bo->id,
+            'partner_id' => $this->partner->id,
+            'name' => 'Prospect Badrul',
+            'category' => CustomerCategory::Prospect,
+        ]);
+
+        $cCustomer = Customer::factory()->create([
+            'business_owner_id' => $this->bo->id,
+            'partner_id' => $this->partner->id,
+            'name' => 'Customer Charlie',
+            'category' => CustomerCategory::Customer,
+        ]);
+
+        $cLoyal = Customer::factory()->create([
+            'business_owner_id' => $this->bo->id,
+            'partner_id' => $this->partner->id,
+            'name' => 'Loyal Danish',
+            'category' => CustomerCategory::LoyalCustomer,
+        ]);
+
+        $cMember = Customer::factory()->create([
+            'business_owner_id' => $this->bo->id,
+            'partner_id' => $this->partner->id,
+            'name' => 'Member Eason',
+            'category' => CustomerCategory::Member,
+        ]);
+
+        $cPartner = Customer::factory()->create([
+            'business_owner_id' => $this->bo->id,
+            'partner_id' => $this->partner->id,
+            'name' => 'Partner Farhan',
+            'category' => CustomerCategory::Partner,
+        ]);
+
+        $cVip = Customer::factory()->create([
+            'business_owner_id' => $this->bo->id,
+            'partner_id' => $this->partner->id,
+            'name' => 'VIP Ghafar',
+            'category' => CustomerCategory::Customer,
+            'is_vip' => true,
+        ]);
+
+        // 1. Visit index - all tabs displayed with accurate counts
+        $response = $this->actingAs($this->user)->get(route('business.customers.index'));
+        $response->assertOk();
+        $response->assertSee('All (7)');
+        $response->assertSee('Lead (1)');
+        $response->assertSee('Prospek (1)');
+        $response->assertSee('Customer (2)');
+        $response->assertSee('Loyal Customer (1)');
+        $response->assertSee('Member (1)');
+        $response->assertSee('Partner (1)');
+        $response->assertSee('VIP (1)');
+
+        // 2. Filter by Member
+        $memberResponse = $this->actingAs($this->user)->get(route('business.customers.index', ['filter' => 'member']));
+        $memberResponse->assertOk();
+        $memberResponse->assertSee('Member Eason');
+        $memberResponse->assertDontSee('Lead Usman');
+        $memberResponse->assertDontSee('Partner Farhan');
+
+        // 3. Filter by Lead
+        $leadResponse = $this->actingAs($this->user)->get(route('business.customers.index', ['filter' => 'lead']));
+        $leadResponse->assertOk();
+        $leadResponse->assertSee('Lead Usman');
+        $leadResponse->assertDontSee('Member Eason');
+
+        // 4. Filter by VIP
+        $vipResponse = $this->actingAs($this->user)->get(route('business.customers.index', ['filter' => 'vip']));
+        $vipResponse->assertOk();
+        $vipResponse->assertSee('VIP Ghafar');
+        $vipResponse->assertDontSee('Member Eason');
+    }
 }

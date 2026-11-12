@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 #[Fillable([
     'product_type_id',
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Storage;
     'business_owner_id',
     'vendor_id',
     'product_no',
+    'slug',
     'name',
     'description',
     'selling_price',
@@ -38,6 +40,61 @@ class Product extends Model
     use HasFactory, SoftDeletes;
 
     public const MAX_PER_BUSINESS_OWNER = 20;
+
+    protected static function booted(): void
+    {
+        static::creating(function (Product $product): void {
+            if (empty($product->slug)) {
+                $product->slug = static::generateSecureSlug();
+            }
+        });
+    }
+
+    /**
+     * Generate an unguessable 12-character lowercase alphanumeric slug.
+     */
+    public static function generateSecureSlug(): string
+    {
+        do {
+            $slug = Str::lower(Str::random(12));
+        } while (static::where('slug', $slug)->exists());
+
+        return $slug;
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    /**
+     * Resolve route binding securely.
+     * Guests must provide the unguessable slug. Direct sequential product_no
+     * (e.g. PRD000008) is blocked from public access to prevent enumeration,
+     * but permitted for the owning Business Owner or Admin for preview.
+     */
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        if ($field && $field !== 'slug') {
+            return parent::resolveRouteBinding($value, $field);
+        }
+
+        // 1. Look up by unguessable secure slug
+        $product = $this->where('slug', $value)->first();
+        if ($product) {
+            return $product;
+        }
+
+        // 2. Disallow guests / customers from guessing sequential product_no
+        if (auth()->check()) {
+            $candidate = $this->where('product_no', $value)->first();
+            if ($candidate && (auth()->user()->isAdmin() || auth()->user()->id === $candidate->businessOwner?->user_id)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
 
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
@@ -114,8 +171,8 @@ class Product extends Model
         }
 
         // The public product link is the heart of the WhatsApp blast — it carries
-        // the buyer to the order page. Only meaningful once the product has a No.
-        if (filled($this->product_no)) {
+        // the buyer to the order page. Only meaningful once the product has a slug or No.
+        if (filled($this->slug ?: $this->product_no)) {
             $lines[] = '';
             $lines[] = $this->publicUrl();
         }
@@ -130,10 +187,11 @@ class Product extends Model
 
     /**
      * Public, shareable URL for the customer-facing product page.
+     * Uses the secure unguessable slug to prevent ID enumeration.
      */
     public function publicUrl(): string
     {
-        return route('public.product.show', ['product' => $this->product_no]);
+        return route('public.product.show', ['product' => $this->slug ?: $this->product_no]);
     }
 
     /**

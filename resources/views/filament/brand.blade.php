@@ -11,8 +11,8 @@
 @endphp
 
 <div class="flex h-full items-center gap-2">
-    <div class="relative flex items-center justify-center h-7 w-7 rounded-full border border-[#E7C46A] bg-[#16436E] p-0.5 shrink-0 shadow-xs">
-        <img src="{{ asset('favicon-192x192.png') }}" alt="PIOS" class="h-full w-full rounded-full object-contain" />
+    <div class="relative flex items-center justify-center h-8 w-8 rounded-lg overflow-hidden shadow-xs shrink-0 border border-white/20">
+        <img src="{{ asset('pwa-icon-192x192.png') }}" alt="PIOS" class="h-full w-full object-cover rounded-lg" />
     </div>
 
     <img

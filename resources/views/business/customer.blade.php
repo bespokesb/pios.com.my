@@ -131,6 +131,44 @@
             color: #92400E;
             border: 1px solid rgba(245, 158, 11, 0.25);
         }
+        .cust-tab-item {
+            padding: 6px 14px;
+            border-radius: 8px;
+            text-decoration: none !important;
+            font-size: 0.88rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.15s ease;
+            background: #FFFFFF;
+            color: #475569;
+            border: 1px solid #E2E8F0;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cust-tab-item:hover {
+            background: #F8FAFC;
+            color: #1E293B;
+        }
+        body.dark-mode-active .cust-tab-item,
+        html.dark .cust-tab-item {
+            background: #1E293B;
+            border-color: #334155;
+            color: #94A3B8;
+        }
+        body.dark-mode-active .cust-tab-item:hover,
+        html.dark .cust-tab-item:hover {
+            background: #334155;
+            color: #F8FAFC;
+        }
+        .cust-tab-item.active-all { background: #0D9488 !important; color: #FFFFFF !important; border-color: #0D9488 !important; }
+        .cust-tab-item.active-lead { background: #475569 !important; color: #FFFFFF !important; border-color: #475569 !important; }
+        .cust-tab-item.active-prospect { background: #2563EB !important; color: #FFFFFF !important; border-color: #2563EB !important; }
+        .cust-tab-item.active-customer { background: #0D9488 !important; color: #FFFFFF !important; border-color: #0D9488 !important; }
+        .cust-tab-item.active-loyal_customer { background: #DB2777 !important; color: #FFFFFF !important; border-color: #DB2777 !important; }
+        .cust-tab-item.active-member { background: #7C3AED !important; color: #FFFFFF !important; border-color: #7C3AED !important; }
+        .cust-tab-item.active-partner { background: #D97706 !important; color: #FFFFFF !important; border-color: #D97706 !important; }
+        .cust-tab-item.active-vip { background: #D97706 !important; color: #FFFFFF !important; border-color: #D97706 !important; }
     </style>
 
     <!-- Desktop Header Bar -->
@@ -203,18 +241,30 @@
         </div>
 
         <!-- Filter Tabs -->
-        <div class="cust-tabs-bar" style="display: flex; gap: 8px; margin-bottom: 16px;">
-            <a href="{{ route('business.customers.index', ['search' => $search]) }}" class="tab-btn {{ $filter === 'all' ? 'active' : '' }}" style="padding: 6px 14px; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; {{ $filter === 'all' ? 'background: #0D9488; color: #fff;' : 'background: #fff; color: #475569; border: 1px solid #E2E8F0;' }}">
+        <div class="cust-tabs-bar" style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+            <a href="{{ route('business.customers.index', ['search' => $search]) }}" class="cust-tab-item {{ $filter === 'all' ? 'active-all' : '' }}">
                 All ({{ $totalCount }})
             </a>
-            <a href="{{ route('business.customers.index', ['filter' => 'vip', 'search' => $search]) }}" class="tab-btn {{ $filter === 'vip' ? 'active' : '' }}" style="padding: 6px 14px; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; {{ $filter === 'vip' ? 'background: #D97706; color: #fff;' : 'background: #fff; color: #475569; border: 1px solid #E2E8F0;' }}">
-                VIP ({{ $vipCount }})
+            <a href="{{ route('business.customers.index', ['filter' => 'lead', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'lead' ? 'active-lead' : '' }}">
+                Lead ({{ $leadCount }})
             </a>
-            <a href="{{ route('business.customers.index', ['filter' => 'customer', 'search' => $search]) }}" class="tab-btn {{ $filter === 'customer' ? 'active' : '' }}" style="padding: 6px 14px; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; {{ $filter === 'customer' ? 'background: #0D9488; color: #fff;' : 'background: #fff; color: #475569; border: 1px solid #E2E8F0;' }}">
+            <a href="{{ route('business.customers.index', ['filter' => 'prospect', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'prospect' ? 'active-prospect' : '' }}">
+                Prospek ({{ $prospectCount }})
+            </a>
+            <a href="{{ route('business.customers.index', ['filter' => 'customer', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'customer' ? 'active-customer' : '' }}">
                 Customer ({{ $customerCount }})
             </a>
-            <a href="{{ route('business.customers.index', ['filter' => 'prospect', 'search' => $search]) }}" class="tab-btn {{ $filter === 'prospect' ? 'active' : '' }}" style="padding: 6px 14px; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; {{ $filter === 'prospect' ? 'background: #134C49; color: #fff;' : 'background: #fff; color: #475569; border: 1px solid #E2E8F0;' }}">
-                Prospects ({{ $prospectCount }})
+            <a href="{{ route('business.customers.index', ['filter' => 'loyal_customer', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'loyal_customer' ? 'active-loyal_customer' : '' }}">
+                Loyal Customer ({{ $loyalCustomerCount }})
+            </a>
+            <a href="{{ route('business.customers.index', ['filter' => 'member', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'member' ? 'active-member' : '' }}">
+                Member ({{ $memberCount }})
+            </a>
+            <a href="{{ route('business.customers.index', ['filter' => 'partner', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'partner' ? 'active-partner' : '' }}">
+                Partner ({{ $partnerCount }})
+            </a>
+            <a href="{{ route('business.customers.index', ['filter' => 'vip', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'vip' ? 'active-vip' : '' }}">
+                VIP ({{ $vipCount }})
             </a>
         </div>
 
@@ -354,17 +404,29 @@
 
         <!-- Filter Tabs for Mobile -->
         <div class="mobile-filter-tabs" style="display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch;">
-            <a href="{{ route('business.customers.index', ['search' => $search]) }}" style="padding: 7px 14px; border-radius: 10px; text-decoration: none; font-size: 0.84rem; font-weight: 600; white-space: nowrap; {{ $filter === 'all' ? 'background: #134C49; color: #fff;' : 'background: #fff; color: #475569; border: 1px solid #E2E8F0;' }}">
+            <a href="{{ route('business.customers.index', ['search' => $search]) }}" class="cust-tab-item {{ $filter === 'all' ? 'active-all' : '' }}" style="padding: 7px 14px; border-radius: 10px; font-size: 0.84rem;">
                 All ({{ $totalCount }})
             </a>
-            <a href="{{ route('business.customers.index', ['filter' => 'vip', 'search' => $search]) }}" style="padding: 7px 14px; border-radius: 10px; text-decoration: none; font-size: 0.84rem; font-weight: 600; white-space: nowrap; {{ $filter === 'vip' ? 'background: #D97706; color: #fff;' : 'background: #fff; color: #475569; border: 1px solid #E2E8F0;' }}">
-                VIP ({{ $vipCount }})
+            <a href="{{ route('business.customers.index', ['filter' => 'lead', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'lead' ? 'active-lead' : '' }}" style="padding: 7px 14px; border-radius: 10px; font-size: 0.84rem;">
+                Lead ({{ $leadCount }})
             </a>
-            <a href="{{ route('business.customers.index', ['filter' => 'customer', 'search' => $search]) }}" style="padding: 7px 14px; border-radius: 10px; text-decoration: none; font-size: 0.84rem; font-weight: 600; white-space: nowrap; {{ $filter === 'customer' ? 'background: #0D9488; color: #fff;' : 'background: #fff; color: #475569; border: 1px solid #E2E8F0;' }}">
+            <a href="{{ route('business.customers.index', ['filter' => 'prospect', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'prospect' ? 'active-prospect' : '' }}" style="padding: 7px 14px; border-radius: 10px; font-size: 0.84rem;">
+                Prospek ({{ $prospectCount }})
+            </a>
+            <a href="{{ route('business.customers.index', ['filter' => 'customer', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'customer' ? 'active-customer' : '' }}" style="padding: 7px 14px; border-radius: 10px; font-size: 0.84rem;">
                 Customer ({{ $customerCount }})
             </a>
-            <a href="{{ route('business.customers.index', ['filter' => 'prospect', 'search' => $search]) }}" style="padding: 7px 14px; border-radius: 10px; text-decoration: none; font-size: 0.84rem; font-weight: 600; white-space: nowrap; {{ $filter === 'prospect' ? 'background: #134C49; color: #fff;' : 'background: #fff; color: #475569; border: 1px solid #E2E8F0;' }}">
-                Prospects ({{ $prospectCount }})
+            <a href="{{ route('business.customers.index', ['filter' => 'loyal_customer', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'loyal_customer' ? 'active-loyal_customer' : '' }}" style="padding: 7px 14px; border-radius: 10px; font-size: 0.84rem;">
+                Loyal Customer ({{ $loyalCustomerCount }})
+            </a>
+            <a href="{{ route('business.customers.index', ['filter' => 'member', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'member' ? 'active-member' : '' }}" style="padding: 7px 14px; border-radius: 10px; font-size: 0.84rem;">
+                Member ({{ $memberCount }})
+            </a>
+            <a href="{{ route('business.customers.index', ['filter' => 'partner', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'partner' ? 'active-partner' : '' }}" style="padding: 7px 14px; border-radius: 10px; font-size: 0.84rem;">
+                Partner ({{ $partnerCount }})
+            </a>
+            <a href="{{ route('business.customers.index', ['filter' => 'vip', 'search' => $search]) }}" class="cust-tab-item {{ $filter === 'vip' ? 'active-vip' : '' }}" style="padding: 7px 14px; border-radius: 10px; font-size: 0.84rem;">
+                VIP ({{ $vipCount }})
             </a>
         </div>
 

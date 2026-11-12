@@ -186,7 +186,7 @@ class BusinessProductManagementTest extends TestCase
             'media_assets' => ['products/photo1.jpg'],
         ]);
 
-        $response = $this->get(route('public.product.show', $product->product_no));
+        $response = $this->get(route('public.product.show', $product));
         $response->assertOk();
         $response->assertSee('<video', false);
         $response->assertSee('autoplay', false);

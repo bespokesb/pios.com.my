@@ -48,7 +48,7 @@ class PublicProductPageTest extends TestCase
     {
         $product = $this->ownedProduct();
 
-        $this->get(route('public.product.show', $product->product_no))
+        $this->get(route('public.product.show', $product))
             ->assertOk()
             ->assertSee('Manuka Honey')
             ->assertSee('25.00')
@@ -60,7 +60,7 @@ class PublicProductPageTest extends TestCase
     {
         $product = $this->ownedProduct();
 
-        $html = $this->get(route('public.product.show', $product->product_no))->getContent();
+        $html = $this->get(route('public.product.show', $product))->getContent();
 
         $this->assertStringNotContainsString('99.99', $html); // cost
         $this->assertStringNotContainsString('7.77', $html);  // commission
@@ -70,7 +70,7 @@ class PublicProductPageTest extends TestCase
     {
         $product = $this->ownedProduct(['status' => ProductStatus::Draft]);
 
-        $this->get(route('public.product.show', $product->product_no))->assertNotFound();
+        $this->get(route('public.product.show', $product))->assertNotFound();
     }
 
     public function test_admin_catalog_product_without_owner_is_not_public(): void
@@ -80,19 +80,19 @@ class PublicProductPageTest extends TestCase
             'status' => ProductStatus::Active,
         ]);
 
-        $this->get(route('public.product.show', $product->product_no))->assertNotFound();
+        $this->get(route('public.product.show', $product))->assertNotFound();
     }
 
     public function test_placing_order_creates_lead_and_submitted_order(): void
     {
         $product = $this->ownedProduct();
 
-        $this->post(route('public.product.order', $product->product_no), [
+        $this->post(route('public.product.order', $product), [
             'name' => 'Siti Aminah',
             'phone' => '012-345 6789',
             'quantity' => 3,
             'address' => '12 Jalan Mawar',
-        ])->assertRedirect(route('public.product.show', $product->product_no))
+        ])->assertRedirect(route('public.product.show', $product))
             ->assertSessionHas('order_confirmation');
 
         $customer = Customer::query()->where('business_owner_id', $product->business_owner_id)->first();
@@ -113,7 +113,7 @@ class PublicProductPageTest extends TestCase
         $product = $this->ownedProduct();
         $boUser = $product->businessOwner->user;
 
-        $this->post(route('public.product.order', $product->product_no), [
+        $this->post(route('public.product.order', $product), [
             'name' => 'Siti Aminah',
             'phone' => '012-345 6789',
             'quantity' => 1,
@@ -134,9 +134,9 @@ class PublicProductPageTest extends TestCase
         $product = $this->ownedProduct();
 
         $payload = ['name' => 'Repeat Buyer', 'phone' => '0123456789', 'quantity' => 1];
-        $this->post(route('public.product.order', $product->product_no), $payload);
+        $this->post(route('public.product.order', $product), $payload);
         // Different formatting of the same number must match, not duplicate.
-        $this->post(route('public.product.order', $product->product_no), array_merge($payload, [
+        $this->post(route('public.product.order', $product), array_merge($payload, [
             'phone' => '012-345 6789',
         ]));
 
@@ -148,7 +148,7 @@ class PublicProductPageTest extends TestCase
     {
         $product = $this->ownedProduct();
 
-        $this->post(route('public.product.order', $product->product_no), [
+        $this->post(route('public.product.order', $product), [
             'name' => 'Bot', 'phone' => '0123456789', 'quantity' => 1,
             'website' => 'http://spam.example',
         ])->assertSessionHasErrors('website');
@@ -160,7 +160,7 @@ class PublicProductPageTest extends TestCase
     {
         $product = $this->ownedProduct();
 
-        $this->post(route('public.product.order', $product->product_no), ['quantity' => 1])
+        $this->post(route('public.product.order', $product), ['quantity' => 1])
             ->assertSessionHasErrors(['name', 'phone']);
 
         $this->assertSame(0, Order::query()->count());
@@ -171,8 +171,8 @@ class PublicProductPageTest extends TestCase
         $productA = $this->ownedProduct();
         $productB = $this->ownedProduct();
 
-        $this->post(route('public.product.order', $productA->product_no), ['name' => 'A', 'phone' => '0123000001', 'quantity' => 1]);
-        $this->post(route('public.product.order', $productB->product_no), ['name' => 'B', 'phone' => '0123000002', 'quantity' => 1]);
+        $this->post(route('public.product.order', $productA), ['name' => 'A', 'phone' => '0123000001', 'quantity' => 1]);
+        $this->post(route('public.product.order', $productB), ['name' => 'B', 'phone' => '0123000002', 'quantity' => 1]);
 
         $boUserA = $productA->businessOwner->user;
 
@@ -192,7 +192,7 @@ class PublicProductPageTest extends TestCase
     public function test_bo_orders_list_and_view_pages_render(): void
     {
         $product = $this->ownedProduct();
-        $this->post(route('public.product.order', $product->product_no), ['name' => 'Render Buyer', 'phone' => '0123000009', 'quantity' => 2]);
+        $this->post(route('public.product.order', $product), ['name' => 'Render Buyer', 'phone' => '0123000009', 'quantity' => 2]);
         $order = Order::query()->first();
         $boUser = $product->businessOwner->user;
 
@@ -221,12 +221,72 @@ class PublicProductPageTest extends TestCase
             ],
         ]);
 
-        $this->get(route('public.product.show', $product->product_no))
+        $this->get(route('public.product.show', $product))
             ->assertOk()
             ->assertSee('https://example.com/img1.jpg')
             ->assertSee('https://example.com/img2.jpg')
             ->assertSee('https://example.com/img3.jpg')
             ->assertSee('thumbContainer')
             ->assertSee('startAutoplay');
+    }
+
+    public function test_public_guest_cannot_access_product_by_sequential_product_no(): void
+    {
+        $product = $this->ownedProduct();
+
+        // Accessing via raw product_no (e.g. /p/PRD000008) must be blocked for guests
+        $this->get('/p/'.$product->product_no)
+            ->assertNotFound();
+    }
+
+    public function test_public_guest_can_access_product_by_secure_slug(): void
+    {
+        $product = $this->ownedProduct();
+
+        $this->assertNotEmpty($product->slug);
+        $this->get('/p/'.$product->slug)
+            ->assertOk()
+            ->assertSee($product->name);
+    }
+
+    public function test_changing_ending_character_or_guessing_slug_returns_not_found(): void
+    {
+        $product = $this->ownedProduct();
+
+        // Mutate the last character
+        $invalidSlug = substr($product->slug, 0, -1).'x';
+        if ($invalidSlug === $product->slug) {
+            $invalidSlug = substr($product->slug, 0, -1).'y';
+        }
+
+        $this->get('/p/'.$invalidSlug)
+            ->assertNotFound();
+        $this->get('/p/PRD000007')
+            ->assertNotFound();
+        $this->get('/p/PRD000009')
+            ->assertNotFound();
+    }
+
+    public function test_authenticated_business_owner_can_preview_their_own_product_by_product_no(): void
+    {
+        $product = $this->ownedProduct();
+        $owner = $product->businessOwner->user;
+
+        $this->actingAs($owner)
+            ->get('/p/'.$product->product_no)
+            ->assertOk()
+            ->assertSee($product->name);
+    }
+
+    public function test_other_business_owner_cannot_access_unowned_product_by_product_no(): void
+    {
+        $product = $this->ownedProduct();
+
+        $otherBo = BusinessOwner::factory()->create();
+        $otherUser = $otherBo->user;
+
+        $this->actingAs($otherUser)
+            ->get('/p/'.$product->product_no)
+            ->assertNotFound();
     }
 }

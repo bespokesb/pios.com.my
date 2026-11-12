@@ -530,7 +530,7 @@ class SubscriptionModuleTest extends TestCase
         $this->assertSame(0, $subscription->hoursRemaining());
     }
 
-    public function test_business_owner_with_active_trial_sees_trial_banner_on_dashboard(): void
+    public function test_business_owner_with_active_trial_does_not_see_trial_banner_on_dashboard(): void
     {
         $partnerUser = User::factory()->create(['role' => UserRole::Partner, 'status' => UserStatus::Active]);
         $partner = Partner::factory()->create(['user_id' => $partnerUser->id]);
@@ -545,12 +545,13 @@ class SubscriptionModuleTest extends TestCase
         $response = $this->actingAs($boUser)->get(route('business.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('48-Hour Free Trial');
-        $response->assertSee('Your BizGrowth Engine (BGE) trial access has');
+        // Banners removed across all screens as BGE is managed manually by Partner
+        $response->assertDontSee('bge-trial-topbanner');
+        $response->assertDontSee('Your BizGrowth Engine (BGE) trial access has');
         $response->assertDontSee('id="bgeExpiredModalOverlay"', escape: false);
     }
 
-    public function test_business_owner_with_expired_trial_sees_popup_modal_with_partner_whatsapp(): void
+    public function test_business_owner_with_expired_trial_does_not_see_blocking_modal_on_screens(): void
     {
         $partnerUser = User::factory()->create(['role' => UserRole::Partner, 'status' => UserStatus::Active]);
         $partner = Partner::factory()->create([
@@ -571,27 +572,18 @@ class SubscriptionModuleTest extends TestCase
         $response = $this->actingAs($boUser)->get(route('business.dashboard'));
 
         $response->assertOk();
-        // Modal overlay present
-        $response->assertSee('id="bgeExpiredModalOverlay"', escape: false);
-        $response->assertSee('BGE Subscription Required');
-        $response->assertSee('Your 48-hour BizGrowth Engine (BGE) free trial period has ended.');
-        $response->assertSee('Dato Partner Hebat');
-        $response->assertSee('P1001');
-        $response->assertSee('Contact Partner via WhatsApp');
-        $response->assertSee('https://wa.me/60123456789', escape: false);
+        // Modal overlay removed across screens as Partner handles F2F manually
+        $response->assertDontSee('id="bgeExpiredModalOverlay"', escape: false);
+        $response->assertDontSee('BGE Subscription Required');
 
-        // Subscriptions page does not display the blocking modal so they can pay
+        // Subscriptions page displays manual partner indicator
         $subResponse = $this->actingAs($boUser)->get(route('business.subscriptions.index'));
         $subResponse->assertOk();
         $subResponse->assertDontSee('id="bgeExpiredModalOverlay"', escape: false);
-
-        // Modal is non-dismissible: no close buttons or dismiss actions
-        $response->assertDontSee('Dismiss');
-        $response->assertDontSee('bge-modal-close');
-        $response->assertDontSee('closeBgeModal');
+        $subResponse->assertSee('Diuruskan Manual oleh Partner');
     }
 
-    public function test_pending_bge_approval_modal_is_non_dismissible_until_partner_approves(): void
+    public function test_bge_payment_workflow_and_partner_approval(): void
     {
         $partnerUser = User::factory()->create(['role' => UserRole::Partner, 'status' => UserStatus::Active]);
         $partner = Partner::factory()->create([
@@ -614,30 +606,24 @@ class SubscriptionModuleTest extends TestCase
         // Ensure initial BGE sub (trial expired after 50 hours)
         app(SubscriptionService::class)->ensureInitialBgeSubscription($bo);
 
-        // 1. BO submits payment
+        // 1. BO submits payment or Partner records payment
         $payment = app(SubscriptionService::class)->submitPayment($boUser, $bge, [
             'payment_method' => 'cash',
         ]);
 
         $this->assertSame('pending_approval', $payment->status);
 
-        // 2. Visiting portal shows non-dismissible Pending Confirmation modal
+        // 2. Visiting portal remains unblocked by modals (managed manually)
         $response = $this->actingAs($boUser)->get('/dashboard');
         $response->assertOk();
-        $response->assertSee('id="bgeExpiredModalOverlay"', escape: false);
-        $response->assertSee('BGE Payment Pending Confirmation');
-        $response->assertSee('Your subscription request is being reviewed by your Partner.');
-        $response->assertDontSee('Dismiss');
-        $response->assertDontSee('bge-modal-close');
-        $response->assertDontSee('closeBgeModal');
+        $response->assertDontSee('id="bgeExpiredModalOverlay"', escape: false);
 
         // 3. Partner approves the payment
         app(SubscriptionService::class)->approvePayment($payment, $partnerUser);
 
-        // 4. Modal disappears and Business Owner can now use the portal
+        // 4. Subscription active and unblocked
         $postApprovalResponse = $this->actingAs($boUser)->get('/dashboard');
         $postApprovalResponse->assertOk();
         $postApprovalResponse->assertDontSee('id="bgeExpiredModalOverlay"', escape: false);
-        $postApprovalResponse->assertDontSee('BGE Payment Pending Confirmation');
     }
 }

@@ -151,6 +151,94 @@ class MalaysianLocations
     }
 
     /**
+     * Normalize Malaysian state name to standard representation.
+     */
+    public static function normalizeState(?string $state): ?string
+    {
+        if ($state === null) {
+            return null;
+        }
+        $trimmed = trim($state);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        $lower = strtolower($trimmed);
+
+        return match (true) {
+            in_array($lower, ['kl', 'kuala lumpur', 'wp kuala lumpur', 'w.p. kuala lumpur', 'wilayah persekutuan kuala lumpur'], true) => 'Wilayah Persekutuan Kuala Lumpur',
+            in_array($lower, ['putrajaya', 'wp putrajaya', 'w.p. putrajaya', 'wilayah persekutuan putrajaya'], true) => 'Wilayah Persekutuan Putrajaya',
+            in_array($lower, ['labuan', 'wp labuan', 'w.p. labuan', 'wilayah persekutuan labuan'], true) => 'Wilayah Persekutuan Labuan',
+            in_array($lower, ['penang', 'pulau pinang'], true) => 'Pulau Pinang',
+            in_array($lower, ['malacca', 'melaka'], true) => 'Melaka',
+            in_array($lower, ['trengganu', 'terengganu'], true) => 'Terengganu',
+            default => collect(self::states())->first(fn ($s) => strtolower($s) === $lower, $trimmed),
+        };
+    }
+
+    /**
+     * Ensure a location (state, city, postcode) exists in the database.
+     * If not already in malaysia_locations, adds it so next time it is in the list.
+     */
+    public static function ensureLocationExists(?string $state, ?string $city, ?string $postcode): ?MalaysiaLocation
+    {
+        $postcode = trim((string) $postcode);
+        if ($postcode === '' || ! preg_match('/^[0-9]{4,10}$/', $postcode)) {
+            return null;
+        }
+
+        $state = self::normalizeState($state) ?? trim((string) $state);
+        $city = trim((string) $city);
+
+        if ($state === '' || $city === '') {
+            try {
+                $existing = MalaysiaLocation::query()->where('postcode', $postcode)->first();
+                if ($existing) {
+                    if ($state === '') {
+                        $state = $existing->state;
+                    }
+                    if ($city === '') {
+                        $city = $existing->city;
+                    }
+                }
+            } catch (\Throwable) {
+                // Ignore DB query errors before table exists
+            }
+        }
+
+        if ($state === '') {
+            $num = (int) preg_replace('/\D/', '', $postcode);
+            $state = self::stateByPostalNumber($num) ?? '';
+        }
+
+        if ($state === '') {
+            return null;
+        }
+
+        if ($city === '') {
+            $lookup = self::lookupByPostcode($postcode);
+            if ($lookup && ! empty($lookup['city'])) {
+                $city = $lookup['city'];
+            } else {
+                $all = self::all();
+                $city = $all[$state]['cities'][0] ?? $state;
+            }
+        }
+
+        try {
+            return MalaysiaLocation::firstOrCreate(
+                [
+                    'state' => $state,
+                    'city' => $city,
+                    'postcode' => $postcode,
+                ]
+            );
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
      * Lookup State and City by Postcode.
      *
      * @return array{state: string, city: string}|null

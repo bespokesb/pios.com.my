@@ -41,12 +41,12 @@
         <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
             <div class="flex items-center gap-3">
                 <a href="{{ \App\Models\SystemSetting::isMarketplaceEnabled() ? route('marketplace.index') : url('/') }}" class="flex items-center gap-3 group">
-                    <div class="relative flex items-center justify-center h-10 w-10 rounded-full border-2 border-[#E7C46A] bg-[#16436E] p-1 shadow-sm shrink-0">
-                        <img src="{{ asset('favicon-192x192.png') }}" alt="PIOS" class="h-8 w-8 rounded-full object-contain">
+                    <div class="relative flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-2xl overflow-hidden shadow-md shrink-0 border border-white/20 bg-white/10 transition-transform group-hover:scale-105">
+                        <img src="{{ asset('pwa-icon-192x192.png') }}" alt="PIOS" class="h-full w-full object-cover rounded-2xl">
                     </div>
                     <div class="min-w-0 flex flex-col">
-                        <span class="font-display font-black text-lg leading-none text-white tracking-wide truncate">{{ $shopName ?: 'PIOS Store' }}</span>
-                        <span class="text-[9px] font-extrabold tracking-widest text-[#E7C46A] uppercase leading-none mt-0.5">{{ __('pios.public.verified_seller') }}</span>
+                        <span class="font-display font-black text-lg sm:text-xl leading-tight text-white tracking-wide truncate">{{ $shopName ?: 'PIOS Store' }}</span>
+                        <span class="text-[9px] sm:text-[10px] font-extrabold tracking-widest text-[#E7C46A] uppercase leading-none mt-0.5">{{ __('pios.public.verified_seller') }}</span>
                     </div>
                 </a>
             </div>
@@ -330,7 +330,7 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('public.product.order', ['product' => $product->product_no]) }}" class="space-y-4">
+                        <form method="POST" action="{{ route('public.product.order', ['product' => $product->slug ?: $product->product_no]) }}" class="space-y-4">
                             @csrf
 
                             {{-- Honeypot --}}
@@ -427,10 +427,15 @@
                                 </div>
                             </div>
 
-                            {{-- POSTCODE DROPDOWN --}}
+                            {{-- POSTCODE DROPDOWN & MANUAL ENTRY --}}
                             <div>
-                                <label for="postcodeSelect" class="mb-1 block text-xs font-bold text-slate-700 uppercase tracking-wider">Postcode</label>
-                                <div class="relative">
+                                <div class="flex items-center justify-between mb-1">
+                                    <label for="postcodeSelect" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-0">Postcode</label>
+                                    <button type="button" id="toggleProductPostcodeModeBtn" class="text-xs font-semibold text-[#174A78] hover:underline focus:outline-none cursor-pointer">
+                                        + Manual Postcode
+                                    </button>
+                                </div>
+                                <div class="relative" id="productPostcodeSelectWrapper">
                                     <select name="poskod" id="postcodeSelect"
                                             class="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 pr-10 text-sm font-semibold text-slate-800 focus:border-[#174A78] focus:outline-none focus:ring-2 focus:ring-[#174A78]/20 transition-all shadow-xs cursor-pointer">
                                         <option value="">Select postcode</option>
@@ -440,6 +445,18 @@
                                             <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.51a.75.75 0 01-1.08 0l-4.25-4.51a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                                         </svg>
                                     </div>
+                                </div>
+                                <div id="productPostcodeInputWrapper" style="display: none;">
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" id="customProductPostcodeInput"
+                                               placeholder="Enter postcode (e.g. 50480)" maxlength="10"
+                                               class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-800 placeholder-slate-400 focus:border-[#174A78] focus:outline-none focus:ring-2 focus:ring-[#174A78]/20 transition-all shadow-xs" disabled>
+                                        <button type="button" id="cancelProductCustomPostcodeBtn"
+                                                class="px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors whitespace-nowrap cursor-pointer">
+                                            List
+                                        </button>
+                                    </div>
+                                    <span class="text-[11px] text-slate-500 mt-1 block">Enter postcode (auto-detects Malaysian state &amp; city)</span>
                                 </div>
                             </div>
 
@@ -506,6 +523,12 @@ document.addEventListener('DOMContentLoaded', function() {
         stateSelect: 'stateSelect',
         citySelect: 'citySelect',
         postcodeSelect: 'postcodeSelect',
+        customInput: 'customProductPostcodeInput',
+        customInputWrapper: 'productPostcodeInputWrapper',
+        selectWrapper: 'productPostcodeSelectWrapper',
+        toggleBtn: 'toggleProductPostcodeModeBtn',
+        cancelBtn: 'cancelProductCustomPostcodeBtn',
+        allowCustom: true,
         initialState: @json(old('negeri', $customer['negeri'] ?? '')),
         initialCity: @json(old('bandar', $customer['bandar'] ?? '')),
         initialPostcode: @json(old('poskod', $customer['poskod'] ?? ''))

@@ -170,10 +170,6 @@
             --trial-banner-height: 0px;
         }
 
-        body.has-trial-banner {
-            --trial-banner-height: 46px;
-        }
-
         /* Enforce theme fonts globally across all pages and elements */
         body, input, button, select, textarea {
             font-family: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif) !important;
@@ -648,31 +644,7 @@
     @stack('styles')
 </head>
 
-@php
-    $currentBgeSub = $bgeSubscription ?? (auth()->check() && auth()->user()->businessOwner ? app(\App\Services\SubscriptionService::class)->ensureInitialBgeSubscription(auth()->user()->businessOwner) : null);
-    $showTrialTopBanner = $currentBgeSub && $currentBgeSub->isTrial();
-    $showExpiredTopBanner = $currentBgeSub && $currentBgeSub->isExpired() && !request()->routeIs('business.subscriptions.*');
-@endphp
-
-<body class="{{ $bodyClass ?? 'dashboard-body' }} {{ ($showTrialTopBanner || $showExpiredTopBanner) ? 'has-trial-banner' : '' }}">
-
-    @if($showTrialTopBanner)
-        <div class="bge-trial-topbanner" style="background: linear-gradient(90deg, #134C49 0%, #1E3A8A 100%); color: #FFFFFF; padding: 10px 20px; font-size: 0.86rem; display: flex; align-items: center; justify-content: space-between; z-index: 100; position: sticky; top: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.15); min-height: 44px; box-sizing: border-box;">
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <span style="background: #E7C46A; color: #0F172A; font-size: 0.72rem; font-weight: 800; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.05em;">48-Hour Free Trial</span>
-                <span>Your BizGrowth Engine (BGE) trial access has <strong>{{ $currentBgeSub->hoursRemaining() }} hours remaining</strong>. Please renew your subscription for uninterrupted access.</span>
-            </div>
-            <a href="{{ route('business.subscriptions.index') }}" style="background: #E7C46A; color: #0F172A; font-weight: 700; padding: 5px 14px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; white-space: nowrap; margin-left: 12px;">Renew BGE</a>
-        </div>
-    @elseif($showExpiredTopBanner)
-        <div class="bge-trial-topbanner" style="background: linear-gradient(90deg, #991B1B 0%, #7F1D1D 100%); color: #FFFFFF; padding: 10px 20px; font-size: 0.86rem; display: flex; align-items: center; justify-content: space-between; z-index: 100; position: sticky; top: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.15); min-height: 44px; box-sizing: border-box;">
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <span style="background: #FEE2E2; color: #991B1B; font-size: 0.72rem; font-weight: 800; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.05em;">Trial Expired</span>
-                <span>Your 48-hour BizGrowth Engine (BGE) trial period has ended. Please renew your subscription for continued access.</span>
-            </div>
-            <a href="{{ route('business.subscriptions.index') }}" style="background: #F87171; color: #FFFFFF; font-weight: 700; padding: 5px 14px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; white-space: nowrap; margin-left: 12px;">Renew BGE Now</a>
-        </div>
-    @endif
+<body class="{{ $bodyClass ?? 'dashboard-body' }}">
 
     <!-- Mobile Top Header (Shown only on Mobile < 992px) -->
     <x-business.mobile-header :title="$headerTitle ?? 'Dashboard'" :customHeaderClass="$mobileHeaderClass ?? 'mobile-dash-header'" />
@@ -690,26 +662,12 @@
         </main>
     </div>
 
-    <!-- BGE Subscription Expired / Pending Modal -->
-    @if(isset($isBgeExpired) && $isBgeExpired && !request()->routeIs('business.subscriptions.*'))
-        <x-business.bge-expired-modal />
-    @endif
-
     <!-- Scripts -->
     <script src="{{ asset('assets/js/dashboard.js') }}?v={{ file_exists(public_path('assets/js/dashboard.js')) ? filemtime(public_path('assets/js/dashboard.js')) : time() }}"></script>
     <script>
         // Mobile menu clean handler
         (function () {
-            function syncTrialBannerHeight() {
-                var banner = document.querySelector('.bge-trial-topbanner');
-                if (banner && banner.offsetHeight > 0) {
-                    document.documentElement.style.setProperty('--trial-banner-height', banner.offsetHeight + 'px');
-                } else {
-                    document.documentElement.style.setProperty('--trial-banner-height', '0px');
-                }
-            }
-            window.addEventListener('resize', syncTrialBannerHeight);
-            syncTrialBannerHeight();
+            document.documentElement.style.setProperty('--trial-banner-height', '0px');
 
             const toggleBtn = document.getElementById('mobileMenuToggleBtn');
             if (toggleBtn) {

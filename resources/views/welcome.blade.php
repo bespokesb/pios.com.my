@@ -38,8 +38,8 @@
             <div class="nav-inner">
                 <!-- Official PIOS Logo with Rounded Badge -->
                 <a href="{{ url('/') }}" class="brand-logo-link" aria-label="PIOS Home" style="display: flex; align-items: center; text-decoration: none;">
-                    <div class="brand-logo-badge" style="position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 9999px; border: 2px solid #E7C46A; background: #16436E; padding: 2px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); margin-right: 12px; flex-shrink: 0;">
-                        <img src="{{ asset('favicon-192x192.png') }}" alt="PIOS" style="width: 100%; height: 100%; border-radius: 9999px; object-fit: contain;">
+                    <div class="brand-logo-badge" style="position: relative; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.25); margin-right: 12px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2);">
+                        <img src="{{ asset('pwa-icon-192x192.png') }}" alt="PIOS" style="width: 100%; height: 100%; border-radius: 14px; object-fit: cover;">
                     </div>
                     <div style="display: flex; flex-direction: column;">
                         <span style="font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.35rem; line-height: 1; color: #FFFFFF; letter-spacing: 0.5px;">pios</span>
@@ -351,7 +351,7 @@
                             ? $prod->firstShareableImageUrl()
                             : asset('assets/images/header_logo.png');
                         $productUrl = (isset($prod->product_no) && filled($prod->product_no))
-                            ? route('public.product.show', ['product' => $prod->product_no])
+                            ? (method_exists($prod, 'publicUrl') ? $prod->publicUrl() : route('public.product.show', ['product' => $prod->slug ?: $prod->product_no]))
                             : route('login');
                     @endphp
                     <article class="product-slide-card">

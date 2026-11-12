@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Support\Phone;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Component;
+use Illuminate\Validation\ValidationException;
 use SensitiveParameter;
 
 /**
@@ -106,5 +107,17 @@ trait ResolvesPiosIdLogin
 
         // Unresolved — return as-is so authentication fails with invalid credentials.
         return $login;
+    }
+
+    protected function throwFailureValidationException(): never
+    {
+        $message = __('pios.auth.failed');
+        if ($message === 'pios.auth.failed' || blank($message)) {
+            $message = 'Please enter correct ID and PASSWORD';
+        }
+
+        throw ValidationException::withMessages([
+            'data.email' => $message,
+        ]);
     }
 }

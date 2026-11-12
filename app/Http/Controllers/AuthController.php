@@ -37,6 +37,9 @@ class AuthController extends Controller
             'piosId' => ['required', 'string'],
             'password' => ['required', 'string'],
             'rememberMe' => ['nullable', 'boolean'],
+        ], [
+            'piosId.required' => 'Please enter your PIOS ID',
+            'password.required' => 'Please enter your password',
         ]);
 
         $login = (string) $credentials['piosId'];
@@ -94,8 +97,13 @@ class AuthController extends Controller
                     ->with('customer_status', __('Welcome back, :name!', ['name' => $customer->name]));
             }
 
+            $failedMsg = __('pios.auth.failed');
+            if ($failedMsg === 'pios.auth.failed' || blank($failedMsg)) {
+                $failedMsg = 'Please enter correct ID and PASSWORD';
+            }
+
             throw ValidationException::withMessages([
-                'piosId' => __('pios.auth.failed', ['attribute' => 'PIOS ID / Password']),
+                'piosId' => $failedMsg,
             ]);
         }
 

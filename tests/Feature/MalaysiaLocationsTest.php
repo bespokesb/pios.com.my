@@ -60,7 +60,7 @@ class MalaysiaLocationsTest extends TestCase
             'selling_price' => 50.00,
         ]);
 
-        $response = $this->get(route('public.product.show', ['product' => $product->product_no]));
+        $response = $this->get(route('public.product.show', $product));
         $response->assertOk();
 
         // Verify Name and Phone are no longer wrapped in a 2-column grid
@@ -80,6 +80,11 @@ class MalaysiaLocationsTest extends TestCase
         $response->assertSee('id="postcodeSelect"', false);
         $response->assertSee('id="citySelect"', false);
         $response->assertSee('id="stateSelect"', false);
+
+        // Verify manual postcode toggle and custom input controls
+        $response->assertSee('id="toggleProductPostcodeModeBtn"', false);
+        $response->assertSee('id="customProductPostcodeInput"', false);
+        $response->assertSee('id="productPostcodeInputWrapper"', false);
     }
 
     public function test_bo_customer_page_renders_shared_location_sync(): void
@@ -95,5 +100,113 @@ class MalaysiaLocationsTest extends TestCase
         $response->assertSee('id="postcodeSelect"', false);
         $response->assertSee('id="citySelect"', false);
         $response->assertSee('id="stateSelect"', false);
+
+        // Verify manual postcode toggle and custom input controls for add and edit modals
+        $response->assertSee('id="togglePostcodeModeBtn"', false);
+        $response->assertSee('id="customPostcodeInput"', false);
+        $response->assertSee('id="toggleEditPostcodeModeBtn"', false);
+        $response->assertSee('id="editCustomPostcodeInput"', false);
+    }
+
+    public function test_ensure_location_exists_creates_records_and_auto_determines_state(): void
+    {
+        // 05200 is in Kedah range (5000-9999)
+        $loc = MalaysianLocations::ensureLocationExists(null, 'Alor Setar', '05200');
+        $this->assertNotNull($loc);
+        $this->assertSame('Kedah', $loc->state);
+        $this->assertSame('Alor Setar', $loc->city);
+        $this->assertSame('05200', $loc->postcode);
+
+        $this->assertDatabaseHas('malaysia_locations', [
+            'state' => 'Kedah',
+            'city' => 'Alor Setar',
+            'postcode' => '05200',
+        ]);
+
+        // State normalization (e.g. Penang -> Pulau Pinang)
+        $loc2 = MalaysianLocations::ensureLocationExists('Penang', 'George Town', '10100');
+        $this->assertNotNull($loc2);
+        $this->assertSame('Pulau Pinang', $loc2->state);
+    }
+
+    public function test_location_postcode_api_stores_new_postcode(): void
+    {
+        $response = $this->postJson(route('locations.postcode.store'), [
+            'postcode' => '71800',
+            'city' => 'Nilai',
+            'state' => 'Negeri Sembilan',
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'location' => [
+                'state' => 'Negeri Sembilan',
+                'city' => 'Nilai',
+                'postcode' => '71800',
+            ],
+        ]);
+
+        $this->assertDatabaseHas('malaysia_locations', [
+            'postcode' => '71800',
+            'state' => 'Negeri Sembilan',
+        ]);
+    }
+
+    public function test_public_product_order_with_manual_postcode_persists_to_malaysia_locations(): void
+    {
+        $bo = BusinessOwner::factory()->create();
+        $product = Product::factory()->create([
+            'business_owner_id' => $bo->id,
+            'status' => ProductStatus::Active,
+            'selling_price' => 45.00,
+        ]);
+
+        $postcode = '06700'; // Pendang, Kedah
+        $this->assertDatabaseMissing('malaysia_locations', ['postcode' => $postcode]);
+
+        $response = $this->post(route('public.product.order', $product), [
+            'name' => 'Manual Postcode Buyer',
+            'phone' => '0198765432',
+            'quantity' => 1,
+            'address' => 'Kampung Bukit',
+            'bandar' => 'Pendang',
+            'negeri' => 'Kedah',
+            'poskod' => $postcode,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('order_confirmation');
+
+        $this->assertDatabaseHas('malaysia_locations', [
+            'postcode' => $postcode,
+            'state' => 'Kedah',
+        ]);
+    }
+
+    public function test_customer_registration_with_manual_postcode_persists_to_malaysia_locations(): void
+    {
+        $user = User::factory()->create(['role' => 'business_owner']);
+        $bo = BusinessOwner::factory()->create(['user_id' => $user->id]);
+
+        $postcode = '24000'; // Kemaman, Terengganu
+        $this->assertDatabaseMissing('malaysia_locations', ['postcode' => $postcode]);
+
+        $response = $this->actingAs($user)->post(route('business.customers.store'), [
+            'name' => 'Che Mat',
+            'hp_no' => '0129876543',
+            'address' => 'Jalan Pantai',
+            'bandar' => 'Kemaman',
+            'negeri' => 'Terengganu',
+            'poskod' => $postcode,
+        ]);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('malaysia_locations', [
+            'postcode' => $postcode,
+            'state' => 'Terengganu',
+            'city' => 'Kemaman',
+        ]);
     }
 }

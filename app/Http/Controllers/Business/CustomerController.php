@@ -48,29 +48,37 @@ class CustomerController extends Controller
             });
         }
 
-        if ($filter === 'prospect') {
+        if ($filter === 'lead') {
+            $query->where('category', CustomerCategory::Lead);
+        } elseif ($filter === 'prospect') {
             $query->where('category', CustomerCategory::Prospect);
         } elseif ($filter === 'customer') {
-            $query->where('category', CustomerCategory::Customer)->where('is_vip', false);
-        } elseif ($filter === 'vip') {
-            $query->where('is_vip', true);
-        } elseif ($filter === 'lead') {
-            $query->where('category', CustomerCategory::Lead);
+            $query->where('category', CustomerCategory::Customer);
         } elseif ($filter === 'loyal_customer') {
             $query->where('category', CustomerCategory::LoyalCustomer);
         } elseif ($filter === 'member') {
             $query->where('category', CustomerCategory::Member);
         } elseif ($filter === 'partner') {
             $query->where('category', CustomerCategory::Partner);
+        } elseif ($filter === 'vip') {
+            $query->where('is_vip', true);
         }
 
         $customers = $query->latest()->get();
 
-        // Calculate counts for tabs
+        // Calculate counts for tabs (matching the 6 menu categories + All + VIP)
         $baseQuery = Customer::query()->visibleTo($user);
+        if (! $user->isAdmin() && $bo) {
+            $baseQuery->where('business_owner_id', $bo->id);
+        }
+
         $totalCount = (clone $baseQuery)->count();
+        $leadCount = (clone $baseQuery)->where('category', CustomerCategory::Lead)->count();
         $prospectCount = (clone $baseQuery)->where('category', CustomerCategory::Prospect)->count();
-        $customerCount = (clone $baseQuery)->where('category', CustomerCategory::Customer)->where('is_vip', false)->count();
+        $customerCount = (clone $baseQuery)->where('category', CustomerCategory::Customer)->count();
+        $loyalCustomerCount = (clone $baseQuery)->where('category', CustomerCategory::LoyalCustomer)->count();
+        $memberCount = (clone $baseQuery)->where('category', CustomerCategory::Member)->count();
+        $partnerCount = (clone $baseQuery)->where('category', CustomerCategory::Partner)->count();
         $vipCount = (clone $baseQuery)->where('is_vip', true)->count();
 
         return view('business.customer', compact(
@@ -78,8 +86,12 @@ class CustomerController extends Controller
             'search',
             'filter',
             'totalCount',
+            'leadCount',
             'prospectCount',
             'customerCount',
+            'loyalCustomerCount',
+            'memberCount',
+            'partnerCount',
             'vipCount'
         ));
     }

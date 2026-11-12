@@ -7,6 +7,7 @@ use App\Enums\CustomerCategory;
 use App\Enums\RecordStatus;
 use App\Models\Concerns\ScopesByOwnerVisibility;
 use App\Services\IdentifierGenerator;
+use App\Support\MalaysianLocations;
 use App\Support\Phone;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -67,6 +68,16 @@ class Customer extends Model
 
         static::deleted(function (): void {
             app(IdentifierGenerator::class)->sync('customer', static::class, 'customer_no');
+        });
+
+        static::saved(function (Customer $customer): void {
+            if (filled($customer->poskod)) {
+                MalaysianLocations::ensureLocationExists(
+                    $customer->negeri,
+                    $customer->bandar,
+                    $customer->poskod
+                );
+            }
         });
     }
 

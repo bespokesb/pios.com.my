@@ -57,8 +57,8 @@
     <header class="mobile-header" id="mobileHeader">
         <div class="mobile-header-inner">
             <a href="{{ url('/') }}" class="mobile-logo-link" aria-label="PIOS Homepage" style="display: flex; align-items: center; text-decoration: none;">
-                <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9999px; border: 2px solid #E7C46A; background: #16436E; padding: 2px; margin-right: 10px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">
-                    <img src="{{ asset('favicon-192x192.png') }}" alt="PIOS" style="width: 100%; height: 100%; border-radius: 9999px; object-fit: contain;">
+                <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px; overflow: hidden; margin-right: 12px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">
+                    <img src="{{ asset('pwa-icon-192x192.png') }}" alt="PIOS" style="width: 100%; height: 100%; border-radius: 12px; object-fit: cover;">
                 </div>
                 <div style="display: flex; flex-direction: column;">
                     <span style="font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.2rem; line-height: 1; color: #FFFFFF; letter-spacing: 0.5px;">pios</span>
@@ -79,8 +79,8 @@
         <div class="drawer-header">
             <div class="drawer-logo-container">
                 <a href="{{ url('/') }}" style="display: flex; align-items: center; text-decoration: none;">
-                    <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 9999px; border: 2px solid #E7C46A; background: #16436E; padding: 2px; margin-right: 10px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">
-                        <img src="{{ asset('favicon-192x192.png') }}" alt="PIOS" style="width: 100%; height: 100%; border-radius: 9999px; object-fit: contain;">
+                    <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px; overflow: hidden; margin-right: 12px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">
+                        <img src="{{ asset('pwa-icon-192x192.png') }}" alt="PIOS" style="width: 100%; height: 100%; border-radius: 12px; object-fit: cover;">
                     </div>
                     <div style="display: flex; flex-direction: column;">
                         <span style="font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.25rem; line-height: 1; color: #FFFFFF; letter-spacing: 0.5px;">pios</span>
@@ -147,7 +147,7 @@
                         <div style="font-weight: 600; margin-bottom: 4px;">Log Masuk Tidak Berjaya:</div>
                         <ul style="margin: 0; padding-left: 18px;">
                             @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
+                                <li>{{ $error === 'pios.auth.failed' ? 'Please enter correct ID and PASSWORD' : $error }}</li>
                             @endforeach
                         </ul>
                     </div>
@@ -175,9 +175,6 @@
                                 aria-required="true"
                             >
                         </div>
-                        @error('piosId')
-                            <div class="field-error" style="display: block; color: #EF4444; font-size: 0.85rem; margin-top: 4px;">{{ $message }}</div>
-                        @enderror
                     </div>
 
                     <!-- Password Input Group -->

@@ -8,6 +8,7 @@ use App\Models\BusinessOwner;
 use App\Models\Product;
 use App\Models\ProductType;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Product>
@@ -108,6 +109,8 @@ class ProductFactory extends Factory
             'product_type_id' => $this->categoryId('health_product'),
             'business_owner_id' => BusinessOwner::factory(),
             'product_no' => $productNo,
+            'slug' => Str::lower(fake()->unique()->bothify('??##??##??##')),
+            'slug' => Str::lower(fake()->unique()->bothify('??##??##??##')),
             'name' => $skincare['name'],
             'description' => $skincare['description'],
             'selling_price' => $selling,

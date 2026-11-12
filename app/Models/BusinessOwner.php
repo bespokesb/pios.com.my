@@ -7,6 +7,7 @@ use App\Enums\FeeStatus;
 use App\Enums\RecordStatus;
 use App\Services\IdentifierGenerator;
 use App\Services\SubscriptionService;
+use App\Support\MalaysianLocations;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -41,7 +42,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'ustazai_sender',
     'whatsapp_provider',
     'whatsapp_api_token',
+    'whatsapp_bot_token',
     'whatsapp_instance_id',
+    'whatsapp_endpoint',
+    'whatsapp_domain',
     'whatsapp_status',
     'whatsapp_last_tested_at',
     'created_by',
@@ -54,6 +58,16 @@ class BusinessOwner extends Model
     {
         static::deleted(function (): void {
             app(IdentifierGenerator::class)->sync('business_owner', static::class, 'business_owner_no');
+        });
+
+        static::saved(function (BusinessOwner $bo): void {
+            if (filled($bo->poskod)) {
+                MalaysianLocations::ensureLocationExists(
+                    $bo->negeri,
+                    $bo->bandar,
+                    $bo->poskod
+                );
+            }
         });
     }
 
@@ -159,6 +173,14 @@ class BusinessOwner extends Model
             return true;
         }
 
+        if ($this->whatsapp_provider === 'wasapla') {
+            return (filled($this->whatsapp_api_token) || filled($this->whatsapp_bot_token)) && filled($this->whatsapp_instance_id);
+        }
+
+        if ($this->whatsapp_provider === 'wati') {
+            return filled($this->whatsapp_api_token) && (filled($this->whatsapp_endpoint) || filled($this->whatsapp_instance_id));
+        }
+
         if ($this->whatsapp_provider === 'fonnte') {
             return filled($this->whatsapp_api_token);
         }
@@ -173,6 +195,8 @@ class BusinessOwner extends Model
     public function whatsAppProviderLabel(): string
     {
         return match ($this->whatsapp_provider) {
+            'wasapla' => 'Wasapla.org (Gateway API)',
+            'wati' => 'Wati.io (Official API)',
             'fonnte' => 'Fonnte (API)',
             'ultramsg' => 'UltraMsg (API)',
             default => 'Manual (wa.me)',
@@ -229,6 +253,7 @@ class BusinessOwner extends Model
             'spouse_hp_no' => PhoneNumber::class,
             'ustazai_api_key' => 'encrypted',
             'whatsapp_api_token' => 'encrypted',
+            'whatsapp_bot_token' => 'encrypted',
             'whatsapp_last_tested_at' => 'datetime',
         ];
     }

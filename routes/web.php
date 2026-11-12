@@ -10,6 +10,7 @@ use App\Http\Controllers\Business\ReportController;
 use App\Http\Controllers\Business\SettingController;
 use App\Http\Controllers\Business\SubscriptionController;
 use App\Http\Controllers\Business\TransactionController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\OrderDocumentController;
 use App\Http\Controllers\PublicProductController;
@@ -105,6 +106,7 @@ Route::middleware(['auth', EnsureBusinessOwnerPortalAccess::class])->group(funct
     Route::get('/business/settings', [SettingController::class, 'index'])->name('business.settings.index');
     Route::post('/business/settings/whatsapp', [SettingController::class, 'updateWhatsApp'])->name('business.settings.whatsapp.update');
     Route::post('/business/settings/whatsapp/test', [SettingController::class, 'testWhatsApp'])->name('business.settings.whatsapp.test');
+    Route::post('/business/settings/whatsapp/qr', [SettingController::class, 'getWhatsAppQr'])->name('business.settings.whatsapp.qr');
     Route::post('/business/settings/profile', [SettingController::class, 'updateProfile'])->name('business.settings.profile.update');
     Route::post('/business/settings/password', [SettingController::class, 'updatePassword'])->name('business.settings.password.update');
     Route::post('/business/products/{product}/blast', [SettingController::class, 'blastProduct'])->name('business.products.blast');
@@ -122,14 +124,18 @@ Route::middleware([EnsureMarketplaceEnabled::class])->group(function (): void {
     Route::post('/market/register', [MarketplaceController::class, 'registerCustomer'])->name('marketplace.register.process');
 });
 
+// Location / Postcode auto-registration
+Route::post('/api/locations/postcode', [LocationController::class, 'storePostcode'])->name('locations.postcode.store');
+
 // Customer Authentication (Always active for product pages & marketplace)
 Route::post('/market/login', [MarketplaceController::class, 'loginCustomer'])->name('marketplace.login');
 Route::post('/market/logout', [MarketplaceController::class, 'logoutCustomer'])->name('marketplace.logout');
 
 // Public, mobile-first product page shared via WhatsApp marketing blasts.
-Route::get('/p/{product:product_no}', [PublicProductController::class, 'show'])
+// Routed securely by unguessable slug to prevent sequential product ID guessing.
+Route::get('/p/{product}', [PublicProductController::class, 'show'])
     ->name('public.product.show');
-Route::post('/p/{product:product_no}/order', [PublicProductController::class, 'order'])
+Route::post('/p/{product}/order', [PublicProductController::class, 'order'])
     ->middleware('throttle:8,1')
     ->name('public.product.order');
 

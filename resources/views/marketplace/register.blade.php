@@ -39,8 +39,8 @@
     <div class="bg-[#174A78] text-white pt-8 pb-14 px-4 sm:px-6 relative overflow-hidden shadow-md">
         <div class="mx-auto max-w-4xl flex items-center justify-between gap-4 mb-6">
             <a href="{{ route('marketplace.index') }}" class="flex items-center gap-3 group">
-                <div class="relative flex items-center justify-center h-11 w-11 rounded-full border-2 border-[#E7C46A] bg-[#16436E] p-1 shadow-md transition-transform group-hover:scale-105">
-                    <img src="{{ asset('favicon-192x192.png') }}" alt="PIOS" class="h-9 w-9 rounded-full object-contain">
+                <div class="relative flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-2xl overflow-hidden shadow-md shrink-0 border border-white/20 bg-white/10 transition-transform group-hover:scale-105">
+                    <img src="{{ asset('pwa-icon-192x192.png') }}" alt="PIOS" class="h-full w-full object-cover rounded-2xl">
                 </div>
                 <div class="flex flex-col">
                     <span class="font-display font-black text-2xl leading-none text-white tracking-wide">pios</span>

@@ -119,18 +119,27 @@ class SettingController extends Controller
         abort_unless($bo !== null, 403);
 
         $validated = $request->validate([
-            'whatsapp_provider' => ['required', 'string', 'in:manual,fonnte,ultramsg'],
+            'whatsapp_provider' => ['required', 'string', 'in:manual,wasapla,wati,fonnte,ultramsg'],
             'whatsapp_api_token' => ['nullable', 'string', 'max:500'],
-            'whatsapp_instance_id' => ['nullable', 'string', 'max:100'],
+            'whatsapp_bot_token' => ['nullable', 'string', 'max:500'],
+            'whatsapp_instance_id' => ['nullable', 'string', 'max:500'],
+            'whatsapp_endpoint' => ['nullable', 'string', 'max:500'],
+            'whatsapp_domain' => ['nullable', 'string', 'max:255'],
         ]);
 
         $provider = $validated['whatsapp_provider'];
         $token = filled($validated['whatsapp_api_token'] ?? null) ? trim((string) $validated['whatsapp_api_token']) : null;
+        $botToken = filled($validated['whatsapp_bot_token'] ?? null) ? trim((string) $validated['whatsapp_bot_token']) : null;
         $instanceId = filled($validated['whatsapp_instance_id'] ?? null) ? trim((string) $validated['whatsapp_instance_id']) : null;
+        $endpoint = filled($validated['whatsapp_endpoint'] ?? null) ? trim((string) $validated['whatsapp_endpoint']) : null;
+        $domain = filled($validated['whatsapp_domain'] ?? null) ? trim((string) $validated['whatsapp_domain']) : null;
 
         $bo->whatsapp_provider = $provider;
         $bo->whatsapp_api_token = $token;
+        $bo->whatsapp_bot_token = $botToken;
         $bo->whatsapp_instance_id = $instanceId;
+        $bo->whatsapp_endpoint = $endpoint;
+        $bo->whatsapp_domain = $domain;
 
         if ($provider === 'manual') {
             $bo->whatsapp_status = 'connected';
@@ -140,10 +149,16 @@ class SettingController extends Controller
             $manager = app(WhatsAppManager::class);
             $testRes = $manager->testConnection($bo, $provider, [
                 'token' => $token,
+                'bot_token' => $botToken,
                 'instance_id' => $instanceId,
+                'endpoint' => $endpoint,
+                'domain' => $domain,
             ]);
 
-            $bo->whatsapp_status = $testRes['success'] ? 'connected' : 'error';
+            $isDeviceConn = ($testRes['is_device_connected'] ?? true);
+            $bo->whatsapp_status = $testRes['success']
+                ? ($isDeviceConn ? 'connected' : 'disconnected')
+                : 'error';
             $bo->whatsapp_last_tested_at = now();
         }
 
@@ -173,14 +188,20 @@ class SettingController extends Controller
 
         $provider = (string) $request->input('whatsapp_provider', $bo->whatsapp_provider ?: 'manual');
         $token = $request->filled('whatsapp_api_token') ? (string) $request->input('whatsapp_api_token') : $bo->whatsapp_api_token;
+        $botToken = $request->filled('whatsapp_bot_token') ? (string) $request->input('whatsapp_bot_token') : $bo->whatsapp_bot_token;
         $instanceId = $request->filled('whatsapp_instance_id') ? (string) $request->input('whatsapp_instance_id') : $bo->whatsapp_instance_id;
+        $endpoint = $request->filled('whatsapp_endpoint') ? (string) $request->input('whatsapp_endpoint') : $bo->whatsapp_endpoint;
+        $domain = $request->filled('whatsapp_domain') ? (string) $request->input('whatsapp_domain') : $bo->whatsapp_domain;
         $testPhone = $request->filled('test_phone') ? (string) $request->input('test_phone') : ($bo->hp_no ?: '60123456789');
 
         $manager = app(WhatsAppManager::class);
 
         $pingResult = $manager->testConnection($bo, $provider, [
             'token' => $token,
+            'bot_token' => $botToken,
             'instance_id' => $instanceId,
+            'endpoint' => $endpoint,
+            'domain' => $domain,
         ]);
 
         if (! $pingResult['success']) {
@@ -192,11 +213,25 @@ class SettingController extends Controller
 
         // If user wants to send a live test message to a phone number:
         if ($request->boolean('send_test_message') && $provider !== 'manual') {
+            if (isset($pingResult['is_device_connected']) && ! $pingResult['is_device_connected']) {
+                $devStatus = $pingResult['status'] ?? 'qr';
+
+                return response()->json([
+                    'success' => false,
+                    'is_device_connected' => false,
+                    'device_status' => $devStatus,
+                    'message' => "Peranti WhatsApp belum dipautkan (Status: {$devStatus}). Sila klik butang [Imbas Kod QR WhatsApp] dan imbas kod QR menggunakan aplikasi WhatsApp di telefon anda terlebih dahulu.",
+                ], 422);
+            }
+
             $driver = $manager->driver($provider);
             $testMsg = "Salam! Ini adalah mesej ujian sambungan WhatsApp Blaster PIOS BizGrowth Engine untuk perniagaan {$bo->applicant_name}. Sambungan berjaya!";
             $sendRes = $driver->sendMessage($testPhone, $testMsg, [
                 'token' => $token,
+                'bot_token' => $botToken,
                 'instance_id' => $instanceId,
+                'endpoint' => $endpoint,
+                'domain' => $domain,
             ]);
 
             if (! $sendRes['success']) {
@@ -210,8 +245,37 @@ class SettingController extends Controller
         return response()->json([
             'success' => true,
             'message' => $pingResult['message'],
+            'is_device_connected' => $pingResult['is_device_connected'] ?? true,
+            'device_status' => $pingResult['status'] ?? null,
             'device' => $pingResult['device'] ?? null,
         ]);
+    }
+
+    public function getWhatsAppQr(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $bo = $user->businessOwner;
+        abort_unless($bo !== null, 403);
+
+        $provider = (string) $request->input('whatsapp_provider', $bo->whatsapp_provider ?: 'manual');
+        $token = $request->filled('whatsapp_api_token') ? (string) $request->input('whatsapp_api_token') : $bo->whatsapp_api_token;
+        $botToken = $request->filled('whatsapp_bot_token') ? (string) $request->input('whatsapp_bot_token') : $bo->whatsapp_bot_token;
+        $instanceId = $request->filled('whatsapp_instance_id') ? (string) $request->input('whatsapp_instance_id') : $bo->whatsapp_instance_id;
+        $endpoint = $request->filled('whatsapp_endpoint') ? (string) $request->input('whatsapp_endpoint') : $bo->whatsapp_endpoint;
+        $domain = $request->filled('whatsapp_domain') ? (string) $request->input('whatsapp_domain') : $bo->whatsapp_domain;
+
+        $manager = app(WhatsAppManager::class);
+
+        $result = $manager->getQrCode($bo, $provider, [
+            'token' => $token,
+            'bot_token' => $botToken,
+            'instance_id' => $instanceId,
+            'endpoint' => $endpoint,
+            'domain' => $domain,
+        ]);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 
     public function blastProduct(Request $request, Product $product): JsonResponse|RedirectResponse
@@ -235,7 +299,7 @@ class SettingController extends Controller
             .'Harga: *RM '.number_format((float) $product->selling_price, 2)."*\n"
             .($product->description ? ($product->description."\n\n") : "\n")
             ."Klik pautan untuk buat pesanan terus:\n"
-            .route('public.product.show', $product->product_no)
+            .$product->publicUrl()
         );
 
         $imageUrl = $product->firstShareableImageUrl();

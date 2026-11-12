@@ -47,9 +47,9 @@
                 </button>
 
                 {{-- LOGO BRAND --}}
-                <a href="{{ route('marketplace.index') }}" class="flex items-center gap-2 group">
-                    <div class="relative flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-full border-2 border-[#E7C46A] bg-[#16436E] p-1 shadow-sm transition-transform group-hover:scale-105">
-                        <img src="{{ asset('favicon-192x192.png') }}" alt="PIOS" class="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-contain">
+                <a href="{{ route('marketplace.index') }}" class="flex items-center gap-3 group">
+                    <div class="relative flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-2xl overflow-hidden shadow-md shrink-0 border border-white/20 bg-white/10 transition-transform group-hover:scale-105">
+                        <img src="{{ asset('pwa-icon-192x192.png') }}" alt="PIOS" class="h-full w-full object-cover rounded-2xl">
                     </div>
                     <div class="flex flex-col">
                         <span class="font-display font-black text-xl sm:text-2xl leading-none text-white tracking-wide">pios</span>
@@ -309,7 +309,7 @@
                                     Seller: {{ $product->businessOwner?->applicant_name ?? 'PIOS Partner' }}
                                 </div>
                                 <h3 class="font-display mt-1 text-base font-bold text-[#0C2740] line-clamp-2">
-                                    <a href="{{ route('public.product.show', ['product' => $product->product_no]) }}" class="hover:text-[#174A78]">
+                                    <a href="{{ $product->publicUrl() }}" class="hover:text-[#174A78]">
                                         {{ $product->name }}
                                     </a>
                                 </h3>

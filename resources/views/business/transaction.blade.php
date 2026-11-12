@@ -249,6 +249,29 @@
         body.transaction-body.dark-mode-active .stepper-bar.done {
             background: #0D9488 !important;
         }
+
+        /* Ensure Desktop Table is strictly hidden on mobile devices (< 992px) */
+        @media screen and (max-width: 991px) {
+            .tx-table-card,
+            .tx-table-card.desktop-only,
+            .desktop-only {
+                display: none !important;
+            }
+
+            .tx-mobile-list {
+                display: flex !important;
+            }
+        }
+
+        @media screen and (min-width: 992px) {
+            .tx-table-card {
+                display: block !important;
+            }
+
+            .tx-mobile-list {
+                display: none !important;
+            }
+        }
     </style>
 
     <!-- Desktop Header Bar -->
@@ -388,7 +411,7 @@
     </div>
 
     <!-- Desktop Transactions Data Table -->
-    <div class="tx-table-card">
+    <div class="tx-table-card desktop-only">
         <div class="table-responsive-wrapper">
             <table class="tx-table" id="transactionTable">
                 <thead>
@@ -559,7 +582,11 @@
                 </div>
                 <!-- Mobile Card Actions -->
                 <div class="tx-card-actions" style="display: flex; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #F1F5F9; flex-wrap: wrap;">
-                    <button type="button" class="btn-tx-view" style="flex: 1;" onclick="openOrderDetailsById({{ $order->id }})">Details</button>
+                    <button type="button" class="btn-tx-view" style="flex: 1; min-width: 80px;" onclick="openOrderDetailsById({{ $order->id }})">Details</button>
+                    <a href="{{ route('order.invoice', $order) }}" target="_blank" class="btn-tx-view" style="flex: 1; min-width: 80px; text-decoration: none; text-align: center;" title="View Invoice">Invoice</a>
+                    @if ($order->isPaid())
+                        <a href="{{ route('order.receipt', $order) }}" target="_blank" class="btn-tx-view" style="flex: 1; min-width: 80px; text-decoration: none; text-align: center;" title="View Receipt">Receipt</a>
+                    @endif
                 </div>
             </div>
         @empty

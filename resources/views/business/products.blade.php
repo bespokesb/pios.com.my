@@ -552,7 +552,7 @@
                         data-product-name="{{ $prod->name }}"
                         data-product-price="{{ number_format((float)$prod->selling_price, 2) }}"
                         data-product-no="{{ $prod->product_no }}"
-                        data-product-url="{{ route('public.product.show', $prod->product_no) }}"
+                        data-product-url="{{ $prod->publicUrl() }}"
                         data-product-desc="{{ $prod->description ?? '' }}"
                         data-product-image="{{ $prod->firstShareableImageUrl() ?? '' }}"
                         data-blast-url="{{ route('business.products.blast', $prod) }}"
@@ -1385,13 +1385,15 @@
                     @php
                         $currentProvider = $bo?->whatsapp_provider ?? 'manual';
                         $providerStatus = $bo?->whatsapp_status ?? 'unconfigured';
-                        $isAutoProvider = in_array($currentProvider, ['fonnte', 'ultramsg']);
+                        $isAutoProvider = in_array($currentProvider, ['wasapla', 'wati', 'fonnte', 'ultramsg']);
                     @endphp
 
                     <div style="background: {{ $isAutoProvider ? '#ECFDF5' : '#F8FAFC' }}; border: 1px solid {{ $isAutoProvider ? '#A7F3D0' : '#E2E8F0' }}; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span style="font-size: 1.3rem;">
-                                @if($currentProvider === 'fonnte') ⚡
+                                @if($currentProvider === 'wasapla') 🇲🇾
+                                @elseif($currentProvider === 'wati') ⭐
+                                @elseif($currentProvider === 'fonnte') ⚡
                                 @elseif($currentProvider === 'ultramsg') 🚀
                                 @else 💬
                                 @endif

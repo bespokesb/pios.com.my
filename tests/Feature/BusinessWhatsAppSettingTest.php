@@ -10,6 +10,7 @@ use App\Models\Partner;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -57,9 +58,127 @@ class BusinessWhatsAppSettingTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Tetapan WhatsApp Blaster');
-        $response->assertSee('Fonnte (API)');
-        $response->assertSee('UltraMsg (API)');
+        $response->assertSee('Wasapla.org (API)');
+        $response->assertSee('Matching Base URL');
+        $response->assertSee('API Key Pelanggan (Bearer Token)');
+        $response->assertSee('Paired Domain (X-App-Domain)');
+        $response->assertSee('Webhook Secret (X-Bot-Token)');
+        $response->assertSee('Keselamatan 4 Lapisan:');
+        $response->assertSee('Wati.io (Official API)');
         $response->assertSee('Manual (wa.me)');
+    }
+
+    public function test_business_owner_can_save_wasapla_provider_with_bot_token(): void
+    {
+        Http::fake([
+            'https://api.wasapla.org/v1/instances/kedaianda-com/status' => function (Request $request) {
+                $this->assertSame('Bearer wsp_bot_secret998877', $request->header('Authorization')[0]);
+                $this->assertSame('wsp_bot_secret998877', $request->header('X-Bot-Token')[0]);
+                $this->assertSame('kedaianda.com', $request->header('X-App-Domain')[0]);
+
+                return Http::response([
+                    'status' => 'connected',
+                    'state' => 'open',
+                ], 200);
+            },
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson(route('business.settings.whatsapp.update'), [
+            'whatsapp_provider' => 'wasapla',
+            'whatsapp_api_token' => '',
+            'whatsapp_bot_token' => 'wsp_bot_secret998877',
+            'whatsapp_instance_id' => 'kedaianda-com',
+            'whatsapp_domain' => 'kedaianda.com',
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'status' => 'connected',
+            'provider' => 'wasapla',
+        ]);
+
+        $this->bo->refresh();
+        $this->assertSame('wasapla', $this->bo->whatsapp_provider);
+        $this->assertNull($this->bo->whatsapp_api_token);
+        $this->assertSame('wsp_bot_secret998877', $this->bo->whatsapp_bot_token);
+        $this->assertSame('kedaianda-com', $this->bo->whatsapp_instance_id);
+        $this->assertSame('connected', $this->bo->whatsapp_status);
+    }
+
+    public function test_wasapla_ping_retries_with_bot_token_when_api_key_returns_401(): void
+    {
+        Http::fake([
+            'https://api.wasapla.org/v1/instances/kedaianda-com/status' => function (Request $request) {
+                if ($request->header('Authorization')[0] === 'Bearer invalid_api_key') {
+                    return Http::response([
+                        'success' => false,
+                        'error' => 'API Key tidak sah atau telah dibatalkan.',
+                    ], 401);
+                }
+
+                if ($request->header('Authorization')[0] === 'Bearer valid_bot_token') {
+                    return Http::response([
+                        'status' => 'connected',
+                        'state' => 'open',
+                    ], 200);
+                }
+
+                return Http::response(['error' => 'Unauthorized'], 401);
+            },
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson(route('business.settings.whatsapp.test'), [
+            'whatsapp_provider' => 'wasapla',
+            'whatsapp_api_token' => 'invalid_api_key',
+            'whatsapp_bot_token' => 'valid_bot_token',
+            'whatsapp_instance_id' => 'kedaianda-com',
+            'whatsapp_domain' => 'kedaianda.com',
+            'send_test_message' => false,
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+        ]);
+    }
+
+    public function test_wasapla_live_message_sends_with_bot_token(): void
+    {
+        Http::fake([
+            'https://api.wasapla.org/v1/instances/kedaianda-com/status' => Http::response([
+                'status' => 'connected',
+                'state' => 'open',
+            ], 200),
+            'https://api.wasapla.org/v1/instances/kedaianda-com/send' => function (Request $request) {
+                $this->assertSame('Bearer wsp_bot_live_token', $request->header('Authorization')[0]);
+                $this->assertSame('wsp_bot_live_token', $request->header('X-Bot-Token')[0]);
+                $this->assertSame('kedaianda.com', $request->header('X-App-Domain')[0]);
+                $data = $request->data();
+                $this->assertSame('60123456789', $data['phone']);
+                $this->assertSame('wsp_bot_live_token', $data['bot_token']);
+
+                return Http::response([
+                    'status' => true,
+                    'message_id' => 'WSP-MSG-998811',
+                ], 200);
+            },
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson(route('business.settings.whatsapp.test'), [
+            'whatsapp_provider' => 'wasapla',
+            'whatsapp_api_token' => '',
+            'whatsapp_bot_token' => 'wsp_bot_live_token',
+            'whatsapp_instance_id' => 'kedaianda-com',
+            'whatsapp_domain' => 'kedaianda.com',
+            'test_phone' => '0123456789',
+            'send_test_message' => true,
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+        ]);
     }
 
     public function test_business_owner_can_save_manual_whatsapp_provider(): void
@@ -426,5 +545,86 @@ class BusinessWhatsAppSettingTest extends TestCase
         $response->assertSee('Semua Pelanggan (1)');
         $response->assertSee('id="blastSelectAllBtn"', false);
         $response->assertSee('name="customer_ids[]"', false);
+    }
+
+    public function test_wasapla_ping_warns_when_device_is_not_scanned_qr(): void
+    {
+        Http::fake([
+            'https://api.wasapla.org/v1/instances/kedaianda-com/status' => Http::response([
+                'success' => true,
+                'instance_id' => 'kedaianda-com',
+                'status' => 'qr',
+                'last_connected_at' => null,
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson(route('business.settings.whatsapp.test'), [
+            'whatsapp_provider' => 'wasapla',
+            'whatsapp_api_token' => 'wsp_live_token_123',
+            'whatsapp_instance_id' => 'https://api.wasapla.org/v1/instances/kedaianda-com',
+            'whatsapp_domain' => 'kedaianda.com',
+            'send_test_message' => false,
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'is_device_connected' => false,
+            'device_status' => 'qr',
+        ]);
+    }
+
+    public function test_wasapla_send_test_message_returns_qr_warning_when_device_is_unlinked(): void
+    {
+        Http::fake([
+            'https://api.wasapla.org/v1/instances/kedaianda-com/status' => Http::response([
+                'success' => true,
+                'instance_id' => 'kedaianda-com',
+                'status' => 'qr',
+                'last_connected_at' => null,
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson(route('business.settings.whatsapp.test'), [
+            'whatsapp_provider' => 'wasapla',
+            'whatsapp_api_token' => 'wsp_live_token_123',
+            'whatsapp_instance_id' => 'https://api.wasapla.org/v1/instances/kedaianda-com',
+            'whatsapp_domain' => 'kedaianda.com',
+            'test_phone' => '0123456789',
+            'send_test_message' => true,
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJson([
+            'success' => false,
+            'is_device_connected' => false,
+            'device_status' => 'qr',
+        ]);
+    }
+
+    public function test_wasapla_get_qr_code_returns_base64_image(): void
+    {
+        Http::fake([
+            'https://api.wasapla.org/v1/instances/kedaianda-com/qr' => Http::response([
+                'success' => true,
+                'instance_id' => 'kedaianda-com',
+                'status' => 'qr',
+                'qr' => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA',
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson(route('business.settings.whatsapp.qr'), [
+            'whatsapp_provider' => 'wasapla',
+            'whatsapp_api_token' => 'wsp_live_token_123',
+            'whatsapp_instance_id' => 'https://api.wasapla.org/v1/instances/kedaianda-com',
+            'whatsapp_domain' => 'kedaianda.com',
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'status' => 'qr',
+            'qr' => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA',
+        ]);
     }
 }

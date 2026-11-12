@@ -7,6 +7,8 @@ use App\Services\WhatsApp\Contracts\WhatsAppDriverInterface;
 use App\Services\WhatsApp\Drivers\FonnteDriver;
 use App\Services\WhatsApp\Drivers\ManualDriver;
 use App\Services\WhatsApp\Drivers\UltraMsgDriver;
+use App\Services\WhatsApp\Drivers\WasaplaDriver;
+use App\Services\WhatsApp\Drivers\WatiDriver;
 use InvalidArgumentException;
 
 class WhatsAppManager
@@ -22,6 +24,8 @@ class WhatsAppManager
 
         if (! isset($this->drivers[$provider])) {
             $this->drivers[$provider] = match ($provider) {
+                'wasapla' => app(WasaplaDriver::class),
+                'wati' => app(WatiDriver::class),
                 'fonnte' => app(FonnteDriver::class),
                 'ultramsg' => app(UltraMsgDriver::class),
                 'manual', 'wa.me' => app(ManualDriver::class),
@@ -47,7 +51,12 @@ class WhatsAppManager
         return [
             'provider' => $bo->whatsapp_provider ?: 'manual',
             'token' => $bo->whatsapp_api_token,
+            'api_key' => $bo->whatsapp_api_token,
+            'bot_token' => $bo->whatsapp_bot_token,
             'instance_id' => $bo->whatsapp_instance_id,
+            'matching_url' => $bo->whatsapp_instance_id,
+            'endpoint' => $bo->whatsapp_endpoint,
+            'domain' => $bo->whatsapp_domain,
         ];
     }
 
@@ -67,8 +76,9 @@ class WhatsAppManager
         $result = $driver->testConnection($config);
 
         if ($result['success'] && empty($customConfig)) {
+            $isDeviceConn = $result['is_device_connected'] ?? true;
             $bo->update([
-                'whatsapp_status' => 'connected',
+                'whatsapp_status' => $isDeviceConn ? 'connected' : 'disconnected',
                 'whatsapp_last_tested_at' => now(),
             ]);
         } elseif (! $result['success'] && empty($customConfig) && $prov !== 'manual') {
@@ -79,6 +89,38 @@ class WhatsAppManager
         }
 
         return $result;
+    }
+
+    /**
+     * Get active QR code for device pairing (e.g. Wasapla/Baileys).
+     *
+     * @param  array<string, mixed>  $customConfig
+     * @return array{success: bool, status?: string, is_connected?: bool, qr?: string|null, message?: string}
+     */
+    public function getQrCode(BusinessOwner $bo, ?string $provider = null, array $customConfig = []): array
+    {
+        $prov = $provider ?: ($bo->whatsapp_provider ?: 'manual');
+        $driver = $this->driver($prov);
+
+        if (method_exists($driver, 'getQrCode')) {
+            $config = array_merge($this->configFor($bo), $customConfig);
+
+            $result = $driver->getQrCode($config);
+
+            if (($result['status'] ?? '') === 'connected' || ! empty($result['is_connected'])) {
+                $bo->update([
+                    'whatsapp_status' => 'connected',
+                    'whatsapp_last_tested_at' => now(),
+                ]);
+            }
+
+            return $result;
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Provider terpilih tidak memerlukan imbasan Kod QR.',
+        ];
     }
 
     /**

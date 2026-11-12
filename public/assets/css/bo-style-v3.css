@@ -5970,7 +5970,8 @@ body.transaction-body {
     /* Hide desktop-only layout items */
     .desktop-sidebar,
     .tx-topbar,
-    .desktop-only {
+    .desktop-only,
+    .tx-table-card {
         display: none !important;
     }
 

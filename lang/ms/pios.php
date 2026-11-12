@@ -508,6 +508,7 @@ return [
     'auth' => [
         'pios_id' => 'ID PIOS',
         'pios_id_placeholder' => 'E-mel, telefon, atau No. KP',
+        'failed' => 'Please enter correct ID and PASSWORD',
         'admin' => [
             'title' => 'Log Masuk PIOS',
             'heading' => 'Log masuk ke PIOS',

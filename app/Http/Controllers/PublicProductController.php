@@ -47,7 +47,7 @@ class PublicProductController extends Controller
         $order = $orders->placePublicOrder($product, $request->validated());
 
         return redirect()
-            ->route('public.product.show', ['product' => $product->product_no])
+            ->route('public.product.show', ['product' => $product->slug ?: $product->product_no])
             ->with('order_confirmation', [
                 'order_no' => $order->order_no,
                 'seller_whatsapp' => Phone::toWhatsApp($product->businessOwner?->hp_no),

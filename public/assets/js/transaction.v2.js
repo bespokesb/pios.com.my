@@ -193,13 +193,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const tracking = (row.getAttribute('data-tracking') || '').toLowerCase();
             const status = (row.getAttribute('data-status') || '').toLowerCase();
 
-            const matchesSearch = !currentSearchQuery || 
-                order.includes(currentSearchQuery) || 
-                customer.includes(currentSearchQuery) || 
+            const matchesSearch = !currentSearchQuery ||
+                order.includes(currentSearchQuery) ||
+                customer.includes(currentSearchQuery) ||
                 product.includes(currentSearchQuery) ||
                 tracking.includes(currentSearchQuery);
 
-            const matchesStatus = currentStatusFilter === 'all' || 
+            const matchesStatus = currentStatusFilter === 'all' ||
                 status === currentStatusFilter.toLowerCase();
 
             if (matchesSearch && matchesStatus) {
@@ -217,13 +217,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const tracking = (card.getAttribute('data-tracking') || '').toLowerCase();
             const status = (card.getAttribute('data-status') || '').toLowerCase();
 
-            const matchesSearch = !currentSearchQuery || 
-                order.includes(currentSearchQuery) || 
-                customer.includes(currentSearchQuery) || 
+            const matchesSearch = !currentSearchQuery ||
+                order.includes(currentSearchQuery) ||
+                customer.includes(currentSearchQuery) ||
                 product.includes(currentSearchQuery) ||
                 tracking.includes(currentSearchQuery);
 
-            const matchesStatus = currentStatusFilter === 'all' || 
+            const matchesStatus = currentStatusFilter === 'all' ||
                 status === currentStatusFilter.toLowerCase();
 
             if (matchesSearch && matchesStatus) {
@@ -389,7 +389,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Modal Action Button (dynamic based on status)
         if (modalActionBtn) {
             const normalized = (status || '').toLowerCase().trim();
 
@@ -423,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
                 modalActionBtn.textContent = 'Mark Paid';
                 modalActionBtn.setAttribute('data-action', 'mark-paid');
-                modalActionBtn.onclick = function(e) {
+                modalActionBtn.onclick = function (e) {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
                     closeTxModal();
                     openMarkPaidModal(_orderId, _orderNo, _customer, _amount);
@@ -435,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
                 modalActionBtn.textContent = 'Ship Order';
                 modalActionBtn.setAttribute('data-action', 'ship');
-                modalActionBtn.onclick = function(e) {
+                modalActionBtn.onclick = function (e) {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
                     closeTxModal();
                     openShipOrderModal(_orderId, _orderNo, _customer, _tracking);
@@ -447,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
                 modalActionBtn.textContent = 'Mark Completed';
                 modalActionBtn.setAttribute('data-action', 'complete');
-                modalActionBtn.onclick = function(e) {
+                modalActionBtn.onclick = function (e) {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
                     closeTxModal();
                     openQuickStatusUpdate(_orderId, _orderNo, 'completed', 'Completed');
@@ -459,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalActionBtn.style.setProperty('display', 'inline-flex', 'important');
                 modalActionBtn.textContent = 'Submit Order';
                 modalActionBtn.setAttribute('data-action', 'submit');
-                modalActionBtn.onclick = function(e) {
+                modalActionBtn.onclick = function (e) {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
                     closeTxModal();
                     openQuickStatusUpdate(_orderId, _orderNo, 'submitted', 'Submitted');
@@ -961,7 +960,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Shortcut: Open Ship Modal
-    window.openShipModal = function(orderId, orderNo, trackingNo = '') {
+    window.openShipModal = function (orderId, orderNo, trackingNo = '') {
         const row = document.getElementById(`txRow-${orderId}`) || document.getElementById(`txCard-${orderId}`);
         const customer = row ? row.getAttribute('data-customer') : '';
         window.openShipOrderModal(orderId, orderNo, customer, trackingNo);
@@ -1149,15 +1148,43 @@ document.addEventListener('DOMContentLoaded', () => {
         const statusBtn = actionGroup.querySelector('.btn-tx-status');
         if (statusBtn) statusBtn.remove();
 
+        // Ensure Invoice button exists
+        let invoiceLink = actionGroup.querySelector('a[title="View Invoice"]');
+        if (!invoiceLink) {
+            invoiceLink = document.createElement('a');
+            invoiceLink.href = `/orders/${order.id}/invoice`;
+            invoiceLink.target = '_blank';
+            invoiceLink.className = 'btn-tx-view';
+            invoiceLink.style.textDecoration = 'none';
+            if (actionGroup.classList.contains('tx-card-actions')) {
+                invoiceLink.style.flex = '1';
+                invoiceLink.style.minWidth = '80px';
+                invoiceLink.style.textAlign = 'center';
+            }
+            invoiceLink.title = 'View Invoice';
+            invoiceLink.textContent = 'Invoice';
+            const viewBtn = actionGroup.querySelector('.btn-tx-view');
+            if (viewBtn && viewBtn.nextSibling) {
+                actionGroup.insertBefore(invoiceLink, viewBtn.nextSibling);
+            } else {
+                actionGroup.appendChild(invoiceLink);
+            }
+        }
+
         // If order is paid/packed/shipped/completed, ensure Receipt button exists
         const isPaid = ['paid', 'packed', 'shipped', 'completed'].includes((order.status || '').toLowerCase());
         let receiptLink = actionGroup.querySelector('a[title="View Receipt"]');
         if (isPaid && !receiptLink) {
             receiptLink = document.createElement('a');
-            receiptLink.href = `/order/${order.id}/receipt`;
+            receiptLink.href = `/orders/${order.id}/receipt`;
             receiptLink.target = '_blank';
             receiptLink.className = 'btn-tx-view';
             receiptLink.style.textDecoration = 'none';
+            if (actionGroup.classList.contains('tx-card-actions')) {
+                receiptLink.style.flex = '1';
+                receiptLink.style.minWidth = '80px';
+                receiptLink.style.textAlign = 'center';
+            }
             receiptLink.title = 'View Receipt';
             receiptLink.textContent = 'Receipt';
             actionGroup.appendChild(receiptLink);

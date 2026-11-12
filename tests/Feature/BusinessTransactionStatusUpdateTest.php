@@ -400,6 +400,48 @@ class BusinessTransactionStatusUpdateTest extends TestCase
         $response->assertSee('Money Refund');
     }
 
+    public function test_transactions_view_renders_desktop_table_card_with_desktop_only_class_and_responsive_css(): void
+    {
+        [$user, $partner, $bo] = $this->businessOwnerUser('P00999', 'BO00999', 'Test Mobile Isolation BO');
+        $customer = $this->customer($bo, $partner, 'C00999');
+        $this->createOrder($bo, $partner, $customer, 'ORD-00999', OrderStatus::Completed);
+
+        $response = $this->actingAs($user)->get(route('business.transactions.index'));
+
+        $response->assertOk();
+        $response->assertSee('class="tx-table-card desktop-only"', escape: false);
+        $response->assertSee('.tx-table-card,', escape: false);
+        $response->assertSee('.tx-mobile-list', escape: false);
+    }
+
+    public function test_transactions_view_renders_mobile_invoice_and_receipt_buttons_correctly(): void
+    {
+        [$user, $partner, $bo] = $this->businessOwnerUser('P00998', 'BO00998', 'Test Mobile Actions BO');
+        $customer = $this->customer($bo, $partner, 'C00998');
+        $submittedOrder = $this->createOrder($bo, $partner, $customer, 'ORD-SUB-01', OrderStatus::Submitted);
+        $paidOrder = $this->createOrder($bo, $partner, $customer, 'ORD-PAID-01', OrderStatus::Paid);
+
+        $response = $this->actingAs($user)->get(route('business.transactions.index'));
+
+        $response->assertOk();
+
+        // Check mobile submitted order has Invoice link but not Receipt link
+        $submittedInvoiceUrl = route('order.invoice', $submittedOrder);
+        $submittedReceiptUrl = route('order.receipt', $submittedOrder);
+        $response->assertSee($submittedInvoiceUrl, escape: false);
+        $response->assertDontSee($submittedReceiptUrl, escape: false);
+
+        // Check mobile paid order has both Invoice link and Receipt link
+        $paidInvoiceUrl = route('order.invoice', $paidOrder);
+        $paidReceiptUrl = route('order.receipt', $paidOrder);
+        $response->assertSee($paidInvoiceUrl, escape: false);
+        $response->assertSee($paidReceiptUrl, escape: false);
+
+        // Confirm details modal does not render Invoice and Receipt buttons (kept outside on cards/table only)
+        $response->assertDontSee('id="modalInvoiceLink"', escape: false);
+        $response->assertDontSee('id="modalReceiptLink"', escape: false);
+    }
+
     private function createOrder(
         BusinessOwner $bo,
         Partner $partner,

@@ -1,4 +1,16 @@
 <div>
+    <style>
+        .bar-lead { background-color: #94A3B8; }
+        .bar-prospek { background-color: #3B82F6; }
+        .bar-customer { background-color: #0D9488; }
+        .bar-loyal-customer { background-color: #DB2777; }
+        .bar-member { background-color: #7C3AED; }
+        .bar-partner { background-color: #D97706; }
+        .bar-vip { background-color: #F59E0B; }
+        .text-pink { color: #DB2777; }
+        .text-purple { color: #7C3AED; }
+        .text-orange { color: #D97706; }
+    </style>
     <!-- Desktop Header Bar -->
     <div class="dash-topbar">
         <div class="topbar-left">
@@ -148,13 +160,13 @@
 
             <div class="pipeline-items-list">
                 @foreach ($pipeline as $p)
-                    <a href="{{ route('business.customers.index') }}" class="pipeline-item">
+                    <a href="{{ route('business.customers.index', isset($p['filter']) ? ['filter' => $p['filter']] : []) }}" class="pipeline-item">
                         <div class="pipeline-item-label-row">
                             <span class="pipeline-stage-name">{{ $p['stage'] }}</span>
                             <span class="pipeline-stage-count">{{ $p['count'] }}</span>
                         </div>
                         <div class="pipeline-bar-track">
-                            <div class="pipeline-bar-fill bar-{{ strtolower($p['stage']) }}" style="width: {{ $p['pct'] }}%;"></div>
+                            <div class="pipeline-bar-fill bar-{{ str_replace(' ', '-', strtolower($p['stage'])) }}" style="width: {{ $p['pct'] }}%;"></div>
                         </div>
                         <div class="pipeline-pct-label text-{{ $p['color'] }}">{{ $p['pct'] }}% of pipeline</div>
                     </a>

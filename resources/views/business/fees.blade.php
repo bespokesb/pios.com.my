@@ -137,9 +137,7 @@
                                     <span class="status-pill {{ $bgeStatusClass }}">{{ $bgeStatusLabel }}</span>
                                 </td>
                                 <td>
-                                    <a href="{{ route('business.subscriptions.index') }}" class="btn-action-view" style="text-decoration: none; display: inline-block; background: #0D9488; color: #fff; font-weight: 600; padding: 6px 14px; border-radius: 8px;">
-                                        Pay / Renew
-                                    </a>
+                                    <span style="font-size: 0.8rem; color: #64748B; font-weight: 500;">Diurus oleh Partner</span>
                                 </td>
                             </tr>
                         @elseif ($bgeSub->isTrial())
@@ -155,9 +153,7 @@
                                     <span class="status-pill badge-paid">Trial Aktif</span>
                                 </td>
                                 <td>
-                                    <a href="{{ route('business.subscriptions.index') }}" class="btn-action-view" style="text-decoration: none; display: inline-block;">
-                                        View Subscription
-                                    </a>
+                                    <span style="font-size: 0.8rem; color: #64748B; font-weight: 500;">Diurus oleh Partner</span>
                                 </td>
                             </tr>
                         @endif
@@ -194,9 +190,7 @@
                                         ⏳ Menunggu Pengesahan
                                     </span>
                                 @else
-                                    <a href="{{ route('business.subscriptions.index') }}" class="btn-action-view" style="text-decoration: none; display: inline-block;">
-                                        Pay / Retry
-                                    </a>
+                                    <span style="color: #DC2626; font-size: 0.82rem; font-weight: 600;">Ditolak (Hubungi Partner)</span>
                                 @endif
                             </td>
                         </tr>
@@ -288,7 +282,7 @@
                     </div>
                     <div class="fee-card-bottom">
                         <span class="fee-card-due">Due: {{ $bgeSub->expires_at ? $bgeSub->expires_at->format('d M Y') : now()->format('d M Y') }}</span>
-                        <a href="{{ route('business.subscriptions.index') }}" class="fee-card-pay-btn" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">Pay / Renew</a>
+                        <span style="font-size: 0.8rem; color: #64748B; font-weight: 500;">Diurus oleh Partner</span>
                     </div>
                 </div>
             @elseif ($bgeSub->isTrial())
@@ -306,7 +300,7 @@
                     </div>
                     <div class="fee-card-bottom">
                         <span class="fee-card-due">Expiry: {{ $bgeSub->expires_at ? $bgeSub->expires_at->format('d M Y') : '-' }}</span>
-                        <a href="{{ route('business.subscriptions.index') }}" style="color: #0D9488; font-size: 0.85rem; font-weight: 600; text-decoration: none;">View Subscription</a>
+                        <span style="font-size: 0.8rem; color: #64748B; font-weight: 500;">Diurus oleh Partner</span>
                     </div>
                 </div>
             @endif
@@ -343,7 +337,7 @@
                     @elseif ($payment->status === 'pending_approval')
                         <span style="color: #D97706; font-size: 0.85rem; font-weight: 600;">⏳ Menunggu Pengesahan</span>
                     @else
-                        <a href="{{ route('business.subscriptions.index') }}" class="fee-card-pay-btn" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">Pay / Retry</a>
+                        <span style="color: #DC2626; font-size: 0.82rem; font-weight: 600;">Ditolak (Hubungi Partner)</span>
                     @endif
                 </div>
             </div>

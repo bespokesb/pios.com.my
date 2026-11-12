@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\PhoneNumber;
 use App\Enums\RecordStatus;
 use App\Services\IdentifierGenerator;
+use App\Support\MalaysianLocations;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -44,6 +45,16 @@ class Partner extends Model
     {
         static::deleted(function (): void {
             app(IdentifierGenerator::class)->sync('partner', static::class, 'partner_no');
+        });
+
+        static::saved(function (Partner $partner): void {
+            if (filled($partner->poskod)) {
+                MalaysianLocations::ensureLocationExists(
+                    $partner->negeri,
+                    $partner->bandar,
+                    $partner->poskod
+                );
+            }
         });
     }
 

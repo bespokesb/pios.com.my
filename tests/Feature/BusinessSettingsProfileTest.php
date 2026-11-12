@@ -73,7 +73,7 @@ class BusinessSettingsProfileTest extends TestCase
         $response->assertSee('Subscription Status &amp; Countdown', false);
         $response->assertSee('HOURS LEFT');
         $response->assertSee('Dato Partner Hebat');
-        $response->assertSee('Renew Subscription (via WhatsApp)');
+        $response->assertSee('Diuruskan Manual oleh Partner');
     }
 
     public function test_settings_page_displays_profile_and_password_forms(): void

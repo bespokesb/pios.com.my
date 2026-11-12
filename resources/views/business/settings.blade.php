@@ -677,7 +677,7 @@
             </div>
             <h2 class="settings-hero-title">Tetapan WhatsApp Blaster</h2>
             <p class="settings-hero-subtitle">
-                Pilih kaedah penghantaran mesej promosi produk ke pelanggan. Anda boleh menggunakan mod Manual (wa.me percuma) atau sambungkan API Fonnte / UltraMsg untuk blast automatik terus dari katalog.
+                Pilih kaedah penghantaran mesej promosi produk ke pelanggan. Anda boleh menggunakan mod Manual (wa.me percuma), sambungan rasmi Wati.io (WhatsApp Business API) atau gateway tempatan Wasapla.org untuk blast automatik terus dari katalog.
             </p>
         </div>
         <div style="text-align: right; min-width: 180px;">
@@ -716,8 +716,8 @@
                 </div>
             </div>
 
-            <!-- 2. Fonnte (API) -->
-            <div class="provider-card {{ ($bo?->whatsapp_provider ?? '') === 'fonnte' ? 'selected' : '' }}" onclick="selectProvider('fonnte', this)">
+            <!-- 2. Wasapla.org (API) -->
+            <div class="provider-card {{ ($bo?->whatsapp_provider ?? '') === 'wasapla' ? 'selected' : '' }}" onclick="selectProvider('wasapla', this)">
                 <div>
                     <div class="provider-top">
                         <div class="provider-icon-title">
@@ -727,40 +727,37 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="provider-name">Fonnte (API)</h3>
-                                <span class="provider-badge" style="background: #FEF3C7; color: #92400E;">⭐ Paling Disyorkan</span>
+                                <h3 class="provider-name">Wasapla.org (API)</h3>
+                                <span class="provider-badge" style="background: #FEF3C7; color: #92400E;">🇲🇾 Gateway Tempatan (Unofficial)</span>
                             </div>
                         </div>
                         <div class="provider-radio-indicator"></div>
                     </div>
                     <p class="provider-desc">
-                        Gateway WhatsApp mesra pasaran Malaysia. Imbas QR dalam 2 minit di fonnte.com untuk blast teks &amp; gambar produk secara automatik.
+                        Gateway WhatsApp tempatan Malaysia. Menyokong Matching URL dan Mandatori 4-Layer Guard (<code>X-App-Domain</code>) untuk blast teks &amp; promosi produk.
                     </p>
                 </div>
             </div>
 
-            <!-- 3. UltraMsg (API) -->
-            <div class="provider-card {{ ($bo?->whatsapp_provider ?? '') === 'ultramsg' ? 'selected' : '' }}" onclick="selectProvider('ultramsg', this)">
+            <!-- 3. Wati.io (Official API) -->
+            <div class="provider-card {{ ($bo?->whatsapp_provider ?? '') === 'wati' ? 'selected' : '' }}" onclick="selectProvider('wati', this)">
                 <div>
                     <div class="provider-top">
                         <div class="provider-icon-title">
                             <div class="provider-icon-box" style="background: #E0E7FF; color: #4338CA;">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-                                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-                                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
-                                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="provider-name">UltraMsg (API)</h3>
-                                <span class="provider-badge" style="background: #E0E7FF; color: #3730A3;">Gateway Global</span>
+                                <h3 class="provider-name">Wati.io (Official API)</h3>
+                                <span class="provider-badge" style="background: #E0E7FF; color: #3730A3;">⭐ Meta Verified (Official)</span>
                             </div>
                         </div>
                         <div class="provider-radio-indicator"></div>
                     </div>
                     <p class="provider-desc">
-                        Gateway WhatsApp antarabangsa stabil dengan sokongan Instance ID khusus dan laporan penghantaran berjadual.
+                        Platform WhatsApp Business Solution Provider (BSP) rasmi Meta. Penghantaran rasmi berkapasiti tinggi dengan sambungan langsung WhatsApp Business API.
                     </p>
                 </div>
             </div>
@@ -769,82 +766,135 @@
         <!-- Hidden input for selected provider -->
         <input type="hidden" name="whatsapp_provider" id="selectedProviderInput" value="{{ $bo?->whatsapp_provider ?? 'manual' }}">
 
-        <!-- Fonnte Configuration Section (Full Width) -->
-        <div id="fonnteConfigSection" class="config-card" style="{{ ($bo?->whatsapp_provider ?? '') === 'fonnte' ? 'display: block;' : 'display: none;' }}">
+        <!-- Wasapla Configuration Section (Full Width) -->
+        <div id="wasaplaConfigSection" class="config-card" style="{{ ($bo?->whatsapp_provider ?? '') === 'wasapla' ? 'display: block;' : 'display: none;' }}">
             <h3 class="config-section-title">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                Konfigurasi Fonnte (API Token)
+                Konfigurasi Wasapla.org (API Key &amp; Instance)
             </h3>
 
+            <!-- 1. Matching Base URL -->
             <div class="form-group">
-                <label class="form-label" for="fonnteApiToken">Fonnte API Token <span style="color: #DC2626;">*</span></label>
-                <input type="text" name="whatsapp_api_token" id="fonnteApiToken" class="form-input" placeholder="Contoh: a1b2c3d4e5f6g7h8..." value="{{ $bo?->whatsapp_provider === 'fonnte' ? $bo?->whatsapp_api_token : '' }}">
-                <p class="form-hint">Dapatkan token ini daripada dashboard akaun Fonnte anda (Menu: Device / Manage Device).</p>
+                <label class="form-label" for="wasaplaInstanceId">Matching Base URL <span style="color: #DC2626;">*</span></label>
+                <div style="position: relative; display: flex; align-items: center;">
+                    <input type="text" name="whatsapp_instance_id" id="wasaplaInstanceId" class="form-input" style="padding-right: 42px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.88rem;" placeholder="https://api.wasapla.org/v1/instances/demo-wasapla-org" value="{{ $bo?->whatsapp_provider === 'wasapla' ? $bo?->whatsapp_instance_id : '' }}">
+                    <button type="button" onclick="copyInputVal('wasaplaInstanceId', this)" title="Salin" style="position: absolute; right: 8px; background: transparent; border: 1px solid #CBD5E1; border-radius: 6px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #64748B;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+                <p class="form-hint">Matching Base URL unik peranti WhatsApp Wasapla anda.</p>
             </div>
 
-            <div class="tutorial-box">
-                <strong>Panduan Ringkas Pengaktifan Fonnte:</strong>
-                <ol>
-                    <li>Layari laman web rasmi <a href="https://fonnte.com" target="_blank" rel="noopener noreferrer" style="color: #0D9488; font-weight: 700; text-decoration: underline;">fonnte.com</a> dan daftar akaun.</li>
-                    <li>Tekan <strong>Add Device</strong> dan imbas kod QR menggunakan WhatsApp pada telefon pintar anda.</li>
-                    <li>Salin <strong>API Token</strong> peranti tersebut dan tampalkan ke ruangan di atas.</li>
-                </ol>
+            <!-- 2. API Key Pelanggan (Bearer Token) -->
+            <div class="form-group">
+                <label class="form-label" for="wasaplaApiToken">API Key Pelanggan (Bearer Token) <span style="color: #DC2626;">*</span></label>
+                <div style="position: relative; display: flex; align-items: center;">
+                    <input type="text" name="whatsapp_api_token" id="wasaplaApiToken" class="form-input" style="padding-right: 42px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.88rem;" placeholder="wsp_live_c1d70d0d53395cb5ae5ea8be533ef2855b6a593abbcd602d" value="{{ $bo?->whatsapp_provider === 'wasapla' ? $bo?->whatsapp_api_token : '' }}">
+                    <button type="button" onclick="copyInputVal('wasaplaApiToken', this)" title="Salin" style="position: absolute; right: 8px; background: transparent; border: 1px solid #CBD5E1; border-radius: 6px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #64748B;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+                <p class="form-hint">Kunci API akaun Wasapla anda (disertakan sebagai Bearer Token).</p>
+            </div>
+
+            <!-- 3. Paired Domain (X-App-Domain) -->
+            <div class="form-group">
+                <label class="form-label" for="wasaplaDomain">Paired Domain (X-App-Domain) <span style="color: #DC2626;">*</span></label>
+                <div style="position: relative; display: flex; align-items: center;">
+                    <input type="text" name="whatsapp_domain" id="wasaplaDomain" class="form-input" style="padding-right: 42px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.88rem;" placeholder="demo.wasapla.org" value="{{ $bo?->whatsapp_domain ?: (request()?->getHost() ?: 'pios.com.my') }}">
+                    <button type="button" onclick="copyInputVal('wasaplaDomain', this)" title="Salin" style="position: absolute; right: 8px; background: transparent; border: 1px solid #CBD5E1; border-radius: 6px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #64748B;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+                <p class="form-hint">Domain berdaftar yang dipautkan dalam 4-Layer Guard Wasapla.</p>
+            </div>
+
+            <!-- 4. Webhook Secret (X-Bot-Token) -->
+            <div class="form-group">
+                <label class="form-label" for="wasaplaBotToken">Webhook Secret (X-Bot-Token)</label>
+                <div style="position: relative; display: flex; align-items: center;">
+                    <input type="text" name="whatsapp_bot_token" id="wasaplaBotToken" class="form-input" style="padding-right: 42px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.88rem;" placeholder="whsec_ac83474b324d64429b648e4ce0174c3de0613c0f" value="{{ $bo?->whatsapp_provider === 'wasapla' ? $bo?->whatsapp_bot_token : '' }}">
+                    <button type="button" onclick="copyInputVal('wasaplaBotToken', this)" title="Salin" style="position: absolute; right: 8px; background: transparent; border: 1px solid #CBD5E1; border-radius: 6px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #64748B;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+                <p class="form-hint">Kunci rahsia webhook / bot token Wasapla (disertakan sebagai header X-Bot-Token).</p>
+            </div>
+
+            <!-- Keselamatan 4 Lapisan Box (Mengikut Sistem Wasapla) -->
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px 20px; margin-top: 18px;">
+                <div style="display: flex; align-items: flex-start; gap: 12px;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <path d="M9 12l2 2 4-4"></path>
+                    </svg>
+                    <div>
+                        <div style="font-weight: 700; color: #0F172A; font-size: 0.95rem;">Keselamatan 4 Lapisan:</div>
+                        <p style="margin: 4px 0 0 0; color: #475569; font-size: 0.88rem; line-height: 1.55;">
+                            Setiap panggilan API ke Matching URL disahkan melalui API Key aktif, padanan nama instance, status langganan aktif, dan kesepadanan domain yang dipautkan.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <div style="margin-top: 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <button type="button" class="btn-test" onclick="testConnection('fonnte')">
+                <button type="button" class="btn-test" onclick="testConnection('wasapla')">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                     Uji Sambungan (Ping API)
                 </button>
-                <button type="button" class="btn-test" onclick="openTestMessageModal('fonnte')" style="color: #0D9488; border-color: #99F6E4; background: #F0FDFA;">
+                <button type="button" class="btn-test" onclick="openQrModal('wasapla')" style="color: #0F766E; border-color: #0D9488; background: #CCFBF1;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Imbas Kod QR WhatsApp
+                </button>
+                <button type="button" class="btn-test" onclick="openTestMessageModal('wasapla')" style="color: #0D9488; border-color: #99F6E4; background: #F0FDFA;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                     Hantar Mesej Ujian Ke Nombor Saya
                 </button>
             </div>
 
-            <div id="fonnteFeedback" class="test-feedback-box"></div>
+            <div id="wasaplaFeedback" class="test-feedback-box"></div>
         </div>
 
-        <!-- UltraMsg Configuration Section (Full Width) -->
-        <div id="ultramsgConfigSection" class="config-card" style="{{ ($bo?->whatsapp_provider ?? '') === 'ultramsg' ? 'display: block;' : 'display: none;' }}">
+        <!-- Wati.io Configuration Section (Full Width) -->
+        <div id="watiConfigSection" class="config-card" style="{{ ($bo?->whatsapp_provider ?? '') === 'wati' ? 'display: block;' : 'display: none;' }}">
             <h3 class="config-section-title">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4338CA" stroke-width="2.2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-                Konfigurasi UltraMsg (Instance ID &amp; Token)
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4338CA" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                Konfigurasi Wati.io (Official WhatsApp API)
             </h3>
 
             <div class="form-group">
-                <label class="form-label" for="ultramsgInstanceId">UltraMsg Instance ID <span style="color: #DC2626;">*</span></label>
-                <input type="text" name="whatsapp_instance_id" id="ultramsgInstanceId" class="form-input" placeholder="Contoh: instance99887" value="{{ $bo?->whatsapp_provider === 'ultramsg' ? $bo?->whatsapp_instance_id : '' }}">
-                <p class="form-hint">Instance ID peranti anda di UltraMsg.</p>
+                <label class="form-label" for="watiEndpoint">Wati Endpoint URL <span style="color: #DC2626;">*</span></label>
+                <input type="text" name="whatsapp_endpoint" id="watiEndpoint" class="form-input" placeholder="Contoh: https://live-mt-server.wati.io/302812" value="{{ $bo?->whatsapp_provider === 'wati' ? ($bo?->whatsapp_endpoint ?: $bo?->whatsapp_instance_id) : '' }}">
+                <p class="form-hint">Endpoint URL atau Tenant Server URL daripada dashboard Wati.io anda.</p>
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="ultramsgApiToken">UltraMsg Token <span style="color: #DC2626;">*</span></label>
-                <input type="text" name="whatsapp_api_token" id="ultramsgApiToken" class="form-input" placeholder="Contoh: 1a2b3c4d5e6f..." value="{{ $bo?->whatsapp_provider === 'ultramsg' ? $bo?->whatsapp_api_token : '' }}">
-                <p class="form-hint">Token kebenaran instance di UltraMsg.</p>
+                <label class="form-label" for="watiApiToken">Wati Access Token <span style="color: #DC2626;">*</span></label>
+                <input type="text" name="whatsapp_api_token" id="watiApiToken" class="form-input" placeholder="Contoh: Bearer token atau API Token anda di Wati" value="{{ $bo?->whatsapp_provider === 'wati' ? $bo?->whatsapp_api_token : '' }}">
+                <p class="form-hint">Dapatkan Access Token ini di dashboard Wati.io (Menu: Connector > API).</p>
             </div>
 
             <div class="tutorial-box">
-                <strong>Panduan Ringkas Pengaktifan UltraMsg:</strong>
+                <strong>Panduan Ringkas Pengaktifan Wati.io:</strong>
                 <ol>
-                    <li>Buka akaun di <a href="https://ultramsg.com" target="_blank" rel="noopener noreferrer" style="color: #4338CA; font-weight: 700; text-decoration: underline;">ultramsg.com</a>.</li>
-                    <li>Imbas kod QR pada instance WhatsApp anda.</li>
-                    <li>Salin <strong>Instance ID</strong> dan <strong>Token</strong> ke borang di atas.</li>
+                    <li>Buka akaun di <a href="https://wati.io" target="_blank" rel="noopener noreferrer" style="color: #4338CA; font-weight: 700; text-decoration: underline;">wati.io</a>.</li>
+                    <li>Pergi ke menu <strong>Connector &gt; API</strong> untuk menyalin <strong>API Endpoint</strong> dan <strong>Access Token</strong>.</li>
+                    <li>Tampalkan maklumat tersebut ke ruangan di atas dan klik Uji Sambungan.</li>
                 </ol>
             </div>
 
             <div style="margin-top: 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <button type="button" class="btn-test" onclick="testConnection('ultramsg')">
+                <button type="button" class="btn-test" onclick="testConnection('wati')">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                     Uji Sambungan (Ping API)
                 </button>
-                <button type="button" class="btn-test" onclick="openTestMessageModal('ultramsg')" style="color: #4338CA; border-color: #C7D2FE; background: #EEF2FF;">
+                <button type="button" class="btn-test" onclick="openTestMessageModal('wati')" style="color: #4338CA; border-color: #C7D2FE; background: #EEF2FF;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                     Hantar Mesej Ujian Ke Nombor Saya
                 </button>
             </div>
 
-            <div id="ultramsgFeedback" class="test-feedback-box"></div>
+            <div id="watiFeedback" class="test-feedback-box"></div>
         </div>
 
         <!-- Manual wa.me Notice Section (Full Width) -->
@@ -893,9 +943,75 @@
         </div>
     </div>
 
+    <!-- WhatsApp QR Code Modal for Wasapla Pairing -->
+    <div id="qrCodeModal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 99999; align-items: center; justify-content: center; padding: 16px;">
+        <div style="background: #FFFFFF; border-radius: 18px; max-width: 460px; width: 100%; padding: 24px 28px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); text-align: center; position: relative;">
+            <button type="button" onclick="closeQrModal()" style="position: absolute; top: 16px; right: 16px; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: #64748B; padding: 4px; line-height: 1;">&times;</button>
+
+            <div style="width: 52px; height: 52px; border-radius: 50%; background: #CCFBF1; color: #0D9488; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+            </div>
+
+            <h3 style="margin: 0 0 6px; font-size: 1.2rem; font-weight: 800; color: #0F172A;">
+                Pautkan Peranti WhatsApp
+            </h3>
+            <p style="font-size: 0.85rem; color: #64748B; margin: 0 0 16px; line-height: 1.45;">
+                Imbas kod QR di bawah menggunakan aplikasi WhatsApp pada telefon anda untuk mengaktifkan penghantaran mesej automatik.
+            </p>
+
+            <div id="qrLoadingBox" style="padding: 40px 20px; font-size: 0.88rem; color: #0D9488; background: #F0FDFA; border-radius: 12px; border: 1px dashed #99F6E4; margin-bottom: 16px;">
+                ⏳ Sedang memuatkan Kod QR Wasapla...
+            </div>
+
+            <div id="qrDisplayBox" style="display: none; margin-bottom: 16px;">
+                <div style="background: #FFFFFF; padding: 12px; border-radius: 14px; border: 2px solid #E2E8F0; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                    <img id="qrCodeImg" src="" alt="WhatsApp QR Code" style="width: 220px; height: 220px; display: block; border-radius: 8px;">
+                </div>
+                <div style="margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span class="dot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #F59E0B;"></span>
+                    <span id="qrStatusLabel" style="font-size: 0.82rem; font-weight: 600; color: #64748B;">Menunggu imbasan telefon...</span>
+                </div>
+            </div>
+
+            <div id="qrConnectedBox" style="display: none; padding: 24px 16px; background: #ECFDF5; border-radius: 12px; border: 1.5px solid #A7F3D0; margin-bottom: 16px;">
+                <div style="font-size: 2.2rem; margin-bottom: 6px;">🎉</div>
+                <div style="font-weight: 800; font-size: 1.05rem; color: #065F46;">WhatsApp Berjaya Disambungkan!</div>
+                <p style="font-size: 0.84rem; color: #047857; margin: 6px 0 0; line-height: 1.4;">
+                    Peranti anda kini aktif dan sedia untuk menghantar mesej ujian atau promosi produk.
+                </p>
+            </div>
+
+            <div id="qrErrorBox" style="display: none; padding: 14px 16px; background: #FEF2F2; border-radius: 12px; border: 1px solid #FECACA; color: #991B1B; font-size: 0.84rem; margin-bottom: 16px; text-align: left;">
+            </div>
+
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; text-align: left; font-size: 0.8rem; color: #334155; line-height: 1.5; margin-bottom: 18px;">
+                <strong style="color: #0F172A; display: block; margin-bottom: 4px;">Cara Mengimbas:</strong>
+                <ol style="margin: 0; padding-left: 18px;">
+                    <li>Buka aplikasi WhatsApp di telefon anda.</li>
+                    <li>Pergi ke <strong>Tetapan (Settings)</strong> &gt; <strong>Peranti Dipautkan (Linked Devices)</strong>.</li>
+                    <li>Tekan <strong>Pautkan Peranti (Link a Device)</strong> dan halakan kamera ke kod QR ini.</li>
+                </ol>
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 10px;">
+                <button type="button" id="refreshQrBtn" onclick="loadWhatsAppQr()" class="btn-test" style="font-size: 0.84rem; padding: 8px 16px;">
+                    🔄 Muat Semula QR
+                </button>
+                <button type="button" onclick="closeQrModal()" class="btn-save-whatsapp" style="font-size: 0.84rem; padding: 8px 20px;">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
     <script>
-        let currentTestingProvider = 'fonnte';
+        let currentTestingProvider = 'wasapla';
 
         // Avatar live preview
         function previewAvatar(input) {
@@ -911,32 +1027,6 @@
             }
         }
 
-        // WhatsApp Partner renewal trigger
-        function triggerPartnerWhatsAppRenew() {
-            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            fetch("{{ route('business.subscriptions.renew-whatsapp') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrf
-                }
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                if (data.whatsapp_url) {
-                    window.open(data.whatsapp_url, '_blank');
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 1200);
-                } else {
-                    window.open("{{ $partnerWhatsAppRenewUrl ?? '#' }}", '_blank');
-                }
-            })
-            .catch(function() {
-                window.open("{{ $partnerWhatsAppRenewUrl ?? '#' }}", '_blank');
-            });
-        }
 
         function selectProvider(provider, element) {
             document.getElementById('selectedProviderInput').value = provider;
@@ -948,46 +1038,60 @@
             }
 
             // Toggle config sections
-            const fonnteSection = document.getElementById('fonnteConfigSection');
-            const ultraSection = document.getElementById('ultramsgConfigSection');
+            const wasaplaSection = document.getElementById('wasaplaConfigSection');
+            const watiSection = document.getElementById('watiConfigSection');
             const manualSection = document.getElementById('manualConfigSection');
 
-            if (fonnteSection) fonnteSection.style.display = (provider === 'fonnte') ? 'block' : 'none';
-            if (ultraSection) ultraSection.style.display = (provider === 'ultramsg') ? 'block' : 'none';
+            if (wasaplaSection) wasaplaSection.style.display = (provider === 'wasapla') ? 'block' : 'none';
+            if (watiSection) watiSection.style.display = (provider === 'wati') ? 'block' : 'none';
             if (manualSection) manualSection.style.display = (provider === 'manual') ? 'block' : 'none';
 
             // Ensure correct input name fields don't collide
-            const fonnteToken = document.getElementById('fonnteApiToken');
-            const ultraToken = document.getElementById('ultramsgApiToken');
+            const wasaplaToken = document.getElementById('wasaplaApiToken');
+            const wasaplaBot = document.getElementById('wasaplaBotToken');
+            const wasaplaInstance = document.getElementById('wasaplaInstanceId');
+            const wasaplaDomain = document.getElementById('wasaplaDomain');
+            const watiToken = document.getElementById('watiApiToken');
+            const watiEndpoint = document.getElementById('watiEndpoint');
 
-            if (provider === 'fonnte') {
-                if (fonnteToken) fonnteToken.disabled = false;
-                if (ultraToken) ultraToken.disabled = true;
-            } else if (provider === 'ultramsg') {
-                if (fonnteToken) fonnteToken.disabled = true;
-                if (ultraToken) ultraToken.disabled = false;
+            if (provider === 'wasapla') {
+                if (wasaplaToken) wasaplaToken.disabled = false;
+                if (wasaplaBot) wasaplaBot.disabled = false;
+                if (wasaplaInstance) wasaplaInstance.disabled = false;
+                if (wasaplaDomain) wasaplaDomain.disabled = false;
+                if (watiToken) watiToken.disabled = true;
+                if (watiEndpoint) watiEndpoint.disabled = true;
+            } else if (provider === 'wati') {
+                if (wasaplaToken) wasaplaToken.disabled = true;
+                if (wasaplaBot) wasaplaBot.disabled = true;
+                if (wasaplaInstance) wasaplaInstance.disabled = true;
+                if (wasaplaDomain) wasaplaDomain.disabled = true;
+                if (watiToken) watiToken.disabled = false;
+                if (watiEndpoint) watiEndpoint.disabled = false;
             } else {
-                if (fonnteToken) fonnteToken.disabled = true;
-                if (ultraToken) ultraToken.disabled = true;
+                if (wasaplaToken) wasaplaToken.disabled = true;
+                if (wasaplaBot) wasaplaBot.disabled = true;
+                if (wasaplaInstance) wasaplaInstance.disabled = true;
+                if (wasaplaDomain) wasaplaDomain.disabled = true;
+                if (watiToken) watiToken.disabled = true;
+                if (watiEndpoint) watiEndpoint.disabled = true;
             }
+        }
+
+        function copyInputVal(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input || !input.value) return;
+            navigator.clipboard.writeText(input.value).then(() => {
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                setTimeout(() => { btn.innerHTML = origHtml; }, 1500);
+            }).catch(() => {});
         }
 
         // Initialize state on load
         document.addEventListener('DOMContentLoaded', () => {
-            const initialProvider = document.getElementById('selectedProviderInput').value || 'manual';
-            const fonnteToken = document.getElementById('fonnteApiToken');
-            const ultraToken = document.getElementById('ultramsgApiToken');
-
-            if (initialProvider === 'fonnte') {
-                if (fonnteToken) fonnteToken.disabled = false;
-                if (ultraToken) ultraToken.disabled = true;
-            } else if (initialProvider === 'ultramsg') {
-                if (fonnteToken) fonnteToken.disabled = true;
-                if (ultraToken) ultraToken.disabled = false;
-            } else {
-                if (fonnteToken) fonnteToken.disabled = true;
-                if (ultraToken) ultraToken.disabled = true;
-            }
+            const initialProvider = document.getElementById('selectedProviderInput')?.value || 'manual';
+            selectProvider(initialProvider, document.querySelector(`.provider-card[onclick*="'${initialProvider}'"]`));
         });
 
         // Test Connection Ping
@@ -997,19 +1101,25 @@
             if (!feedbackEl) return;
 
             let token = '';
+            let botToken = '';
             let instanceId = '';
+            let endpoint = '';
+            let domain = '';
 
-            if (provider === 'fonnte') {
-                token = document.getElementById('fonnteApiToken')?.value || '';
-                if (!token.trim()) {
-                    showFeedback(feedbackEl, false, 'Sila masukkan Fonnte API Token terlebih dahulu.');
+            if (provider === 'wasapla') {
+                token = document.getElementById('wasaplaApiToken')?.value || '';
+                botToken = document.getElementById('wasaplaBotToken')?.value || '';
+                instanceId = document.getElementById('wasaplaInstanceId')?.value || '';
+                domain = document.getElementById('wasaplaDomain')?.value || '';
+                if ((!token.trim() && !botToken.trim()) || !instanceId.trim()) {
+                    showFeedback(feedbackEl, false, 'Sila masukkan Matching Base URL dan API Key Pelanggan terlebih dahulu.');
                     return;
                 }
-            } else if (provider === 'ultramsg') {
-                instanceId = document.getElementById('ultramsgInstanceId')?.value || '';
-                token = document.getElementById('ultramsgApiToken')?.value || '';
-                if (!instanceId.trim() || !token.trim()) {
-                    showFeedback(feedbackEl, false, 'Sila masukkan UltraMsg Instance ID dan Token terlebih dahulu.');
+            } else if (provider === 'wati') {
+                endpoint = document.getElementById('watiEndpoint')?.value || '';
+                token = document.getElementById('watiApiToken')?.value || '';
+                if (!token.trim()) {
+                    showFeedback(feedbackEl, false, 'Sila masukkan Wati.io Access Token terlebih dahulu.');
                     return;
                 }
             }
@@ -1030,14 +1140,26 @@
                 body: JSON.stringify({
                     whatsapp_provider: provider,
                     whatsapp_api_token: token,
+                    whatsapp_bot_token: botToken,
                     whatsapp_instance_id: instanceId,
+                    whatsapp_endpoint: endpoint,
+                    whatsapp_domain: domain,
                     send_test_message: false
                 })
             })
             .then(res => res.json().then(data => ({ status: res.status, body: data })))
             .then(({ status, body }) => {
                 if (status >= 200 && status < 300 && body.success) {
-                    showFeedback(feedbackEl, true, '✅ ' + (body.message || 'Sambungan berjaya!') + (body.device ? ' (' + body.device + ')' : ''));
+                    if (body.is_device_connected === false) {
+                        showFeedback(
+                            feedbackEl,
+                            'warning',
+                            '⚠️ ' + (body.message || 'Kredensial API sah tetapi peranti WhatsApp belum diimbas.') +
+                            '<div style="margin-top: 10px;"><button type="button" onclick="openQrModal(\'' + provider + '\')" class="btn-test" style="background: #0D9488; color: #FFFFFF; border: none; padding: 7px 16px; font-size: 0.84rem; border-radius: 8px; cursor: pointer; font-weight: 700;">📱 Buka Kod QR Sekarang</button></div>'
+                        );
+                    } else {
+                        showFeedback(feedbackEl, true, '✅ ' + (body.message || 'Sambungan berjaya!') + (body.device ? ' (' + body.device + ')' : ''));
+                    }
                 } else {
                     showFeedback(feedbackEl, false, '❌ ' + (body.message || 'Gagal menyambung ke pelayan provider.'));
                 }
@@ -1079,12 +1201,19 @@
             }
 
             let token = '';
+            let botToken = '';
             let instanceId = '';
-            if (provider === 'fonnte') {
-                token = document.getElementById('fonnteApiToken')?.value || '';
-            } else if (provider === 'ultramsg') {
-                instanceId = document.getElementById('ultramsgInstanceId')?.value || '';
-                token = document.getElementById('ultramsgApiToken')?.value || '';
+            let endpoint = '';
+            let domain = '';
+
+            if (provider === 'wasapla') {
+                token = document.getElementById('wasaplaApiToken')?.value || '';
+                botToken = document.getElementById('wasaplaBotToken')?.value || '';
+                instanceId = document.getElementById('wasaplaInstanceId')?.value || '';
+                domain = document.getElementById('wasaplaDomain')?.value || '';
+            } else if (provider === 'wati') {
+                endpoint = document.getElementById('watiEndpoint')?.value || '';
+                token = document.getElementById('watiApiToken')?.value || '';
             }
 
             if (sendBtn) {
@@ -1108,7 +1237,10 @@
                 body: JSON.stringify({
                     whatsapp_provider: provider,
                     whatsapp_api_token: token,
+                    whatsapp_bot_token: botToken,
                     whatsapp_instance_id: instanceId,
+                    whatsapp_endpoint: endpoint,
+                    whatsapp_domain: domain,
                     test_phone: phone,
                     send_test_message: true
                 })
@@ -1134,12 +1266,194 @@
             });
         }
 
-        function showFeedback(el, isSuccess, msg) {
+        let qrPollTimer = null;
+
+        function openQrModal(provider) {
+            currentTestingProvider = provider || 'wasapla';
+            const modal = document.getElementById('qrCodeModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+            loadWhatsAppQr();
+        }
+
+        function closeQrModal() {
+            if (qrPollTimer) {
+                clearInterval(qrPollTimer);
+                qrPollTimer = null;
+            }
+            const modal = document.getElementById('qrCodeModal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        }
+
+        function loadWhatsAppQr() {
+            const provider = currentTestingProvider || 'wasapla';
+            let token = '';
+            let botToken = '';
+            let instanceId = '';
+            let domain = '';
+
+            if (provider === 'wasapla') {
+                token = document.getElementById('wasaplaApiToken')?.value || '';
+                botToken = document.getElementById('wasaplaBotToken')?.value || '';
+                instanceId = document.getElementById('wasaplaInstanceId')?.value || '';
+                domain = document.getElementById('wasaplaDomain')?.value || '';
+            }
+
+            const loadingBox = document.getElementById('qrLoadingBox');
+            const displayBox = document.getElementById('qrDisplayBox');
+            const connectedBox = document.getElementById('qrConnectedBox');
+            const errorBox = document.getElementById('qrErrorBox');
+            const qrImg = document.getElementById('qrCodeImg');
+            const statusLabel = document.getElementById('qrStatusLabel');
+
+            if ((!token.trim() && !botToken.trim()) || !instanceId.trim()) {
+                if (loadingBox) loadingBox.style.display = 'none';
+                if (displayBox) displayBox.style.display = 'none';
+                if (connectedBox) connectedBox.style.display = 'none';
+                if (errorBox) {
+                    errorBox.style.display = 'block';
+                    errorBox.innerHTML = '<strong>Sila isi Matching Base URL dan API Key Pelanggan</strong> terlebih dahulu sebelum memuatkan Kod QR.';
+                }
+                return;
+            }
+
+            if (loadingBox) loadingBox.style.display = 'block';
+            if (displayBox) displayBox.style.display = 'none';
+            if (connectedBox) connectedBox.style.display = 'none';
+            if (errorBox) errorBox.style.display = 'none';
+
+            fetch('{{ route("business.settings.whatsapp.qr") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    whatsapp_provider: provider,
+                    whatsapp_api_token: token,
+                    whatsapp_bot_token: botToken,
+                    whatsapp_instance_id: instanceId,
+                    whatsapp_domain: domain
+                })
+            })
+            .then(res => res.json().then(data => ({ status: res.status, body: data })))
+            .then(({ status, body }) => {
+                if (loadingBox) loadingBox.style.display = 'none';
+
+                if (status >= 200 && status < 300 && body.success) {
+                    if (body.status === 'connected' || body.is_connected) {
+                        if (displayBox) displayBox.style.display = 'none';
+                        if (connectedBox) connectedBox.style.display = 'block';
+                        if (qrPollTimer) {
+                            clearInterval(qrPollTimer);
+                            qrPollTimer = null;
+                        }
+                    } else if (body.qr) {
+                        if (connectedBox) connectedBox.style.display = 'none';
+                        if (displayBox) displayBox.style.display = 'block';
+                        if (qrImg) qrImg.src = body.qr;
+                        if (statusLabel) statusLabel.textContent = 'Menunggu imbasan telefon (Status: ' + (body.status || 'qr') + ')...';
+
+                        if (!qrPollTimer) {
+                            qrPollTimer = setInterval(() => {
+                                pollQrStatus();
+                            }, 6000);
+                        }
+                    } else {
+                        if (errorBox) {
+                            errorBox.style.display = 'block';
+                            errorBox.innerHTML = '❌ ' + (body.message || 'Kod QR tidak tersedia buat masa ini.');
+                        }
+                    }
+                } else {
+                    if (displayBox) displayBox.style.display = 'none';
+                    if (connectedBox) connectedBox.style.display = 'none';
+                    if (errorBox) {
+                        errorBox.style.display = 'block';
+                        errorBox.innerHTML = '❌ ' + (body.message || 'Gagal menjana Kod QR daripada Wasapla.');
+                    }
+                    if (qrPollTimer) {
+                        clearInterval(qrPollTimer);
+                        qrPollTimer = null;
+                    }
+                }
+            })
+            .catch(() => {
+                if (loadingBox) loadingBox.style.display = 'none';
+                if (errorBox) {
+                    errorBox.style.display = 'block';
+                    errorBox.innerHTML = '❌ Ralat rangkaian semasa memuatkan Kod QR.';
+                }
+            });
+        }
+
+        function pollQrStatus() {
+            const provider = currentTestingProvider || 'wasapla';
+            const token = document.getElementById('wasaplaApiToken')?.value || '';
+            const botToken = document.getElementById('wasaplaBotToken')?.value || '';
+            const instanceId = document.getElementById('wasaplaInstanceId')?.value || '';
+            const domain = document.getElementById('wasaplaDomain')?.value || '';
+
+            fetch('{{ route("business.settings.whatsapp.qr") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    whatsapp_provider: provider,
+                    whatsapp_api_token: token,
+                    whatsapp_bot_token: botToken,
+                    whatsapp_instance_id: instanceId,
+                    whatsapp_domain: domain
+                })
+            })
+            .then(res => res.json())
+            .then(body => {
+                if (body && body.success) {
+                    if (body.status === 'connected' || body.is_connected) {
+                        const displayBox = document.getElementById('qrDisplayBox');
+                        const connectedBox = document.getElementById('qrConnectedBox');
+                        if (displayBox) displayBox.style.display = 'none';
+                        if (connectedBox) connectedBox.style.display = 'block';
+                        if (qrPollTimer) {
+                            clearInterval(qrPollTimer);
+                            qrPollTimer = null;
+                        }
+                    } else if (body.qr) {
+                        const qrImg = document.getElementById('qrCodeImg');
+                        if (qrImg && body.qr !== qrImg.src) {
+                            qrImg.src = body.qr;
+                        }
+                    }
+                }
+            })
+            .catch(() => {});
+        }
+
+        function showFeedback(el, status, msg) {
             if (!el) return;
             el.style.display = 'block';
-            el.style.background = isSuccess ? '#ECFDF5' : '#FEF2F2';
-            el.style.border = '1px solid ' + (isSuccess ? '#A7F3D0' : '#FECACA');
-            el.style.color = isSuccess ? '#065F46' : '#991B1B';
+            if (status === 'warning') {
+                el.style.background = '#FFFBEB';
+                el.style.border = '1px solid #FDE68A';
+                el.style.color = '#92400E';
+            } else if (status === true) {
+                el.style.background = '#ECFDF5';
+                el.style.border = '1px solid #A7F3D0';
+                el.style.color = '#065F46';
+            } else {
+                el.style.background = '#FEF2F2';
+                el.style.border = '1px solid #FECACA';
+                el.style.color = '#991B1B';
+            }
             el.innerHTML = msg;
         }
     </script>

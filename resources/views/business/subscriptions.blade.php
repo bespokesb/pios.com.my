@@ -98,29 +98,6 @@
             line-height: 1.35;
         }
 
-        .btn-renew-whatsapp {
-            background: #E7C46A;
-            color: #0F172A;
-            font-weight: 800;
-            font-size: 0.94rem;
-            padding: 13px 24px;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            text-decoration: none;
-            box-shadow: 0 4px 14px rgba(231, 196, 106, 0.35);
-            white-space: nowrap;
-        }
-
-        .btn-renew-whatsapp:hover {
-            background: #F1D487;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(231, 196, 106, 0.45);
-        }
     </style>
 
     <!-- Desktop Header Bar -->
@@ -263,17 +240,20 @@
                 </div>
             </div>
 
-            <!-- WhatsApp Renewal Action -->
-            <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-                <button type="button" class="btn-renew-whatsapp" onclick="triggerPartnerWhatsAppRenew()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17.472 14.382c-.301-.15-1.782-.879-2.057-.98-.276-.1-.476-.15-.677.15-.201.3-.777.98-.953 1.18-.175.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.787-1.677-2.088-.175-.3-.019-.463.132-.613.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.677-1.632-.928-2.235-.245-.587-.493-.508-.677-.517-.175-.01-.376-.01-.577-.01-.201 0-.527.075-.803.376-.276.3-1.054 1.03-1.054 2.511 0 1.482 1.079 2.911 1.23 3.112.15.2 2.124 3.243 5.145 4.548.719.311 1.28.497 1.718.636.722.23 1.379.197 1.9-.12.57-.348 1.782-.728 2.033-1.431.25-.703.25-1.306.175-1.431-.075-.125-.276-.2-.577-.35zM12 2a10 10 0 0 0-8.59 15.11L2 22l4.98-1.31A10 10 0 1 0 12 2z"></path>
-                    </svg>
-                    Renew Subscription (via WhatsApp)
-                </button>
-                <span style="font-size: 0.74rem; color: #CBD5E1; max-width: 320px; line-height: 1.35;">
-                    Opens your Partner's WhatsApp with pre-filled payment details. Your Partner confirms payment to add +30 days (or bundle) instantly.
-                </span>
+            <!-- Managed Manually by Partner -->
+            <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 6px;">
+                <div style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 12px; padding: 12px 18px; color: #FFFFFF; max-width: 380px;">
+                    <div style="font-size: 0.86rem; font-weight: 700; display: flex; align-items: center; gap: 8px; color: #FACC15;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span>Diuruskan Manual oleh Partner</span>
+                    </div>
+                    <div style="font-size: 0.76rem; color: #E2E8F0; margin-top: 5px; line-height: 1.4;">
+                        Yuran langganan BGE diuruskan secara peribadi (bersemuka/F2F) oleh Sponsoring Partner anda dan direkodkan terus dalam modul laporan &amp; transaksi Partner.
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -336,13 +316,9 @@
                     </div>
 
                     @if ($plan->code === 'bge')
-                        <button type="button" onclick="triggerPartnerWhatsAppRenew()"
-                            style="width: 100%; background: #059669; color: #FFFFFF; border: 1px solid #059669; padding: 10px; border-radius: 8px; font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.472 14.382c-.301-.15-1.782-.879-2.057-.98-.276-.1-.476-.15-.677.15-.201.3-.777.98-.953 1.18-.175.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.787-1.677-2.088-.175-.3-.019-.463.132-.613.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.677-1.632-.928-2.235-.245-.587-.493-.508-.677-.517-.175-.01-.376-.01-.577-.01-.201 0-.527.075-.803.376-.276.3-1.054 1.03-1.054 2.511 0 1.482 1.079 2.911 1.23 3.112.15.2 2.124 3.243 5.145 4.548.719.311 1.28.497 1.718.636.722.23 1.379.197 1.9-.12.57-.348 1.782-.728 2.033-1.431.25-.703.25-1.306.175-1.431-.075-.125-.276-.2-.577-.35zM12 2a10 10 0 0 0-8.59 15.11L2 22l4.98-1.31A10 10 0 1 0 12 2z"></path>
-                            </svg>
-                            <span>{{ $isActive ? 'Renew via WhatsApp Partner' : 'Subscribe via WhatsApp Partner' }}</span>
-                        </button>
+                        <div style="width: 100%; background: #F8FAFC; border: 1px dashed #CBD5E1; color: #475569; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.82rem; text-align: center;">
+                            Diuruskan secara manual oleh Partner
+                        </div>
                     @else
                         <button type="button" onclick="openSubscribeModal({{ $plan->id }}, '{{ addslashes($plan->name) }}', '{{ number_format((float)$plan->price, 2) }}', '{{ addslashes($plan->payment_instructions ?? '') }}', '{{ $plan->qrCodeUrl() }}')"
                             style="width: 100%; background: {{ $isActive ? '#F1F5F9' : '#0D9488' }}; color: {{ $isActive ? '#0F172A' : '#FFFFFF' }}; border: 1px solid {{ $isActive ? '#CBD5E1' : '#0D9488' }}; padding: 10px; border-radius: 8px; font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease;">
@@ -473,24 +449,6 @@
                 @csrf
                 <input type="hidden" name="subscription_product_id" id="modalProductId" value="">
 
-                <!-- Partner Direct WhatsApp Option -->
-                @if ($partner)
-                    <div style="background: #F0FDF4; border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                        <div>
-                            <div style="font-size: 0.86rem; font-weight: 800; color: #166534; display: flex; align-items: center; gap: 6px;">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="#16A34A"><path d="M17.472 14.382c-.301-.15-1.782-.879-2.057-.98-.276-.1-.476-.15-.677.15-.201.3-.777.98-.953 1.18-.175.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.787-1.677-2.088-.175-.3-.019-.463.132-.613.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.677-1.632-.928-2.235-.245-.587-.493-.508-.677-.517-.175-.01-.376-.01-.577-.01-.201 0-.527.075-.803.376-.276.3-1.054 1.03-1.054 2.511 0 1.482 1.079 2.911 1.23 3.112.15.2 2.124 3.243 5.145 4.548.719.311 1.28.497 1.718.636.722.23 1.379.197 1.9-.12.57-.348 1.782-.728 2.033-1.431.25-.703.25-1.306.175-1.431-.075-.125-.276-.2-.577-.35zM12 2a10 10 0 0 0-8.59 15.11L2 22l4.98-1.31A10 10 0 1 0 12 2z"></path></svg>
-                                <span>Renew Directly via Partner WhatsApp</span>
-                            </div>
-                            <div style="font-size: 0.78rem; color: #15803D; margin-top: 3px;">
-                                Sponsoring Partner: <strong>{{ $partner->applicant_name }}</strong> ({{ $partner->partner_no }})
-                            </div>
-                        </div>
-                        <button type="button" onclick="triggerPartnerWhatsAppRenew()" style="background: #16A34A; color: #FFFFFF; border: none; padding: 9px 16px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(22,163,74,0.3);">
-                            <span>Open Partner WhatsApp</span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                        </button>
-                    </div>
-                @endif
 
                 <!-- Payment Instructions & QR Box -->
                 <div style="background: #F0FDFA; border: 1px solid #CCFBF1; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
@@ -583,31 +541,6 @@
             document.getElementById('subscribeModal').style.display = 'none';
         }
 
-        function triggerPartnerWhatsAppRenew() {
-            var csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            fetch("{{ route('business.subscriptions.renew-whatsapp') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrf
-                }
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                if (data.whatsapp_url) {
-                    window.open(data.whatsapp_url, '_blank');
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 1200);
-                } else {
-                    window.open("{{ $partnerWhatsAppRenewUrl ?? '#' }}", '_blank');
-                }
-            })
-            .catch(function(err) {
-                window.open("{{ $partnerWhatsAppRenewUrl ?? '#' }}", '_blank');
-            });
-        }
 
         function toggleProofField() {
             const method = document.getElementById('paymentMethodSelect').value;

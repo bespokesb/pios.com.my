@@ -91,6 +91,65 @@ window.__malaysianLocations = @json($malaysianLocationsData);
         const locations = window.__malaysianLocations;
         let isSyncing = false;
         let isCustomModeActive = false;
+        const defaultToggleLabel = (toggleBtn ? toggleBtn.textContent.trim() : '') || '+ Add new postcode';
+
+        function persistPostcodeToDatabase(pc, state, city) {
+            pc = (pc || '').trim();
+            if (!pc || pc.length < 4) return;
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                || document.querySelector('input[name="_token"]')?.value
+                || '{{ csrf_token() }}';
+
+            fetch('{{ route('locations.postcode.store') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    postcode: pc,
+                    state: state || '',
+                    city: city || ''
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success && data.location) {
+                    const loc = data.location;
+                    postcodeLookup[loc.postcode] = { state: loc.state, city: loc.city };
+
+                    if (window.__malaysianLocations && window.__malaysianLocations[loc.state]) {
+                        const s = window.__malaysianLocations[loc.state];
+                        if (!s.postcodes.includes(loc.postcode)) {
+                            s.postcodes.push(loc.postcode);
+                            s.postcodes.sort();
+                        }
+                        if (loc.city) {
+                            if (!s.cities.includes(loc.city)) {
+                                s.cities.push(loc.city);
+                                s.cities.sort();
+                            }
+                            if (!s.city_postcodes) s.city_postcodes = {};
+                            if (!s.city_postcodes[loc.city]) s.city_postcodes[loc.city] = [];
+                            if (!s.city_postcodes[loc.city].includes(loc.postcode)) {
+                                s.city_postcodes[loc.city].push(loc.postcode);
+                                s.city_postcodes[loc.city].sort();
+                            }
+                        }
+                    }
+
+                    if (!Array.from(postcodeSelect.options).some(o => o.value === loc.postcode)) {
+                        const opt = document.createElement('option');
+                        opt.value = loc.postcode;
+                        opt.textContent = loc.postcode;
+                        postcodeSelect.appendChild(opt);
+                    }
+                }
+            })
+            .catch(() => {});
+        }
 
         function setCustomMode(isCustom) {
             isCustomModeActive = Boolean(isCustom);
@@ -117,7 +176,7 @@ window.__malaysianLocations = @json($malaysianLocationsData);
                     customInputWrapper.style.display = 'none';
                     selectWrapper.style.display = '';
                     if (toggleBtn) {
-                        toggleBtn.textContent = '+ Add new postcode';
+                        toggleBtn.textContent = defaultToggleLabel;
                     }
                     postcodeSelect.disabled = false;
                     postcodeSelect.setAttribute('name', 'poskod');
@@ -133,6 +192,7 @@ window.__malaysianLocations = @json($malaysianLocationsData);
                                 postcodeSelect.appendChild(opt);
                             }
                             postcodeSelect.value = typed;
+                            persistPostcodeToDatabase(typed, stateSelect.value, citySelect.value);
                         } else if (postcodeSelect.value === '__custom__') {
                             postcodeSelect.value = '';
                         }
@@ -450,6 +510,7 @@ window.__malaysianLocations = @json($malaysianLocationsData);
                     } finally {
                         isSyncing = false;
                     }
+                    persistPostcodeToDatabase(pc, stateSelect.value, citySelect.value);
                 }
             });
             customInput.addEventListener('change', function() {
@@ -460,6 +521,29 @@ window.__malaysianLocations = @json($malaysianLocationsData);
                         syncLocationFromPostcode(pc);
                     } finally {
                         isSyncing = false;
+                    }
+                    persistPostcodeToDatabase(pc, stateSelect.value, citySelect.value);
+                }
+            });
+            customInput.addEventListener('blur', function() {
+                const pc = customInput.value.trim();
+                if (pc && pc.length >= 4) {
+                    persistPostcodeToDatabase(pc, stateSelect.value, citySelect.value);
+                }
+            });
+        }
+
+        const parentForm = postcodeSelect.closest('form') || (customInput ? customInput.closest('form') : null);
+        if (parentForm) {
+            parentForm.addEventListener('submit', function() {
+                if (isCustomModeActive && customInput) {
+                    const typed = customInput.value.trim();
+                    if (typed) {
+                        customInput.disabled = false;
+                        customInput.setAttribute('name', 'poskod');
+                        postcodeSelect.disabled = true;
+                        postcodeSelect.removeAttribute('name');
+                        persistPostcodeToDatabase(typed, stateSelect.value, citySelect.value);
                     }
                 }
             });

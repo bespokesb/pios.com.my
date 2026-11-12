@@ -68,10 +68,13 @@ class BusinessDashboard extends BaseDashboard
         // KPI Counts
         $customerQuery = Customer::query()->visibleTo($user);
         $totalCustomers = (clone $customerQuery)->count();
+        $leadCount = (clone $customerQuery)->where('category', CustomerCategory::Lead)->count();
         $prospectsCount = (clone $customerQuery)->where('category', CustomerCategory::Prospect)->count();
-        $vipCount = (clone $customerQuery)->where('is_vip', true)->count();
-        $contactsCount = (clone $customerQuery)->where('category', CustomerCategory::Lead)->count();
         $standardCustomersCount = (clone $customerQuery)->where('category', CustomerCategory::Customer)->count();
+        $loyalCustomersCount = (clone $customerQuery)->where('category', CustomerCategory::LoyalCustomer)->count();
+        $membersCount = (clone $customerQuery)->where('category', CustomerCategory::Member)->count();
+        $partnersCount = (clone $customerQuery)->where('category', CustomerCategory::Partner)->count();
+        $vipCount = (clone $customerQuery)->where('is_vip', true)->count();
 
         $productQuery = Product::query()->visibleTo($user);
         $productsCount = (clone $productQuery)->count();
@@ -89,28 +92,56 @@ class BusinessDashboard extends BaseDashboard
         $pipelineTotal = max($totalCustomers, 1);
         $pipeline = [
             [
-                'stage' => 'Contact',
-                'count' => $contactsCount,
-                'pct' => round(($contactsCount / $pipelineTotal) * 100, 1),
+                'stage' => 'Lead',
+                'filter' => 'lead',
+                'count' => $leadCount,
+                'pct' => round(($leadCount / $pipelineTotal) * 100, 1),
                 'color' => 'slate',
-                'badge' => 'Contact',
+                'badge' => 'Lead',
             ],
             [
-                'stage' => 'Prospect',
+                'stage' => 'Prospek',
+                'filter' => 'prospect',
                 'count' => $prospectsCount,
                 'pct' => round(($prospectsCount / $pipelineTotal) * 100, 1),
                 'color' => 'blue',
-                'badge' => 'Prospect',
+                'badge' => 'Prospek',
             ],
             [
                 'stage' => 'Customer',
+                'filter' => 'customer',
                 'count' => $standardCustomersCount,
                 'pct' => round(($standardCustomersCount / $pipelineTotal) * 100, 1),
                 'color' => 'teal',
                 'badge' => 'Customer',
             ],
             [
+                'stage' => 'Loyal Customer',
+                'filter' => 'loyal_customer',
+                'count' => $loyalCustomersCount,
+                'pct' => round(($loyalCustomersCount / $pipelineTotal) * 100, 1),
+                'color' => 'pink',
+                'badge' => 'Loyal Customer',
+            ],
+            [
+                'stage' => 'Member',
+                'filter' => 'member',
+                'count' => $membersCount,
+                'pct' => round(($membersCount / $pipelineTotal) * 100, 1),
+                'color' => 'purple',
+                'badge' => 'Member',
+            ],
+            [
+                'stage' => 'Partner',
+                'filter' => 'partner',
+                'count' => $partnersCount,
+                'pct' => round(($partnersCount / $pipelineTotal) * 100, 1),
+                'color' => 'orange',
+                'badge' => 'Partner',
+            ],
+            [
                 'stage' => 'VIP',
+                'filter' => 'vip',
                 'count' => $vipCount,
                 'pct' => round(($vipCount / $pipelineTotal) * 100, 1),
                 'color' => 'yellow',

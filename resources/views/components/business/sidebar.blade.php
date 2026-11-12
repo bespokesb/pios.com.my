@@ -68,6 +68,14 @@
             <span>Reports</span>
         </a>
 
+        <a href="{{ route('business.promotions.index') }}" class="sidebar-item dash-nav-item {{ request()->routeIs('business.promotions.*') || request()->is('business/promotions*') ? 'active' : '' }}">
+            <svg class="sidebar-icon dash-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 2L11 13"></path>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            <span>WA Promotions</span>
+        </a>
+
         <a href="{{ route('business.settings.index') }}" class="sidebar-item dash-nav-item {{ request()->routeIs('business.settings.*') || request()->is('settings*', 'business/settings*') ? 'active' : '' }}">
             <svg class="sidebar-icon dash-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>

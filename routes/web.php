@@ -6,10 +6,12 @@ use App\Http\Controllers\Business\CustomerController;
 use App\Http\Controllers\Business\DashboardController;
 use App\Http\Controllers\Business\FeeController;
 use App\Http\Controllers\Business\ProductController;
+use App\Http\Controllers\Business\PromotionController;
 use App\Http\Controllers\Business\ReportController;
 use App\Http\Controllers\Business\SettingController;
 use App\Http\Controllers\Business\SubscriptionController;
 use App\Http\Controllers\Business\TransactionController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\OrderDocumentController;
@@ -47,6 +49,11 @@ Route::get('/partner/login', fn () => redirect()->route('login'));
 Route::post('/partner/login', fn () => redirect()->route('login'));
 Route::get('/business/login', fn () => redirect()->route('login'));
 Route::post('/business/login', fn () => redirect()->route('login'));
+
+// Public Questionnaire & Feedback Routes (Accessible from Login page)
+Route::get('/feedback', [FeedbackController::class, 'show'])->name('feedback.show');
+Route::post('/feedback', [FeedbackController::class, 'store'])->middleware('throttle:15,1')->name('feedback.store');
+Route::get('/feedback/slide', [FeedbackController::class, 'slide'])->name('feedback.slide');
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -111,6 +118,13 @@ Route::middleware(['auth', EnsureBusinessOwnerPortalAccess::class])->group(funct
     Route::post('/business/settings/password', [SettingController::class, 'updatePassword'])->name('business.settings.password.update');
     Route::post('/business/products/{product}/blast', [SettingController::class, 'blastProduct'])->name('business.products.blast');
     Route::get('/settings', [SettingController::class, 'index']);
+
+    // WhatsApp Promotions & Scheduled Blasts
+    Route::get('/business/promotions', [PromotionController::class, 'index'])->name('business.promotions.index');
+    Route::post('/business/promotions', [PromotionController::class, 'store'])->name('business.promotions.store');
+    Route::post('/business/promotions/{campaign}/run', [PromotionController::class, 'runNow'])->name('business.promotions.run');
+    Route::post('/business/promotions/{campaign}/cancel', [PromotionController::class, 'cancel'])->name('business.promotions.cancel');
+    Route::delete('/business/promotions/{campaign}', [PromotionController::class, 'destroy'])->name('business.promotions.destroy');
 });
 
 // Public Customer Marketplace

@@ -238,6 +238,13 @@
                         <div class="btn-spinner" id="btnSpinner" aria-hidden="true"></div>
                     </button>
 
+                    <!-- Feedback Link -->
+                    <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                        <a href="{{ route('feedback.show') }}" style="color: #E7C46A; text-decoration: none; font-size: 0.88rem; font-weight: 600;">
+                            Feedback
+                        </a>
+                    </div>
+
                     <!-- Marketplace Link -->
                     <div style="text-align: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
                         <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 0.85rem;">

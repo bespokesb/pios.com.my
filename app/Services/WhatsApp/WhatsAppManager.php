@@ -3,6 +3,7 @@
 namespace App\Services\WhatsApp;
 
 use App\Models\BusinessOwner;
+use App\Models\WhatsAppCampaign;
 use App\Services\WhatsApp\Contracts\WhatsAppDriverInterface;
 use App\Services\WhatsApp\Drivers\FonnteDriver;
 use App\Services\WhatsApp\Drivers\ManualDriver;
@@ -225,5 +226,92 @@ class WhatsAppManager
             'manual_urls' => $manualUrls,
             'details' => $details,
         ];
+    }
+
+    /**
+     * Execute a WhatsApp promotion campaign (immediate or scheduled).
+     *
+     * @return array<string, mixed>
+     */
+    public function executeCampaign(WhatsAppCampaign $campaign, bool $isBackground = false): array
+    {
+        $campaign->loadMissing(['businessOwner', 'product']);
+        $bo = $campaign->businessOwner;
+
+        if ($bo === null) {
+            $campaign->update([
+                'status' => WhatsAppCampaign::STATUS_FAILED,
+                'sent_at' => now(),
+                'result_summary' => ['error' => 'Profil Business Owner tidak ditemui.'],
+            ]);
+
+            return ['total' => 0, 'sent' => 0, 'failed' => 0, 'is_manual' => false, 'manual_urls' => [], 'details' => []];
+        }
+
+        $targets = $campaign->resolveTargets();
+        if (empty($targets)) {
+            $campaign->update([
+                'status' => WhatsAppCampaign::STATUS_FAILED,
+                'total_recipients' => 0,
+                'sent_count' => 0,
+                'failed_count' => 0,
+                'sent_at' => now(),
+                'result_summary' => ['error' => 'Tiada penerima WhatsApp yang sah ditemui.'],
+            ]);
+
+            return ['total' => 0, 'sent' => 0, 'failed' => 0, 'is_manual' => false, 'manual_urls' => [], 'details' => []];
+        }
+
+        $isManual = ($bo->whatsapp_provider ?: 'manual') === 'manual';
+        if ($isBackground && $isManual) {
+            $campaign->update([
+                'status' => WhatsAppCampaign::STATUS_FAILED,
+                'total_recipients' => count($targets),
+                'sent_count' => 0,
+                'failed_count' => count($targets),
+                'sent_at' => now(),
+                'result_summary' => [
+                    'error' => 'Mod Manual (wa.me) tidak menyokong penghantaran automatik berjadual. Sila aktifkan Wasapla.org atau Wati.io di Settings.',
+                ],
+            ]);
+
+            return [
+                'total' => count($targets),
+                'sent' => 0,
+                'failed' => count($targets),
+                'is_manual' => true,
+                'manual_urls' => [],
+                'details' => [],
+            ];
+        }
+
+        $campaign->update([
+            'status' => WhatsAppCampaign::STATUS_PROCESSING,
+            'total_recipients' => count($targets),
+        ]);
+
+        $result = $this->sendBlast(
+            $bo,
+            $targets,
+            $campaign->renderMessageTemplate(),
+            $campaign->resolveMediaUrl(),
+        );
+
+        $finalStatus = match (true) {
+            $result['sent'] > 0 && $result['failed'] === 0 => WhatsAppCampaign::STATUS_COMPLETED,
+            $result['sent'] > 0 && $result['failed'] > 0 => WhatsAppCampaign::STATUS_PARTIAL,
+            default => WhatsAppCampaign::STATUS_FAILED,
+        };
+
+        $campaign->update([
+            'status' => $finalStatus,
+            'total_recipients' => $result['total'],
+            'sent_count' => $result['sent'],
+            'failed_count' => $result['failed'],
+            'sent_at' => now(),
+            'result_summary' => $result,
+        ]);
+
+        return $result;
     }
 }

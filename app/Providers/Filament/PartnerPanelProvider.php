@@ -8,6 +8,7 @@ use App\Filament\Partner\Resources\PartnerBoPaymentApprovalResource;
 use App\Filament\Partner\Resources\PartnerSubscriptionResource;
 use App\Filament\Resources\BusinessOwners\BusinessOwnerResource;
 use App\Filament\Resources\Customers\CustomerResource;
+use App\Filament\Resources\FeedbackSubmissions\FeedbackSubmissionResource;
 use App\Filament\Resources\Partners\PartnerResource;
 use App\Filament\Support\LocaleSwitcher;
 use App\Filament\Widgets\PartnerBusinessOwners;
@@ -62,6 +63,7 @@ class PartnerPanelProvider extends PanelProvider
                 PartnerResource::class,
                 BusinessOwnerResource::class,
                 CustomerResource::class,
+                FeedbackSubmissionResource::class,
                 PartnerBoFeeApprovalResource::class,
                 PartnerSubscriptionResource::class,
                 PartnerBoPaymentApprovalResource::class,

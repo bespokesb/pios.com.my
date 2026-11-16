@@ -154,27 +154,86 @@ class MarketplaceTest extends TestCase
         $this->assertEquals($customer->id, session('market_customer_id'));
     }
 
-    public function test_customer_registration_page_and_process(): void
+    public function test_public_customer_registration_is_removed(): void
     {
-        $response = $this->get('/market/register');
-        $response->assertStatus(200);
-        $response->assertSee('Register Customer');
-
-        $response = $this->post('/market/register', [
+        $this->get('/market/register')->assertNotFound();
+        $this->post('/market/register', [
             'name' => 'Ahmad Razak',
             'phone' => '0123456789',
-            'email' => 'ahmad@example.com',
-            'kp_no' => '880505014433',
-            'address' => '45 Jalan Sultan, Shah Alam',
+        ])->assertNotFound();
+
+        $this->assertDatabaseMissing('customers', ['name' => 'Ahmad Razak']);
+    }
+
+    public function test_identification_never_exposes_the_customers_stored_details(): void
+    {
+        $product = $this->createSampleProduct('Madu Asli', 30.00);
+        $customer = Customer::factory()->forBusinessOwner($product->businessOwner)->create([
+            'name' => 'Siti Nurhaliza',
+            'hp_no' => '0198887766',
+            'kp_no' => '900101015566',
+            'email' => 'siti.secret@example.com',
+            'address' => '77 Jalan Rahsia, Ipoh',
         ]);
 
-        $response->assertRedirect('/market');
-        $this->assertDatabaseHas('customers', [
-            'name' => 'Ahmad Razak',
-            'kp_no' => '880505014433',
-            'email' => 'ahmad@example.com',
+        // Identify by IC: nothing beyond the name may land in the session or the page.
+        $this->post('/market/login', ['identifier' => '900101015566'])->assertRedirect();
+        $this->assertEquals($customer->id, session('market_customer_id'));
+        $this->assertNull(session('market_customer_email'));
+        $this->assertNull(session('market_customer_kp_no'));
+        $this->assertNull(session('market_customer_address'));
+        $this->assertNull(session('market_customer_phone'));
+        $this->assertArrayNotHasKey('address', session('market_customer'));
+
+        $this->post('/market/cart/add', ['product_id' => $product->id, 'quantity' => 1]);
+
+        foreach (['/market', '/market/checkout', '/p/'.$product->slug] as $url) {
+            $page = $this->get($url);
+            $page->assertDontSee('77 Jalan Rahsia');
+            $page->assertDontSee('siti.secret@example.com');
+            $page->assertDontSee('0198887766');
+        }
+    }
+
+    public function test_anonymous_checkout_does_not_overwrite_an_existing_customers_address(): void
+    {
+        $product = $this->createSampleProduct('Kurma', 25.00);
+        $customer = Customer::factory()->forBusinessOwner($product->businessOwner)->create([
+            'hp_no' => '0191234567',
+            'address' => 'Original BO Address',
         ]);
-        $this->assertEquals('Ahmad Razak', session('market_customer_name'));
+
+        $this->post('/market/cart/add', ['product_id' => $product->id, 'quantity' => 1]);
+        $this->post('/market/checkout', [
+            'name' => 'Attacker',
+            'phone' => '0191234567',
+            'address' => 'Hijacked Address',
+        ])->assertOk();
+
+        $this->assertSame('Original BO Address', $customer->fresh()->address);
+        $this->assertNotSame('Attacker', $customer->fresh()->name);
+    }
+
+    public function test_checkout_rejects_an_invalid_phone(): void
+    {
+        $product = $this->createSampleProduct('Teh', 10.00);
+        $this->post('/market/cart/add', ['product_id' => $product->id, 'quantity' => 1]);
+
+        $this->post('/market/checkout', [
+            'name' => 'Ali',
+            'phone' => 'not-a-phone',
+            'address' => 'Somewhere',
+        ])->assertSessionHasErrors('phone');
+
+        $this->assertSame(0, Order::query()->count());
+    }
+
+    public function test_market_login_redirect_to_ignores_external_urls(): void
+    {
+        $this->post('/market/login', [
+            'identifier' => 'nobody@example.com',
+            'redirect_to' => 'https://evil.example.com/phish',
+        ])->assertRedirect()->assertRedirectContains(url('/'));
     }
 
     public function test_checkout_places_order_and_clears_cart(): void

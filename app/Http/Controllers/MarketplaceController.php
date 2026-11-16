@@ -2,15 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\CustomerCategory;
 use App\Enums\ProductStatus;
-use App\Enums\RecordStatus;
-use App\Models\BusinessOwner;
 use App\Models\Customer;
-use App\Models\Partner;
 use App\Models\Product;
 use App\Models\ProductType;
-use App\Services\IdentifierGenerator;
+use App\Rules\MalaysianMobile;
 use App\Services\ManualOrderService;
 use App\Support\Phone;
 use Illuminate\Http\RedirectResponse;
@@ -188,7 +184,7 @@ class MarketplaceController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'max:20', new MalaysianMobile],
             'address' => ['required', 'string', 'max:1000'],
             'note' => ['nullable', 'string', 'max:500'],
         ]);
@@ -239,50 +235,41 @@ class MarketplaceController extends Controller
         ]);
 
         $input = trim($validated['identifier']);
-        $customer = null;
+        $phoneKey = Phone::toWhatsApp($input);
 
-        // Try phone match
-        $digits = Phone::digits($input);
-        if ($digits !== '') {
-            $customer = Customer::query()
-                ->get()
-                ->first(fn ($c): bool => Phone::digits((string) $c->hp_no) === $digits
-                    || Phone::toWhatsApp((string) $c->hp_no) === Phone::toWhatsApp($input));
-        }
-
-        // Try KP (IC) or Email match if phone match failed
-        if (! $customer) {
-            $customer = Customer::query()
-                ->where('kp_no', $input)
-                ->orWhere('email', $input)
-                ->first();
-        }
+        // Indexed equality lookups only (no full-table scan on a public endpoint).
+        $customer = Customer::query()
+            ->where(function ($q) use ($input, $phoneKey): void {
+                $q->where('kp_no', $input)->orWhere('email', $input);
+                if ($phoneKey !== null) {
+                    $q->orWhere('hp_no_normalized', $phoneKey);
+                }
+            })
+            ->first();
 
         if ($customer) {
-            $customerData = [
+            // Identification is not authentication: anyone who knows a phone/IC/email
+            // can submit it. Only keep what unlocks the marketplace (scope + greeting).
+            // The customer's stored phone, IC, email and address are never put in the
+            // session or rendered back. Prefill uses only what this visitor types.
+            $this->forgetCustomerSession();
+            session()->put('market_customer', [
                 'id' => $customer->id,
+                'business_owner_id' => $customer->business_owner_id,
                 'name' => $customer->name,
-                'phone' => $customer->hp_no,
-                'email' => $customer->email,
-                'kp_no' => $customer->kp_no,
-                'address' => $customer->address,
-                'is_vip' => (bool) $customer->is_vip,
-            ];
-
-            session()->put('market_customer', $customerData);
+            ]);
             session()->put('market_customer_id', $customer->id);
             session()->put('market_customer_name', $customer->name);
-            session()->put('market_customer_phone', $customer->hp_no);
-            session()->put('market_customer_email', $customer->email);
-            session()->put('market_customer_kp_no', $customer->kp_no);
-            session()->put('market_customer_address', $customer->address);
+            if ($phoneKey !== null && $customer->hp_no_normalized === $phoneKey) {
+                session()->put('market_customer_phone', $input);
+            }
 
-            $targetUrl = $request->input('redirect_to') ?: redirect()->back()->getTargetUrl();
+            $targetUrl = $this->safeRedirectTarget($request);
 
             return redirect($targetUrl)->with('customer_status', __('Welcome back, :name!', ['name' => $customer->name]));
         }
 
-        $targetUrl = $request->input('redirect_to') ?: redirect()->back()->getTargetUrl();
+        $targetUrl = $this->safeRedirectTarget($request);
 
         return redirect($targetUrl)
             ->withInput()
@@ -291,113 +278,14 @@ class MarketplaceController extends Controller
     }
 
     /**
-     * Display the Customer Registration page.
-     */
-    public function showRegisterForm(Request $request): View
-    {
-        $customer = $this->resolveCurrentCustomer($request);
-
-        return view('marketplace.register', [
-            'customer' => $customer,
-        ]);
-    }
-
-    /**
-     * Process Customer Registration.
-     */
-    public function registerCustomer(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:50'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'kp_no' => ['nullable', 'string', 'max:50'],
-            'address' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        $digits = Phone::digits($validated['phone']);
-
-        $customer = Customer::query()
-            ->get()
-            ->first(fn ($c): bool => Phone::digits((string) $c->hp_no) === $digits
-                || (filled($validated['kp_no'] ?? null) && $c->kp_no === $validated['kp_no'])
-                || (filled($validated['email'] ?? null) && strtolower((string) $c->email) === strtolower((string) $validated['email'])));
-
-        if (! $customer) {
-            $bo = BusinessOwner::query()->first();
-            if (! $bo) {
-                $partner = Partner::query()->firstOrCreate(
-                    ['partner_no' => 'P000001'],
-                    ['applicant_name' => 'PIOS System Partner']
-                );
-                $bo = BusinessOwner::query()->firstOrCreate(
-                    ['business_owner_no' => 'BO000001'],
-                    ['partner_id' => $partner->id, 'applicant_name' => 'PIOS System Merchant']
-                );
-            }
-
-            $customer = new Customer;
-            $customer->business_owner_id = $bo->id;
-            $customer->partner_id = $bo->partner_id;
-            $customer->customer_no = app(IdentifierGenerator::class)->generate('customer', Customer::class, 'customer_no');
-            $customer->category = CustomerCategory::Lead;
-            $customer->status = RecordStatus::Active;
-        }
-
-        $customer->name = $validated['name'];
-        $customer->hp_no = $validated['phone'];
-        if (filled($validated['kp_no'] ?? null)) {
-            $customer->kp_no = $validated['kp_no'];
-        }
-        if (filled($validated['email'] ?? null)) {
-            $customer->email = $validated['email'];
-        }
-        if (filled($validated['address'] ?? null)) {
-            $customer->address = $validated['address'];
-        }
-
-        $customer->save();
-
-        $customerData = [
-            'id' => $customer->id,
-            'name' => $customer->name,
-            'phone' => $customer->hp_no,
-            'email' => $customer->email,
-            'kp_no' => $customer->kp_no,
-            'address' => $customer->address,
-            'is_vip' => (bool) $customer->is_vip,
-        ];
-
-        session()->put('market_customer', $customerData);
-        session()->put('market_customer_id', $customer->id);
-        session()->put('market_customer_name', $customer->name);
-        session()->put('market_customer_phone', $customer->hp_no);
-        session()->put('market_customer_email', $customer->email);
-        session()->put('market_customer_kp_no', $customer->kp_no);
-        session()->put('market_customer_address', $customer->address);
-
-        $redirectTo = session()->get('market_cart') ? route('marketplace.checkout') : route('marketplace.index');
-
-        return redirect($redirectTo)->with('customer_status', __('Registration successful! Welcome, :name.', ['name' => $customer->name]));
-    }
-
-    /**
      * Clear customer identification session.
      */
     public function logoutCustomer(Request $request): RedirectResponse
     {
-        session()->forget([
-            'market_customer',
-            'market_customer_id',
-            'market_customer_name',
-            'market_customer_phone',
-            'market_customer_email',
-            'market_customer_kp_no',
-            'market_customer_address',
-        ]);
+        $this->forgetCustomerSession();
         session()->save();
 
-        $redirectTo = $request->input('redirect_to') ?: redirect()->back()->getTargetUrl();
+        $redirectTo = $this->safeRedirectTarget($request);
 
         return redirect($redirectTo)
             ->with('customer_status', __('Logged out successfully.'))
@@ -413,20 +301,50 @@ class MarketplaceController extends Controller
      */
     private function resolveCurrentCustomer(Request $request): array
     {
-        $id = session()->get('market_customer_id');
-        $customerModel = $id ? Customer::query()->find($id) : null;
-
         $sessionCustomer = session()->get('market_customer', []);
 
+        // Contact details come only from what this visitor typed at checkout; the
+        // identified customer's stored record is never loaded back into the page.
         return [
-            'id' => $customerModel?->id ?? $sessionCustomer['id'] ?? null,
-            'business_owner_id' => $customerModel?->business_owner_id ?? $sessionCustomer['business_owner_id'] ?? null,
-            'name' => $customerModel?->name ?? $sessionCustomer['name'] ?? session()->get('market_customer_name'),
-            'phone' => $customerModel?->hp_no ?? $sessionCustomer['phone'] ?? session()->get('market_customer_phone'),
-            'email' => $customerModel?->email ?? $sessionCustomer['email'] ?? session()->get('market_customer_email'),
-            'kp_no' => $customerModel?->kp_no ?? $sessionCustomer['kp_no'] ?? session()->get('market_customer_kp_no'),
-            'address' => $customerModel?->address ?? $sessionCustomer['address'] ?? session()->get('market_customer_address'),
-            'is_vip' => (bool) ($customerModel?->is_vip ?? $sessionCustomer['is_vip'] ?? false),
+            'id' => $sessionCustomer['id'] ?? null,
+            'business_owner_id' => $sessionCustomer['business_owner_id'] ?? null,
+            'name' => session()->get('market_customer_name') ?? $sessionCustomer['name'] ?? null,
+            'phone' => session()->get('market_customer_phone'),
+            'email' => null,
+            'kp_no' => null,
+            'address' => session()->get('market_customer_address'),
+            'is_vip' => false,
         ];
+    }
+
+    private function forgetCustomerSession(): void
+    {
+        session()->forget([
+            'market_customer',
+            'market_customer_id',
+            'market_customer_name',
+            'market_customer_phone',
+            'market_customer_email',
+            'market_customer_kp_no',
+            'market_customer_address',
+        ]);
+    }
+
+    /**
+     * Only same-site paths are honoured for redirect_to (no open redirect).
+     */
+    private function safeRedirectTarget(Request $request): string
+    {
+        $target = (string) $request->input('redirect_to', '');
+
+        if ($target !== '' && str_starts_with($target, '/') && ! str_starts_with($target, '//')) {
+            return url($target);
+        }
+
+        if ($target !== '' && str_starts_with($target, url('/'))) {
+            return $target;
+        }
+
+        return redirect()->back()->getTargetUrl();
     }
 }

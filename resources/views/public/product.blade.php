@@ -7,21 +7,20 @@
     
     $isProductLoginEnabled = \App\Models\SystemSetting::isPublicProductLoginEnabled();
 
-    $customerId = session('market_customer_id');
-    $customerModel = $customerId ? \App\Models\Customer::find($customerId) : null;
-    
+    // Prefill only from what this visitor typed; never load the identified
+    // customer's stored contact details back into the page.
     $sessionCustomer = session('market_customer', []);
     $customer = [
-        'id' => $sessionCustomer['id'] ?? $customerModel?->id,
-        'name' => $sessionCustomer['name'] ?? $customerModel?->name ?? session('market_customer_name'),
-        'phone' => $sessionCustomer['phone'] ?? $customerModel?->hp_no ?? session('market_customer_phone'),
-        'email' => $sessionCustomer['email'] ?? $customerModel?->email ?? session('market_customer_email'),
-        'address' => $sessionCustomer['address'] ?? $customerModel?->address ?? session('market_customer_address'),
-        'address_line_2' => $sessionCustomer['address_line_2'] ?? $customerModel?->address_line_2,
-        'address_line_3' => $sessionCustomer['address_line_3'] ?? $customerModel?->address_line_3,
-        'poskod' => $sessionCustomer['poskod'] ?? $customerModel?->poskod,
-        'bandar' => $sessionCustomer['bandar'] ?? $customerModel?->bandar,
-        'negeri' => $sessionCustomer['negeri'] ?? $customerModel?->negeri,
+        'id' => $sessionCustomer['id'] ?? null,
+        'name' => session('market_customer_name') ?? ($sessionCustomer['name'] ?? null),
+        'phone' => session('market_customer_phone'),
+        'email' => null,
+        'address' => session('market_customer_address'),
+        'address_line_2' => null,
+        'address_line_3' => null,
+        'poskod' => null,
+        'bandar' => null,
+        'negeri' => null,
     ];
 @endphp
 

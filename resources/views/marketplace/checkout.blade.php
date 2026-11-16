@@ -134,7 +134,7 @@
                             <input type="text" name="name" id="name" required value="{{ old('name', $customer['name'] ?? '') }}"
                                    placeholder="e.g. Ahmad Razak"
                                    class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 focus:border-[#174A78] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#174A78]/20 transition-all shadow-xs">
-                            @error('name') <span class="text-xs text-rose-600 font-semibold">{{ $message }}</span> @error
+                            @error('name') <span class="text-xs text-rose-600 font-semibold">{{ $message }}</span> @enderror
                         </div>
 
                         <div>

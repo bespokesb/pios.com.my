@@ -110,25 +110,64 @@ class RoleLoginRedirectTest extends TestCase
         $this->assertAuthenticatedAs($customerUser);
     }
 
-    public function test_customer_record_login_without_user_account_redirects_to_marketplace(): void
+    public function test_customer_record_never_signs_in_through_staff_login(): void
     {
         $partner = Partner::factory()->create();
         $bo = BusinessOwner::factory()->create(['partner_id' => $partner->id]);
-        $customer = Customer::factory()->create([
+        Customer::factory()->create([
             'business_owner_id' => $bo->id,
             'partner_id' => $partner->id,
             'customer_no' => 'CST99001',
             'hp_no' => '0198889999',
+            'kp_no' => '900202025555',
             'email' => 'customer99@example.com',
         ]);
 
-        $response = $this->post(route('login.submit'), [
-            'piosId' => 'CST99001',
-            'password' => 'anypassword',
+        foreach (['CST99001', '0198889999', '900202025555', 'customer99@example.com'] as $identifier) {
+            $this->post(route('login.submit'), [
+                'piosId' => $identifier,
+                'password' => 'anypassword',
+            ])->assertSessionHasErrors('piosId');
+
+            $this->assertGuest();
+            $this->assertNull(session('market_customer_id'));
+            $this->assertNull(session('market_customer'));
+        }
+    }
+
+    public function test_customer_phone_cannot_steer_login_to_a_staff_account(): void
+    {
+        $staff = User::factory()->create([
+            'role' => UserRole::PiosOwner,
+            'status' => UserStatus::Active,
+            'email' => 'staff@example.com',
+            'password' => bcrypt('staff-secret'),
+        ]);
+        $partner = Partner::factory()->create();
+        $bo = BusinessOwner::factory()->create(['partner_id' => $partner->id]);
+        Customer::factory()->create([
+            'business_owner_id' => $bo->id,
+            'partner_id' => $partner->id,
+            'hp_no' => '0177776666',
+            'email' => $staff->email,
         ]);
 
-        $response->assertRedirect(route('marketplace.index'));
-        $this->assertEquals($customer->id, session('market_customer_id'));
+        $this->post(route('login.submit'), [
+            'piosId' => '0177776666',
+            'password' => 'staff-secret',
+        ])->assertSessionHasErrors('piosId');
+
+        $this->assertGuest();
+    }
+
+    public function test_staff_login_is_rate_limited(): void
+    {
+        for ($i = 0; $i < 30; $i++) {
+            $this->post(route('login.submit'), ['piosId' => 'x@example.com', 'password' => 'wrong']);
+        }
+
+        $this->post(route('login.submit'), ['piosId' => 'x@example.com', 'password' => 'wrong'])
+            ->assertStatus(429);
     }
 
     public function test_authenticated_owner_visiting_login_redirects_to_owner_dashboard(): void

@@ -94,14 +94,15 @@ class ManualOrderService
                 ->first();
 
             if ($existing) {
-                $addressData = array_filter([
-                    'address' => $buyer['address'] ?? null,
-                    'address_line_2' => $buyer['address_line_2'] ?? null,
-                    'address_line_3' => $buyer['address_line_3'] ?? null,
-                    'bandar' => $buyer['bandar'] ?? null,
-                    'negeri' => $buyer['negeri'] ?? null,
-                    'poskod' => $buyer['poskod'] ?? null,
-                ], fn ($val) => filled($val));
+                // Public, unauthenticated endpoint: anyone who knows a phone number can
+                // post here, so only fill address fields the BO's record leaves blank —
+                // never overwrite data the Business Owner already holds.
+                $addressData = [];
+                foreach (['address', 'address_line_2', 'address_line_3', 'bandar', 'negeri', 'poskod'] as $field) {
+                    if (blank($existing->{$field}) && filled($buyer[$field] ?? null)) {
+                        $addressData[$field] = $buyer[$field];
+                    }
+                }
 
                 if (! empty($addressData)) {
                     $existing->update($addressData);

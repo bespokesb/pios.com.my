@@ -39,7 +39,7 @@ Route::get('/', function () {
 // Authentication Routes
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:30,1')->name('login.submit');
 });
 
 // Single Unified Login Redirects for Admin, Partner & Business Panels
@@ -133,16 +133,14 @@ Route::middleware([EnsureMarketplaceEnabled::class])->group(function (): void {
     Route::post('/market/cart/add', [MarketplaceController::class, 'addToCart'])->name('marketplace.cart.add');
     Route::post('/market/cart/update', [MarketplaceController::class, 'updateCart'])->name('marketplace.cart.update');
     Route::get('/market/checkout', [MarketplaceController::class, 'checkout'])->name('marketplace.checkout');
-    Route::post('/market/checkout', [MarketplaceController::class, 'processCheckout'])->name('marketplace.checkout.process');
-    Route::get('/market/register', [MarketplaceController::class, 'showRegisterForm'])->name('marketplace.register');
-    Route::post('/market/register', [MarketplaceController::class, 'registerCustomer'])->name('marketplace.register.process');
+    Route::post('/market/checkout', [MarketplaceController::class, 'processCheckout'])->middleware('throttle:20,1')->name('marketplace.checkout.process');
 });
 
 // Location / Postcode auto-registration
 Route::post('/api/locations/postcode', [LocationController::class, 'storePostcode'])->name('locations.postcode.store');
 
 // Customer Authentication (Always active for product pages & marketplace)
-Route::post('/market/login', [MarketplaceController::class, 'loginCustomer'])->name('marketplace.login');
+Route::post('/market/login', [MarketplaceController::class, 'loginCustomer'])->middleware('throttle:20,1')->name('marketplace.login');
 Route::post('/market/logout', [MarketplaceController::class, 'logoutCustomer'])->name('marketplace.logout');
 
 // Public, mobile-first product page shared via WhatsApp marketing blasts.
